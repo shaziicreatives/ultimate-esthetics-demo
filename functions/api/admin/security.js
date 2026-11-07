@@ -16,7 +16,7 @@ export async function onRequestGet({request,env}){
    env.DB.prepare("SELECT id,username,action,entity,entity_id,details,ip,created_at FROM activity_log ORDER BY id DESC LIMIT 500").all(),
    u.role==="owner" ? env.DB.prepare("SELECT id,username,role,is_active FROM users WHERE role='owner' OR username IN ('Admin','Reception') ORDER BY id").all() : Promise.resolve({results:[]})
   ]);
-  return json({logins:logins.results||[],sessions:(sessions.results||[]).map(s=>({...s,device:device(s.user_agent),current:s.id===u.session_id})),activity:activity.results||[],users:users.results||[]});
+  return json({logins:logins.results||[],sessions:(sessions.results||[]).map(s=>({...s,device:device(s.user_agent),current:s.id===u.session_id})),activity:activity.results||[],users:users.results||[],currentUser:{username:u.username,role:u.role}});
  }catch(e){return json({error:"Security records unavailable: "+String(e.message||"database error")},500);}
 }
 export async function onRequestDelete({request,env}){
