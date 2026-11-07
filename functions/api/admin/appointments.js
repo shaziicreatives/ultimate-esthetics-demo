@@ -71,7 +71,7 @@ export async function onRequestPatch(context) {
         ).bind(status, id).run();
         await env.DB.prepare(
             "INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, ?, 'appointment', ?, ?, ?)"
-        ).bind(session.id, session.username, "appointment_status", id, before.status + " -> " + status, request.headers.get("CF-Connecting-IP") || "").run();
+        ).bind(session.user_id, session.username, "appointment_status", id, before.status + " -> " + status, request.headers.get("CF-Connecting-IP") || "").run();
 
         return new Response(JSON.stringify({ success: true, changes: updated.meta?.changes || 0 }), {
             headers: { "Content-Type": "application/json" }
