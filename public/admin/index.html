@@ -278,7 +278,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad = n => String(n).padStart(2, '0');
-const pkDateTime = value => { if (!value) return '—'; const raw=String(value).trim(); const iso=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw; const d=new Date(iso); if(Number.isNaN(d.getTime()))return raw; return new Intl.DateTimeFormat('en-PK',{timeZone:'Asia/Karachi',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(d)+' PKT'; };
+const localDateKey = value => { if(!value)return ''; const raw=String(value).trim(); const iso=/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw; const d=new Date(iso); return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); };\nconst pkDateTime = value => { if (!value) return '—'; const raw=String(value).trim(); const iso=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw; const d=new Date(iso); if(Number.isNaN(d.getTime()))return raw; return new Intl.DateTimeFormat('en-PK',{timeZone:'Asia/Karachi',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(d)+' PKT'; };
 const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const todayStr = () => { const p = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()); const v=Object.fromEntries(p.map(x=>[x.type,x.value])); return v.year+'-'+v.month+'-'+v.day; };
 const plusDays = n => { const [y,m,d]=todayStr().split('-').map(Number); const dt=new Date(Date.UTC(y,m-1,d+n)); return dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate()); };
@@ -473,7 +473,7 @@ function viewDashboard() {
 
   const recent = state.appts.slice().sort((x, y) => y.id - x.id).slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + nice(a.date) + ' · ' + t12(a.time) + ' · ' + esc(procName(a)) + '</small></div>' + stPill(a.status) + '</div>').join('') || '<div class="empty">No bookings yet.</div>';
 
-  const collectedToday = state.visits.reduce((sum,v) => sum + (v.payments||[]).filter(p => String(p.created_at||'').slice(0,10) === t).reduce((n,p)=>n+Number(p.amount||0),0), 0);
+  const collectedToday = state.visits.reduce((sum,v) => sum + (v.payments||[]).filter(p => localDateKey(p.created_at) === t).reduce((n,p)=>n+Number(p.amount||0),0), 0);
   const balanceDue = state.financialPatients.reduce((sum,p)=>sum+Number(p.balance||0),0);
   const totalPatients = state.financialPatients.length || state.patients.length;
   const daily = Array.from({length:7},(_,i)=>{const d=plusDays(i-6);return {date:d,count:state.appts.filter(a=>a.date===d && ['confirmed','done','no_show'].includes(a.status)).length};});
