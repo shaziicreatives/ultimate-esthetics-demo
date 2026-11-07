@@ -35,6 +35,10 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Invalid username or password" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
 
+    if (user.role === "owner") {
+      await env.DB.prepare("UPDATE users SET username='Owner', updated_at=CURRENT_TIMESTAMP WHERE id=? AND role='owner' AND username='admin' COLLATE NOCASE").bind(user.id).run();
+      user.username = "Owner";
+    }
     const tokenBytes = new Uint8Array(32); crypto.getRandomValues(tokenBytes);
     const token = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, "0")).join("");
     const tokenDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
