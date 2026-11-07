@@ -158,6 +158,9 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
 .visit-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
 .proc-line{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px;margin:8px 0}
+/* reference dashboard proportions */
+@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:205px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
+
 
 @media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:900px){
@@ -242,7 +245,7 @@ const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
 
 /* ---------- state ---------- */
-const state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, histQ: '', appts: [], patients: [], doctors: [], sig: '' };
+const state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -297,7 +300,8 @@ async function loadData(first) {
   }
   seenPendingIds = new Set(pendingIds);
 
-  const sig = JSON.stringify(appts);
+  try { const vr = await api('/api/admin/visits'); if (vr.ok) { state.visits = vr.data.visits || []; state.financialPatients = vr.data.patients || []; } } catch(e) { }
+  const sig = JSON.stringify(appts) + JSON.stringify(state.visits);
   const changed = sig !== state.sig;
   state.sig = sig; state.appts = appts;
   const pm = {};
@@ -504,8 +508,12 @@ const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewTod
 
 function openVisitForm(id) {
  const a=state.appts.find(x=>x.id===id); if(!a)return;
- const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><h2>Check-in & visit · '+esc(a.name)+'</h2><button class="btn sm" type="button" data-act="closevisit">Close</button></div><form id="visitForm" data-id="'+a.id+'" class="col" style="gap:10px"><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" value="0" required></div></div><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button><div class="field"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="3"></textarea></div><div class="two-col"><div class="field"><label>Total bill (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" value="0" required></div><div class="field"><label>Received now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" value="0" required></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option>cash</option><option>card</option><option>bank transfer</option><option>online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></form></section></div>';
+ const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><h2>Check-in & visit · '+esc(a.name)+'</h2><button class="btn sm" type="button" data-act="closevisit">Close</button></div><form id="visitForm" data-id="'+a.id+'" class="col" style="gap:10px"><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" value="0" required></div></div><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button><div class="field"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="3"></textarea></div><div class="alert-item info" id="visitPrevious">Previous balance: Rs <b id="visitPrevValue">0</b></div><div class="two-col"><div class="field"><label>Total bill (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" value="0" required></div><div class="field"><label>Received now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" value="0" required></div></div><div class="two-col"><div class="stat-box"><div class="lbl">Total due before payment</div><div class="val num" id="visitDue">Rs 0</div></div><div class="stat-box"><div class="lbl">Remaining after payment</div><div class="val num" id="visitRemaining">Rs 0</div></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option>cash</option><option>card</option><option>bank transfer</option><option>online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></form></section></div>';
+ const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
+ html=html.replace('id="visitPrevValue">0','id="visitPrevValue">'+prev.toLocaleString('en-PK'));
  document.body.insertAdjacentHTML('beforeend',html);
+ const calc=()=>{const due=prev+Number($('#visitTotal').value||0),left=due-Number($('#visitReceived').value||0);$('#visitDue').textContent='Rs '+due.toLocaleString('en-PK');$('#visitRemaining').textContent='Rs '+Math.max(0,left).toLocaleString('en-PK');};
+ $('#visitTotal').addEventListener('input',calc);$('#visitReceived').addEventListener('input',calc);calc();
 }
 
 function renderNav() {
@@ -570,9 +578,9 @@ document.addEventListener('submit',async e=>{
  if(e.target.id!=='visitForm')return;e.preventDefault();
  const form=e.target,err=$('#visitErr'),btn=$('#visitSave'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value)}));
  const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value);
- if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>total){err.textContent='Procedure, fee, total aur received amount check karein.';err.hidden=false;return;}
+ if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+total){err.textContent='Procedure, fee, total aur received amount check karein.';err.hidden=false;return;}
  btn.disabled=true;btn.textContent='Saving…';
- try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,total_amount:total,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Visit save nahi hui.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}$('#visitModal').remove();toast('Visit and payment saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
+ try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,total_amount:total,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Visit save nahi hui.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}$('#visitModal').remove();toast('Visit/payment saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
  catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
 });
 
