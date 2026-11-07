@@ -618,7 +618,7 @@ document.addEventListener('click', async e => {
     case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
     case 'restore': state.tab = 'pending'; setStatus(id, 'pending', 'Moved back to pending.'); break;
     case 'done': setStatus(id, 'done', 'Visit marked as completed.'); break;
-    case 'noshow': setStatus(id, 'no_show', 'No-show mark ho gaya.'); break;
+    case 'noshow': setStatus(id, 'no_show', 'Marked as no-show.'); break;
     case 'undo': setStatus(id, 'confirmed', 'Moved back to awaiting check-in.'); break;
     case 'hist': state.histSel = Number(b.dataset.p); b.disabled = false; go('history'); break;
   }
