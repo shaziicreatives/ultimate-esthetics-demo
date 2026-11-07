@@ -10,12 +10,13 @@ function device(ua){ua=String(ua||"");const os=/Windows/i.test(ua)?"Windows":/An
 export async function onRequestGet({request,env}){
  try{
   const u=await auth(request,env);if(!u)return json({error:"Unauthorized"},401);
-  const [logins,sessions,activity]=await Promise.all([
-   env.DB.prepare("SELECT id,username,ip,success,created_at FROM login_attempts ORDER BY id DESC LIMIT 30").all(),
+  const [logins,sessions,activity,users]=await Promise.all([
+   env.DB.prepare("SELECT id,username,ip,success,created_at FROM login_attempts ORDER BY id DESC LIMIT 500").all(),
    env.DB.prepare("SELECT s.id,s.user_id,s.ip,s.user_agent,s.expires_at,s.created_at,u.username FROM sessions s JOIN users u ON u.id=s.user_id WHERE datetime(s.expires_at)>datetime('now') ORDER BY s.created_at DESC LIMIT 50").all(),
-   env.DB.prepare("SELECT id,username,action,entity,entity_id,details,ip,created_at FROM activity_log ORDER BY id DESC LIMIT 50").all()
+   env.DB.prepare("SELECT id,username,action,entity,entity_id,details,ip,created_at FROM activity_log ORDER BY id DESC LIMIT 500").all(),
+   u.role==="owner" ? env.DB.prepare("SELECT id,username,role,is_active FROM users WHERE username IN ('Owner','Admin','Reception') ORDER BY id").all() : Promise.resolve({results:[]})
   ]);
-  return json({logins:logins.results||[],sessions:(sessions.results||[]).map(s=>({...s,device:device(s.user_agent),current:s.id===u.session_id})),activity:activity.results||[]});
+  return json({logins:logins.results||[],sessions:(sessions.results||[]).map(s=>({...s,device:device(s.user_agent),current:s.id===u.session_id})),activity:activity.results||[],users:users.results||[]});
  }catch(e){return json({error:"Security records unavailable: "+String(e.message||"database error")},500);}
 }
 export async function onRequestDelete({request,env}){
