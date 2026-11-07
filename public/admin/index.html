@@ -184,7 +184,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="field"><label for="uName">Username</label><input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username"></div>
       <div class="field"><label for="uPass">Password</label><input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password"></div>
       <div id="loginErr" class="err" hidden></div>
-      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button>
+      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button><button class="btn" type="button" id="forgotBtn" style="width:100%">Forgot password? Email reset link</button>
     </form>
   </div>
 </div>
@@ -240,7 +240,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, histQ: '', appts: [], patients: [], doctors: [], sig: '' };
-const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History']];
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
 async function api(path, opts) {
@@ -485,19 +485,43 @@ function histDetail() {
     (fu ? '<div class="alert-item info" style="margin-bottom:10px">Follow-up: <b>' + nice(fu) + '</b></div>' : '') +
     '<h2 style="font-size:15px;margin:8px 0 2px">Timeline</h2>' + tl + '</div>';
 }
+
+function viewSecurity() {
+ return head('Security', 'Account password and owner recovery email.', '') +
+ '<div class="two-col"><section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:12px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" minlength="10" autocomplete="new-password" required></div><div class="field"><label>Confirm new password</label><input class="inp" id="pwAgain" type="password" minlength="10" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button></form></section><section class="card tint"><h2>Owner recovery email</h2><p class="hint" style="margin:10px 0">Password reset links are addressed to <b>imat2025maths@gmail.com</b>. Email delivery requires Resend credentials in Cloudflare Pages settings.</p><button class="btn" type="button" id="sendReset">Send password reset email</button></section></div>';
+}
+
 function viewHistory() {
   return head('Patient History', 'Naam, phone ya #ID se dhoondhein.', '') +
     '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
 }
 
 /* ---------- render + events ---------- */
-const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory };
+const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
 function renderNav() {
   const n = pending().length;
   $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
 }
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
 function go(p) { state.page = p; render(); window.scrollTo(0, 0); }
+
+
+document.addEventListener('click', async e => {
+ if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
+ const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
+ try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request'}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('If owner account exists, reset link email has been sent.'); }
+ catch(x){ if(x.message!=='unauthorized') toast('Reset email request failed.'); }
+ b.disabled=false; b.textContent=old;
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='pwForm') return; e.preventDefault();
+ const current=$('#pwCurrent').value,n=$('#pwNew').value,n2=$('#pwAgain').value,err=$('#pwErr'),btn=$('#pwSave');
+ if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
+ if(n.length<10||!/[0-9]/.test(n)){err.textContent='Use at least 10 characters and one number.';err.hidden=false;return;}
+ err.hidden=true;btn.disabled=true;btn.textContent='Saving…';
+ try { const r=await api('/api/admin/password',{method:'POST',body:{current_password:current,new_password:n}}); if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save password';return;} toast('Password changed. Please sign in again.'); showLogin(); }
+ catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Save password';}
+});
 
 document.addEventListener('click', e => {
   const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
