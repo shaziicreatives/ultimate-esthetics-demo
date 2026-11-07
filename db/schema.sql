@@ -1,22 +1,35 @@
-DROP TABLE IF EXISTS appointments;
-DROP TABLE IF EXISTS slots;
-
-CREATE TABLE appointments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  patient_name TEXT NOT NULL,
-  phone TEXT NOT NULL,
-  doctor TEXT NOT NULL,
-  service TEXT,
-  appointment_date TEXT NOT NULL,
-  appointment_time TEXT NOT NULL,
-  status TEXT DEFAULT 'Pending',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+-- Patients Table
+CREATE TABLE IF NOT EXISTS patients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE slots (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  date TEXT NOT NULL,
-  time TEXT NOT NULL,
-  is_booked INTEGER DEFAULT 0,
-  UNIQUE(date, time)
+-- Doctors Table
+CREATE TABLE IF NOT EXISTS doctors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    title TEXT NOT NULL
+);
+
+-- Initial Doctors Data
+INSERT OR IGNORE INTO doctors (id, name, title) VALUES 
+(1, 'Dr. Ayesha Malik', 'Consultant Dermatologist'),
+(2, 'Dr. Hamza Raza', 'Hair Transplant Surgeon'),
+(3, 'Dr. Sana Iqbal', 'Aesthetic Physician');
+
+-- Appointments Table with Double-Booking Prevention
+CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    doctor_id INTEGER NOT NULL,
+    patient_id INTEGER NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    treatment TEXT,
+    status TEXT DEFAULT 'booked', -- booked, cancelled, completed
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(id),
+    FOREIGN KEY (patient_id) REFERENCES patients(id),
+    UNIQUE(doctor_id, date, time) -- Double booking rokne ke liye
 );
