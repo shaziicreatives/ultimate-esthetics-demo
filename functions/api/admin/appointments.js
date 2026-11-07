@@ -88,10 +88,10 @@ export async function onRequestPatch(context) {
         const message = String(err?.message || "");
         if (message.includes("UNIQUE constraint failed") || message.includes("uq_active_slot")) {
             return new Response(JSON.stringify({
-                error: "Yeh doctor is date aur time par pehle se booked hai. Appointment restore karne se pehle doosra time select karein.",
+                error: "This doctor is already booked at that date and time. Select another time before restoring the appointment.",
                 code: "SLOT_TAKEN"
             }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
-        return new Response(JSON.stringify({ error: "Appointment update nahi ho saki. Please dobara try karein." }), { status: 500, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: "Unable to update the appointment. Please try again." }), { status: 500, headers: { "Content-Type": "application/json" } });
     }
 }
