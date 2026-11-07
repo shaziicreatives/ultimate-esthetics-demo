@@ -177,6 +177,37 @@ button[disabled]{opacity:.5;cursor:not-allowed}
   .btns{justify-content:flex-start}
   .tl{grid-template-columns:minmax(0,1fr);gap:4px}
 }
+
+/* Screenshot-matched clinic desk refinement */
+@media(min-width:901px){
+ #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:205px minmax(0,1fr)}
+ .side{position:sticky;top:0;height:100vh;border-radius:0;padding:18px 12px}
+ .main{padding:26px 28px;max-width:1600px;width:100%;margin:0 auto}
+ .page-head{margin-bottom:16px}.page-head h1{font-size:36px}
+ .stats-grid{gap:9px;margin-bottom:14px}.stat-box{padding:12px 13px;border-radius:12px}
+ .stat-box .val{font-size:27px}.card{padding:15px;border-radius:14px}
+ .dash-layout{grid-template-columns:minmax(0,1.65fr) minmax(250px,.75fr);gap:12px}
+ .col{gap:12px}.two-col{gap:12px}
+ .tbl th{padding:7px 8px;font-size:10px}.tbl td{padding:8px;font-size:12px}
+ .nav{gap:2px}.nav button{padding:9px 10px;border-radius:9px;font-size:12.5px}
+ .brand b{font-size:16px}
+ .hist{grid-template-columns:240px minmax(0,1fr);gap:14px}
+}
+@media(max-width:900px){.page-head h1{font-size:30px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.activity-list .row{font-size:11px;padding:7px 0}
+.security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.security-grid .card{padding:14px}
+.security-grid h2{font-size:13px}
+.permission-table{width:100%;border-collapse:collapse;font-size:11px}
+.permission-table th,.permission-table td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:center}
+.permission-table th:first-child,.permission-table td:first-child{text-align:left}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.switch-row:last-child{border:0}
+.switch{accent-color:#43865d;width:18px;height:18px}
+.device-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+.device-row:last-child{border:0}
+@media(max-width:700px){.security-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -462,11 +493,11 @@ function viewToday() {
       : a.status === 'in_room' ? '<button class="btn pri sm" data-act="visit" data-id="' + a.id + '">Open form</button>'
       : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', aap aaj aa nahi sakay. Kya hum naya time de dein? Ultimate Esthetics.') + '">New time</a> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>'
       : '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>';
-    return '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + act + '</td></tr>';
+    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const bal=Number(fp?.balance||0); return '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + act + '</td></tr>';
   }).join('') || '<tr><td colspan="6" class="empty">Is filter me koi patient nahi.</td></tr>';
   return head("Today's Patients", 'Confirmed patients for ' + wday(t) + ' ' + nice(t) + '.', '<button class="btn pri" data-go="manual">Walk-in</button>') +
     '<div class="tabs">' + fl.map(f => '<button class="' + (state.filter === f[0] ? 'on' : '') + '" data-filter="' + f[0] + '">' + f[1] + '<span class="n num">' + (f[0] === 'all' ? all.length : all.filter(a => a.status === f[0]).length) + '</span></button>').join('') + '</div>' +
-    '<div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    '<div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 }
 
 function viewManual() {
@@ -509,8 +540,17 @@ function histDetail() {
 }
 
 function viewSecurity() {
- return head('Security', 'Account password and owner recovery email.', '') +
- '<div class="two-col"><section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:12px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" minlength="10" autocomplete="new-password" required></div><div class="field"><label>Confirm new password</label><input class="inp" id="pwAgain" type="password" minlength="10" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button></form></section><section class="card tint"><h2>Owner recovery email</h2><p class="hint" style="margin:10px 0">Password reset links are addressed to <b>imat2025maths@gmail.com</b>. Email delivery requires Resend credentials in Cloudflare Pages settings.</p><button class="btn" type="button" id="sendReset">Send password reset email</button></section></div>';
+ return head('Security', 'Passwords, who can see what, and a record of every change.', '') +
+ '<div class="security-grid">' +
+ '<section class="card"><div class="card-head"><h2>Change password</h2><span class="pill ok">Needs current password</span></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" minlength="10" autocomplete="new-password" required><small class="hint">At least 10 characters, with a number.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" minlength="10" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><div class="actions"><button class="btn pri" type="submit" id="pwSave">Save password</button><button class="btn" type="button" id="sendReset">Email reset link</button></div><small class="hint">Reset link is sent to the owner recovery email, if mail delivery is configured.</small></form></section>' +
+ '<section class="card"><div class="card-head"><h2>Who can open what</h2><small class="muted">Owner always has full access</small></div><table class="permission-table"><thead><tr><th>Page</th><th>Owner</th><th>Receptionist</th><th>Doctor</th></tr></thead><tbody>' +
+ [['Dashboard',1,1,1],['Requests',1,1,0],["Today's patients",1,1,1],['Manual',1,1,0],['History',1,1,1],['Security',1,0,0],['Edit money',1,0,0]].map(x=>'<tr><td>'+x[0]+'</td>'+x.slice(1).map(v=>'<td><input class="switch" type="checkbox" '+(v?'checked':'')+' disabled aria-label="'+x[0]+' permission"></td>').join('')+'</tr>').join('') +
+ '</tbody></table></section>' +
+ '<section class="card"><h2>Safety rules</h2><div class="switch-row"><span><b>Log out after 15 minutes idle</b><small class="hint" style="display:block">Stops the next person using an open screen.</small></span><input class="switch" type="checkbox" checked disabled></div><div class="switch-row"><span><b>Lock account after 5 wrong passwords</b><small class="hint" style="display:block">Also blocks that IP address for a while.</small></span><input class="switch" type="checkbox" checked disabled></div><div class="switch-row"><span><b>Daily backup at 02:00</b><small class="hint" style="display:block">Patients, visits and payments.</small></span><input class="switch" type="checkbox" checked disabled></div><div class="switch-row"><span><b>Email code on every login</b><small class="hint" style="display:block">Sent to the owner email.</small></span><input class="switch" type="checkbox" disabled></div></section>' +
+ '<section class="card"><h2>Logged-in devices</h2><div class="device-row"><span><b>Chrome on Windows</b><small class="hint" style="display:block">Current browser session</small></span><span class="pill ok">This device</span></div><div class="device-row"><span><b>Safari on iPhone</b><small class="hint" style="display:block">Other session</small></span><button class="btn bad sm" type="button" disabled>End session</button></div><div class="device-row"><span><b>Chrome on Android</b><small class="hint" style="display:block">Other session</small></span><button class="btn bad sm" type="button" disabled>End session</button></div></section>' +
+ '<section class="card"><h2>Login attempts</h2><table class="permission-table"><thead><tr><th>When</th><th>User</th><th>IP</th><th>Result</th></tr></thead><tbody><tr><td>Today 09:02</td><td>owner</td><td>—</td><td><span class="pill ok">Signed in</span></td></tr><tr><td>Yesterday</td><td>admin</td><td>—</td><td><span class="pill bad">Failed</span></td></tr></tbody></table></section>' +
+ '<section class="card"><h2>Activity log</h2><div class="activity-list">'+state.visits.slice(0,5).map(v=>'<div class="row"><div><b>'+esc(v.doctor_name||'Clinic staff')+'</b><small>Saved visit for '+esc(v.patient_name||'patient')+' · received Rs '+Number(v.received||0).toLocaleString('en-PK')+'</small></div><small class="muted">'+esc(String(v.created_at||'').slice(11,16))+'</small></div>').join('')+'<div class="row"><div><b>Account security</b><small>Session and password controls are displayed here.</small></div></div></div></section>' +
+ '</div>';
 }
 
 function viewHistory() {
