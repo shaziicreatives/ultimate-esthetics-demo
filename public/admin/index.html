@@ -477,20 +477,21 @@ function histList() {
   const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
   const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
   if (!l.length) return '<div class="empty">Koi patient nahi mila.</div>';
-  return l.map(p => '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + p.appts.length + ' booking' + (p.appts.length > 1 ? 's' : '') + '</small></div></button>').join('');
+  return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span></button>';}).join('');
 }
 function histDetail() {
-  const p = state.patients.find(x => x.id === state.histSel);
-  if (!p) return '<div class="card"><div class="empty">Patient select karein.</div></div>';
-  const list = p.appts.slice().sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time));
-  const c = s => p.appts.filter(a => a.status === s).length;
-  const fu = p.appts.map(a => a.fu).filter(Boolean).sort().pop();
-  const tl = list.map(a => '<div class="tl"><div class="d">' + nice(a.date) + '<small>' + wday(a.date) + ' · ' + t12(a.time) + '</small></div><div><b>' + esc(procName(a)) + '</b><div class="req-meta"><span class="chip">' + esc(a.doc) + '</span>' + stPill(a.status) + (a.source === 'manual' ? '<span class="chip">Manual</span>' : '') + '</div></div></div>').join('');
-  return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">' + initials(p.name) + '</div><div><b style="font-size:18px">' + esc(p.name) + '</b><small class="num"><span class="id">#' + p.id + '</span> · ' + esc(prettyPhone(p.phone)) + '</small></div></div>' +
-    '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(p.phone, 'Salam ' + p.name + ', Ultimate Esthetics se rabta. ') + '">WhatsApp</a></div>' +
-    '<div class="stats-grid" style="margin:14px 0"><div class="stat-box"><div class="lbl">Total bookings</div><div class="val num">' + p.appts.length + '</div></div><div class="stat-box"><div class="lbl">Done</div><div class="val num">' + c('done') + '</div></div><div class="stat-box"><div class="lbl">No-shows</div><div class="val num">' + c('no_show') + '</div></div></div>' +
-    (fu ? '<div class="alert-item info" style="margin-bottom:10px">Follow-up: <b>' + nice(fu) + '</b></div>' : '') +
-    '<h2 style="font-size:15px;margin:8px 0 2px">Timeline</h2>' + tl + '</div>';
+  const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Patient select karein.</div></div>';
+  const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{visit_count:0,billed:0,received:0,balance:0};
+  const list=state.visits.filter(v=>Number(v.patient_id)===Number(p.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  const appt=p.appts.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  const fu=fp.follow_up_date;
+  const tl=list.map(v=>'<div class="tl"><div class="d">'+nice(String(v.created_at||'').slice(0,10))+'<small>'+String(v.created_at||'').slice(11,16)+'</small></div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span></div></div></div>').join('');
+  const bookings=appt.map(a=>'<div class="tl"><div class="d">'+nice(a.date)+'<small>'+t12(a.time)+'</small></div><div><b>'+esc(procName(a))+'</b><div class="req-meta"><span class="chip">'+esc(a.doc)+'</span>'+stPill(a.status)+'</div></div></div>').join('');
+  return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">'+initials(p.name)+'</div><div><b style="font-size:18px">'+esc(p.name)+'</b><small class="num"><span class="id">#'+p.id+'</span> · '+esc(prettyPhone(p.phone))+'</small></div></div><a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(p.phone,'Salam '+p.name+', Ultimate Esthetics se rabta. ')+'">WhatsApp</a></div>'+
+  '<div class="stats-grid" style="margin:14px 0;grid-template-columns:repeat(4,minmax(0,1fr))"><div class="stat-box"><div class="lbl">Visits</div><div class="val num">'+Number(fp.visit_count||0)+'</div></div><div class="stat-box"><div class="lbl">Billed</div><div class="val num">Rs '+Number(fp.billed||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Received</div><div class="val num">Rs '+Number(fp.received||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Balance</div><div class="val num" style="color:var(--bad)">Rs '+Number(fp.balance||0).toLocaleString('en-PK')+'</div></div></div>'+
+  (fu?'<div class="alert-item info" style="margin-bottom:10px">Follow-up due <b>'+nice(fu)+'</b></div>':'')+
+  '<h2 style="font-size:15px;margin:8px 0">Visit timeline</h2>'+(tl||'<div class="empty">Abhi financial visit record nahi hai.</div>')+
+  '<h2 style="font-size:15px;margin:18px 0 4px">Appointment history</h2>'+(bookings||'<div class="empty">No appointments.</div>')+'</div>';
 }
 
 function viewSecurity() {
