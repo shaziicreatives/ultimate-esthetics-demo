@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ultimate Esthetics Clinic Desk - Admin Panel</title>
+<title>Ultimate Esthetics Clinic Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
 <style>
 :root{
@@ -14,27 +14,39 @@
   --shadow:0 1px 2px rgba(44,38,33,.05),0 8px 24px rgba(44,38,33,.06);
   --font-display:'Instrument Serif',Georgia,serif; --font-body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#16120F; --surface:#221D19; --surface2:#2B251F; --ink:#F1EAE0; --muted:#B5A797; --line:#3A322B;
+  --accent:#E8DFD1; --accent-ink:#241E19; --sand:#6B5A48; --sand-soft:#2F2822;
+  --wa:#2FBF71; --wa-ink:#0E1A13;
+  --ok:#7CC49A; --ok-bg:#1F3328; --warn:#E3B568; --warn-bg:#3A2D17; --bad:#E58B80; --bad-bg:#3C201C; --info:#8FB3D4; --info-bg:#1E2C3A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#16120F; --surface:#221D19; --surface2:#2B251F; --ink:#F1EAE0; --muted:#B5A797; --line:#3A322B;
+  --accent:#E8DFD1; --accent-ink:#241E19; --sand:#6B5A48; --sand-soft:#2F2822;
+  --wa:#2FBF71; --wa-ink:#0E1A13;
+  --ok:#7CC49A; --ok-bg:#1F3328; --warn:#E3B568; --warn-bg:#3A2D17; --bad:#E58B80; --bad-bg:#3C201C; --info:#8FB3D4; --info-bg:#1E2C3A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25); color-scheme:dark}
+
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1,h2,h3,p{margin:0}
 .num{font-variant-numeric:tabular-nums}
 
-/* LOGIN SCREEN STYLES */
-.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg)}
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:90vh;padding:20px}
 .login-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px;width:100%;max-width:400px;box-shadow:var(--shadow);text-align:center}
 .login-card .brand-mark{width:48px;height:48px;border-radius:14px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:28px;margin:0 auto 12px}
 .login-card h2{font-family:var(--font-display);font-size:28px;font-weight:400;margin-bottom:6px}
 .login-card p{color:var(--muted);font-size:13.5px;margin-bottom:24px}
-.login-form{display:flex;flex-direction:column;gap:14px;text-align:left}
-.login-form label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 
-/* APP MAIN LAYOUT */
-.app{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
-  display:grid;grid-template-columns:240px minmax(0,1fr);width:100%;height:100vh;max-width:100vw}
-.side{background:var(--surface2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;height:100vh;overflow-y:auto}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;
+  display:grid;grid-template-columns:236px minmax(0,1fr);min-height:calc(100dvh - 32px);max-width:1480px;margin:0 auto}
+.side{background:var(--surface2);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:22px;
+  position:sticky;top:0;height:calc(100dvh - 34px);align-self:start}
 .brand{display:flex;align-items:center;gap:11px;padding:0 8px}
 .brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px}
 .brand b{display:block;font-family:var(--font-display);font-weight:400;font-size:19px;line-height:1.1}
@@ -52,69 +64,162 @@ h1,h2,h3,p{margin:0}
 .user b{font-size:13.5px}
 .foot-row{display:flex;gap:8px}
 
-.main{padding:28px 32px;overflow-y:auto;height:100vh;background:var(--surface)}
+.main{padding:28px 30px 36px;min-width:0}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
-.page-head h1{font-family:var(--font-display);font-weight:400;font-size:38px;line-height:1.05}
+.page-head h1{font-family:var(--font-display);font-weight:400;font-size:38px;line-height:1.05;text-wrap:balance}
 .page-head p{color:var(--muted);margin-top:6px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:9px 15px;font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:9px 15px;font-weight:600;font-size:14px;text-decoration:none;color:var(--ink);white-space:nowrap}
 .btn:hover{border-color:var(--sand);background:var(--surface2)}
 .btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.pri:hover{opacity:.92}
 .btn.wa{background:var(--wa);color:var(--wa-ink);border-color:var(--wa)}
+.btn.wa:hover{opacity:.92}
 .btn.bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
 .btn.sm{padding:6px 11px;font-size:13px;border-radius:10px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.ico{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0}
+.card.tint{background:var(--surface2)}
 .card h2{font-size:16px;font-weight:700}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-head small,.muted{color:var(--muted)}
+.card-head small{font-size:13px}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px;margin-bottom:20px}
 .stat{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
 .stat .lbl{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
 .stat .val{font-family:var(--font-display);font-size:34px;line-height:1}
+.stat .sub{font-size:12.5px;color:var(--muted)}
 .stat.hero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stat.hero .lbl,.stat.hero .sub{color:inherit;opacity:.78}
 
-.tbl-wrap{overflow-x:auto}
+.dash{display:grid;grid-template-columns:minmax(0,1fr) 304px;gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+
+.tbl-wrap{overflow-x:auto;margin:0 -6px;padding:0 6px}
 .tbl{width:100%;border-collapse:collapse;min-width:560px}
 .tbl th{text-align:left;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr:hover td{background:var(--surface2)}
+.who{display:flex;align-items:center;gap:10px}
+.who b{display:block;line-height:1.2}
+.who small{color:var(--muted);font-size:12.5px}
+.id{font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+:root[data-theme="dark"] .id{color:var(--sand)}
 .right{text-align:right}
 
-.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 .pill.info{background:var(--info-bg);color:var(--info)}
+.pill.mute{background:var(--sand-soft);color:var(--muted)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:8px;background:var(--sand-soft);color:var(--muted)}
 
-.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:4px;border-radius:14px;margin-bottom:18px}
+.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:4px;border-radius:14px;flex-wrap:wrap;margin-bottom:18px}
 .tabs button{border:0;background:transparent;padding:8px 15px;border-radius:10px;font-weight:600;color:var(--muted);font-size:14px}
 .tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.tabs .n{font-size:12px;opacity:.8;margin-left:6px}
 
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field label{font-size:12.5px;font-weight:600;color:var(--muted)}
-.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;min-width:0}
+.inp:hover{border-color:var(--sand)}
+textarea.inp{resize:vertical;min-height:84px}
+.inp.ro{background:var(--surface2);color:var(--muted)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.req{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
-.req .btns{display:flex;gap:8px;justify-content:flex-end}
-.empty{padding:26px 10px;text-align:center;color:var(--muted)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:14px;z-index:60;box-shadow:var(--shadow);font-weight:500}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint.bad{color:var(--bad)} .hint.ok{color:var(--ok)}
 
-@media(max-width:900px){
-  .app{grid-template-columns:1fr;height:auto}
-  .side{height:auto;position:static}
-  .main{height:auto;overflow:visible}
+.req{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.req:last-child{border-bottom:0}
+.req .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.req .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.list-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.list-row:last-child{border-bottom:0}
+.list-row .grow{flex:1;min-width:0}
+.list-row .grow b{display:block;line-height:1.25}
+.list-row small{color:var(--muted);font-size:12.5px}
+.empty{padding:26px 10px;text-align:center;color:var(--muted)}
+
+.bal{font-weight:700;font-variant-numeric:tabular-nums}
+.bal.due{color:var(--bad)} .bal.clear{color:var(--ok)}
+
+.hist{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.plist{display:flex;flex-direction:column;gap:2px;max-height:560px;overflow-y:auto;margin:0 -8px;padding:0 8px}
+.pitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid transparent;background:transparent;padding:10px;border-radius:12px}
+.pitem:hover{background:var(--surface2)}
+.pitem.on{background:var(--surface2);border-color:var(--sand)}
+.pitem small{color:var(--muted);font-size:12.5px;display:block;line-height:1.2}
+.pitem b{line-height:1.2;display:block}
+.timeline{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.tl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.tl:first-child{border-top:0}
+.tl .d{font-weight:700;font-size:13px}
+.tl .d small{display:block;color:var(--muted);font-weight:500}
+
+.bigid{font-family:var(--font-display);font-size:68px;line-height:1;color:var(--accent)}
+:root[data-theme="dark"] .bigid{color:var(--sand)}
+.rules{margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.rules li{display:flex;gap:10px;color:var(--muted);font-size:13.5px}
+.rules .ico{color:var(--ok);margin-top:2px}
+
+.sw{position:relative;width:42px;height:24px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;background:var(--line);border-radius:99px;transition:.15s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sw input:checked+i{background:var(--ok)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+
+.log{display:flex;flex-direction:column}
+.log div{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.log div:last-child{border-bottom:0}
+.log time{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+.scrim{position:fixed;inset:0;background:rgba(20,14,10,.45);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:50;display:flex;flex-direction:column;box-shadow:-12px 0 40px rgba(0,0,0,.18)}
+.drawer-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.drawer-head h2{font-family:var(--font-display);font-weight:400;font-size:28px;line-height:1.1}
+.drawer-body{padding:18px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:18px}
+.drawer-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;background:var(--surface)}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 120px 36px;gap:8px;margin-bottom:8px}
+.sum{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.sum .r{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.sum .r .inp{width:150px;text-align:right}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:14px;z-index:60;max-width:min(560px,calc(100% - 32px));box-shadow:var(--shadow);font-weight:500}
+
+@media (max-width:1180px){.dash{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr);border-radius:20px}
+  .side{position:static;height:auto;flex-direction:column;gap:12px;padding:14px;border-right:0;border-bottom:1px solid var(--line)}
+  .nav{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:2px}
+  .nav button{width:auto;white-space:nowrap;padding:9px 13px}
+  .nav-label,.user,.side-foot .hint{display:none}
+  .side-foot{margin-top:0}
+  .main{padding:20px 16px 28px}
+  .page-head h1{font-size:32px}
+  .hist,.two{grid-template-columns:minmax(0,1fr)}
+  .req{grid-template-columns:minmax(0,1fr)}
+  .req .btns{justify-content:flex-start}
 }
 </style>
 </head>
 <body>
 
-<!-- LOGIN VIEW -->
 <div id="loginView" class="login-screen">
   <div class="login-card">
     <div class="brand-mark">U</div>
     <h2>Ultimate Esthetics</h2>
     <p>Sign in to access clinic desk</p>
-    <form class="login-form" onsubmit="handleLogin(event)">
+    <form class="stack" onsubmit="handleLogin(event)" style="text-align:left;gap:14px">
       <div class="field">
         <label for="uName">Username</label>
         <input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username">
@@ -123,13 +228,12 @@ h1,h2,h3,p{margin:0}
         <label for="uPass">Password</label>
         <input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password">
       </div>
-      <div id="loginErr" style="color:var(--bad);font-size:13px;display:none"></div>
-      <button class="btn pri" type="submit" id="loginBtn" style="margin-top:6px;width:100%">Sign In</button>
+      <div id="loginErr" class="hint bad" hidden></div>
+      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:6px">Sign In</button>
     </form>
   </div>
 </div>
 
-<!-- MAIN DASHBOARD APP VIEW -->
 <div class="app" id="appView" style="display:none">
   <aside class="side">
     <div class="brand">
@@ -137,7 +241,7 @@ h1,h2,h3,p{margin:0}
       <div><b>Ultimate Esthetics</b><span>Clinic Desk</span></div>
     </div>
     <div class="nav-label">Daily work</div>
-    <nav class="nav" id="nav"></nav>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
     <div class="side-foot">
       <div class="user">
         <div class="avatar">OW</div>
@@ -152,39 +256,82 @@ h1,h2,h3,p{margin:0}
   <main class="main"><div id="view"></div></main>
 </div>
 
-<div class="toast" id="toast" hidden></div>
-<audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Check-in form"></aside>
+<div class="toast" id="toast" hidden role="status"></div>
 
 <script>
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rs = n => 'Rs ' + Math.round(Number(n) || 0).toLocaleString('en-US');
 const pad = n => String(n).padStart(2, '0');
+const T0 = new Date();
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const dayOff = o => { const d = new Date(T0); d.setDate(d.getDate() + o); return ymd(d); };
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const nice = s => { if(!s) return ''; const [y, m, d] = s.split('-').map(Number); return pad(d) + ' ' + MON[m - 1] + ' ' + y; };
 const t12 = t => { if(!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + pad(m) + ' ' + ap; };
+const nowHM = () => pad(new Date().getHours()) + ':' + pad(new Date().getMinutes());
+const normPhone = p => String(p).replace(/\D/g, '').slice(-10);
+const waLink = (phone, msg) => 'https://wa.me/92' + normPhone(phone) + '?text=' + encodeURIComponent(msg);
 const initials = n => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-const DOCTORS = ['Dr. Ayesha Malik', 'Dr. Hamza Raza', 'Dr. Sana Iqbal'];
-const PROCS = { 'Consultation': 1500, 'Hydrafacial': 8000, 'Hair transplant': 50000, 'Hair PRP': 10000, 'Laser treatment': 12000, 'Glow drip': 7000 };
-const SLOTS = ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+const ICON = {
+  home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  inbox: '<path d="M3 13l3-8h12l3 8v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1 3h6l1-3h5"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  userplus: '<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/>',
+  book: '<path d="M4 4h10a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M8 20a4 4 0 0 1-4-4"/>',
+  shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  wa: '<path d="M3 21l1.6-4.9A8.5 8.5 0 1 1 8 19.5z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .7a4 4 0 0 1-1.7-1.7l.7-1-1-2z"/>',
+  check: '<path d="M5 12l5 5 9-10"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2.5.6 4 2.3 4 5"/>',
+  card: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>'
+};
+const ic = (n, cls = '') => '<svg class="ico ' + cls + '" viewBox="0 0 24 24" aria-hidden="true">' + (ICON[n] || '') + '</svg>';
 
-let state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, patients: [], appts: [], requests: [], logs: [] };
+const DOCTORS = ['Dr. Ayesha Malik', 'Dr. Hamza Raza', 'Dr. Sana Iqbal'];
+const PROCS = { 'Consultation': 1500, 'Hydrafacial': 8000, 'Chemical Peel': 6500, 'Laser Hair Removal': 12000, 'Hair PRP': 18000, 'Botox': 25000, 'Dermal Filler': 35000 };
+const SLOTS = ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
+
+let state = {
+  page: 'dashboard', tab: 'pending', filter: 'all', histSel: 1001, histQ: '', nextId: 1013,
+  patients: [], appts: [], requests: [], logs: [], form: null
+};
+
+// AUDIO BEEP SYNTHESIZER (NO EXTERNAL AUDIO FILE DEPENDENCY)
+let audioCtx = null;
+function playNotificationSound() {
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+  } catch(e) { console.log(e); }
+}
+document.addEventListener('click', () => { if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+const pat = id => state.patients.find(p => p.id === id);
+const bal = p => (p && p.visits ? p.visits.reduce((a, v) => a + v.total - v.received, 0) : 0);
+const addLog = (who, a) => state.logs.unshift({ t: nowHM(), who, a });
 const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
-const stPill = s => ({ confirmed: '<span class="pill info">Confirmed</span>', pending: '<span class="pill warn">Pending</span>', done: '<span class="pill ok">Done</span>', rejected: '<span class="pill bad">Rejected</span>', noshow: '<span class="pill bad">No-show</span>' }[s] || '<span class="pill info">' + s + '</span>');
+const stPill = s => ({ confirmed: '<span class="pill info">Awaiting check-in</span>', inroom: '<span class="pill warn">In room</span>', done: '<span class="pill ok">Done</span>', noshow: '<span class="pill bad">No-show</span>', pending: '<span class="pill warn">Pending</span>', pending_confirmation: '<span class="pill warn">Pending</span>' }[s] || '<span class="pill info">' + s + '</span>');
 
-let lastCount = -1;
-let liveInterval = null;
+let lastCount = -1; let liveInterval = null;
 
-// AUTHENTICATION HANDLERS
+// AUTHENTICATION LOGIC
 async function handleLogin(e) {
   e.preventDefault();
-  const username = $('#uName').value.trim();
-  const password = $('#uPass').value.trim();
-  const errEl = $('#loginErr');
-  const btn = $('#loginBtn');
-
-  errEl.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Verifying...';
+  const username = $('#uName').value.trim(), password = $('#uPass').value.trim();
+  const errEl = $('#loginErr'), btn = $('#loginBtn');
+  errEl.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
 
   try {
     const res = await fetch('/api/admin/login', {
@@ -197,41 +344,31 @@ async function handleLogin(e) {
       localStorage.setItem('admin_auth', 'true');
       showDashboard();
     } else {
-      errEl.textContent = data.error || 'Invalid credentials.';
-      errEl.style.display = 'block';
+      errEl.textContent = data.error || 'Invalid credentials.'; errEl.hidden = false;
     }
   } catch(err) {
-    errEl.textContent = 'Connection error.';
-    errEl.style.display = 'block';
+    errEl.textContent = 'Connection error.'; errEl.hidden = false;
   }
-  btn.disabled = false;
-  btn.textContent = 'Sign In';
+  btn.disabled = false; btn.textContent = 'Sign In';
 }
 
 function handleLogout() {
   localStorage.removeItem('admin_auth');
   if(liveInterval) clearInterval(liveInterval);
-  $('#appView').style.display = 'none';
-  $('#loginView').style.display = 'flex';
+  $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 
 function checkSession() {
-  if(localStorage.getItem('admin_auth') === 'true') {
-    showDashboard();
-  } else {
-    $('#loginView').style.display = 'flex';
-    $('#appView').style.display = 'none';
-  }
+  if(localStorage.getItem('admin_auth') === 'true') showDashboard();
+  else { $('#loginView').style.display = 'flex'; $('#appView').style.display = 'none'; }
 }
 
 function showDashboard() {
-  $('#loginView').style.display = 'none';
-  $('#appView').style.display = 'grid';
-  loadData();
-  if(!liveInterval) liveInterval = setInterval(loadData, 10000);
+  $('#loginView').style.display = 'none'; $('#appView').style.display = 'grid';
+  loadData(); if(!liveInterval) liveInterval = setInterval(loadData, 5000);
 }
 
-// DATA FETCHING
+// FETCH REAL D1 DATA (CORRECTED STATUS MATCHING)
 async function loadData() {
   try {
     const res = await fetch('/api/admin/appointments');
@@ -239,125 +376,145 @@ async function loadData() {
     if(res.ok) {
       const data = await res.json();
       const rawAppts = data.appointments || [];
-      
-      if(lastCount !== -1 && rawAppts.length > lastCount) {
-        $('#notificationSound').play().catch(e => console.log(e));
-      }
-      lastCount = rawAppts.length;
 
-      state.appts = rawAppts;
+      // Detect Naya Online Booking for Notification Sound
+      const pendReqs = rawAppts.filter(a => a.status === 'pending' || a.status === 'pending_confirmation');
+      if(lastCount !== -1 && pendReqs.length > lastCount) {
+        playNotificationSound();
+        toast('🔔 New appointment booking received!');
+      }
+      lastCount = pendReqs.length;
+
+      state.appts = rawAppts.map(a => ({
+        id: a.id, pid: a.patient_id, time: String(a.time || '11:00').padStart(2,'0').slice(0, 5),
+        doc: a.doctor_name, proc: a.treatment || 'Consultation',
+        status: (a.status === 'pending' || a.status === 'pending_confirmation') ? 'confirmed' : a.status, paid: 0
+      }));
+
       let pMap = {};
       rawAppts.forEach(a => {
         if(!pMap[a.patient_id]) {
-          pMap[a.patient_id] = { id: a.patient_id, name: a.patient_name, phone: a.patient_phone, visits: [] };
+          pMap[a.patient_id] = { id: a.patient_id, name: a.patient_name, phone: a.patient_phone, src: 'online', followUp: null, visits: [] };
+        }
+        if(a.status === 'done') {
+          pMap[a.patient_id].visits.push({ date: a.date, procs: [a.treatment || 'Consultation'], notes: 'Completed visit', total: PROCS[a.treatment] || 5000, received: PROCS[a.treatment] || 5000, doc: a.doctor_name });
         }
       });
       state.patients = Object.values(pMap);
-      
-      state.requests = rawAppts.filter(a => a.status === 'pending').map(a => ({
-        rid: a.id, name: a.patient_name, phone: a.patient_phone, doc: a.doctor_name, proc: a.treatment || 'Consultation', time: (a.time||'11:00').slice(0,5), status: 'pending', pid: a.patient_id
+
+      state.requests = rawAppts.filter(a => a.status === 'pending' || a.status === 'pending_confirmation').map(a => ({
+        rid: a.id, name: a.patient_name, phone: a.patient_phone, doc: a.doctor_name, proc: a.treatment || 'Consultation', time: String(a.time||'11:00').padStart(2,'0').slice(0,5), want: String(a.time||'11:00').padStart(2,'0').slice(0,5), status: 'pending', pid: a.patient_id
       }));
     }
   } catch(e) { console.error(e); }
   render();
 }
 
+function head(title, sub, actions) {
+  return '<div class="page-head"><div><h1>' + title + '</h1><p>' + sub + '</p></div><div class="actions">' + (actions || '') + '</div></div>';
+}
+
 function viewDashboard() {
   const pend = state.requests.filter(r => r.status === 'pending').length;
-  const rows = state.appts.slice(0, 6).map(a => {
-    const waText = encodeURIComponent(`Hello ${a.patient_name}, your appointment at Ultimate Esthetics for ${a.treatment || 'Consultation'} on ${a.date} at ${a.time} has been ${a.status.toUpperCase()}.`);
-    const waUrl = `https://wa.me/${(a.patient_phone||'').replace(/[^0-9]/g,'')}?text=${waText}`;
-    
-    let actionBtn = '';
-    if(a.status === 'pending') {
-      actionBtn = `<button class="btn pri sm" onclick="updateApptStatus(${a.id}, 'confirmed')">Confirm</button> <button class="btn bad sm" onclick="updateApptStatus(${a.id}, 'rejected')">Reject</button>`;
-    } else {
-      actionBtn = `<span class="muted" style="margin-right:6px">Done</span> <a class="btn wa sm" target="_blank" href="${waUrl}">💬 Send WhatsApp</a>`;
-    }
-
-    return `<tr><td><b>${t12((a.time||'').slice(0,5))}</b></td><td><b>${esc(a.patient_name)}</b><small style="display:block;color:var(--muted)">${esc(a.patient_phone)}</small></td><td>${esc(a.doctor_name)}</td><td>${stPill(a.status)}</td><td class="right">${actionBtn}</td></tr>`;
+  const rows = state.appts.map((a, idx) => {
+    const p = pat(a.pid) || { name: 'Patient', id: a.pid };
+    return '<tr><td class="num"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + esc(a.proc) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="checkin" data-i="' + idx + '">Check-In</button>' : a.status === 'inroom' ? '<button class="btn sm" data-act="openform" data-i="' + idx + '">Open form</button>' : '') + '</td></tr>';
   }).join('');
 
-  return `<div class="page-head"><h1>Dashboard</h1><p>Live clinic desk with audio alerts & direct WhatsApp messaging.</p></div>
-    <div class="stats">
-      <div class="stat hero"><div class="lbl">Total Appointments</div><div class="val num">${state.appts.length}</div><div class="sub">Live D1 Database</div></div>
-      <div class="stat"><div class="lbl">Pending Requests</div><div class="val num">${pend}</div><div class="sub">Require verification</div></div>
-      <div class="stat"><div class="lbl">Registered Patients</div><div class="val num">${state.patients.length}</div><div class="sub">Total patient records</div></div>
-    </div>
-    <div class="card"><div class="card-head"><h2>Recent Appointments</h2><button class="btn sm" onclick="state.page='today';render()">View All</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th class="right">Action / WhatsApp</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">No appointments found.</td></tr>'}</tbody></table></div></div>`;
+  return head('Good day, Owner', 'Here is what needs your attention today.', '<button class="btn" data-go="manual">' + ic('userplus') + 'Manual patient</button><button class="btn pri" data-go="requests">' + ic('inbox') + 'Requests' + (pend ? ' (' + pend + ')' : '') + '</button>') +
+    '<div class="stats">' +
+    '<div class="stat hero"><div class="lbl">' + ic('card') + 'Collected today</div><div class="val num">Rs 20,000</div><div class="sub">From finished visits</div></div>' +
+    '<div class="stat"><div class="lbl">' + ic('users') + 'Total patients</div><div class="val num">' + state.patients.length + '</div><div class="sub">IDs active</div></div>' +
+    '<div class="stat"><div class="lbl">' + ic('cal') + "Today's queue</div><div class="val num">' + state.appts.length + '</div><div class="sub">' + state.appts.filter(a => a.status === 'confirmed').length + ' awaiting</div></div>' +
+    '<div class="stat"><div class="lbl">' + ic('inbox') + 'Pending requests</div><div class="val num">' + pend + '</div><div class="sub">Waiting reply</div></div></div>' +
+    '<div class="dash"><div class="col">' +
+    '<div class="card"><div class="card-head"><h2>Today\'s queue</h2><button class="btn sm" data-go="today">Open full list</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th></th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="empty">No queue today</td></tr>') + '</tbody></table></div></div></div>' +
+    '<div class="col"><div class="card tint"><div class="who" style="gap:14px"><div class="avatar" style="width:52px;height:52px;font-size:16px">OW</div><div><b style="font-size:17px">Owner</b><small>Owner account</small></div></div>' +
+    '<button class="btn" data-go="security" style="margin-top:14px;width:100%">' + ic('shield') + 'Open security</button></div>' +
+    '<div class="card"><div class="card-head"><h2>Recent activity</h2></div><div class="log">' + (state.logs.slice(0, 5).map(l => '<div><time>' + l.t + '</time><span><b>' + esc(l.who) + '</b> ' + esc(l.a) + '</span></div>').join('') || '<div class="empty">No logs yet</div>') + '</div></div></div></div>';
 }
 
 function viewRequests() {
-  const tabs = [['pending', 'Pending'], ['accepted', 'Confirmed'], ['rejected', 'Rejected']];
-  const list = state.requests.filter(r => r.status === state.tab || (state.tab === 'accepted' && r.status === 'confirmed'));
+  const tabs = [['pending', 'Pending'], ['accepted', 'Accepted'], ['rejected', 'Rejected']];
+  const list = state.requests.filter(r => r.status === state.tab);
   const body = list.length ? list.map(r => {
-    const waText = encodeURIComponent(`Hello ${r.name}, your appointment request at Ultimate Esthetics for ${r.proc} on ${r.time} has been updated.`);
-    const waUrl = `https://wa.me/${r.phone.replace(/[^0-9]/g,'')}?text=${waText}`;
-    return `<div class="req"><div><b>${esc(r.name)}</b><small>${esc(r.phone)} — ${esc(r.proc)} (${esc(r.doc)})</small></div><div>${stPill(r.status)}</div><div class="btns">${r.status === 'pending' ? `<button class="btn pri sm" onclick="updateApptStatus(${r.rid}, 'confirmed')">Accept</button><button class="btn bad sm" onclick="updateApptStatus(${r.rid}, 'rejected')">Reject</button>` : `<a class="btn wa sm" target="_blank" href="${waUrl}">💬 Send WhatsApp</a>`}</div></div>`;
-  }).join('') : '<div class="empty">No requests found.</div>';
+    const slot = '<select class="inp" style="width:auto" data-slot="' + r.rid + '">' + SLOTS.map(s => '<option value="' + s + '"' + (s === r.time ? ' selected' : '') + '>' + t12(s) + '</option>').join('') + '</select>';
+    return '<div class="req"><div class="who"><div class="avatar">' + initials(r.name) + '</div><div><b>' + esc(r.name) + '</b><small class="num">' + esc(r.phone) + '</small><div class="meta"><span class="chip">' + esc(r.proc) + '</span><span class="chip">' + esc(r.doc) + '</span></div></div></div><div class="field"><label>Time</label><div>' + slot + '</div></div><div class="btns"><button class="btn pri sm" data-act="accept" data-r="' + r.rid + '">' + ic('check') + 'Accept</button><a class="btn wa sm" target="_blank" href="' + waLink(r.phone, 'Salam ' + r.name + ', appointment time: ' + t12(r.time) + ' with ' + r.doc) + '">' + ic('wa') + 'Offer WhatsApp</a><button class="btn bad sm" data-act="reject" data-r="' + r.rid + '">Reject</button></div></div>';
+  }).join('') : '<div class="empty">No pending website requests right now.</div>';
 
-  return `<div class="page-head"><h1>Requests</h1><p>Website appointment inquiries & direct WhatsApp routing</p></div>
-    <div class="tabs">${tabs.map(t => `<button class="${state.tab === t[0] ? 'on' : ''}" onclick="state.tab='${t[0]}';render()">${t[1]}</button>`).join('')}</div>
-    <div class="card">${body}</div>`;
+  return head('Requests', 'Online bookings from the website.', '') +
+    '<div class="tabs">' + tabs.map(t => '<button class="' + (state.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<span class="n num">' + state.requests.filter(r => r.status === t[0]).length + '</span></button>').join('') + '</div>' +
+    '<div class="card">' + body + '</div>';
 }
 
 function viewToday() {
-  const rows = state.appts.map(a => {
-    const waText = encodeURIComponent(`Hello ${a.patient_name}, regarding your appointment at Ultimate Esthetics.`);
-    const waUrl = `https://wa.me/${(a.patient_phone||'').replace(/[^0-9]/g,'')}?text=${waText}`;
-    let act = a.status === 'pending' ? `<button class="btn pri sm" onclick="updateApptStatus(${a.id}, 'confirmed')">Confirm</button> <button class="btn bad sm" onclick="updateApptStatus(${a.id}, 'rejected')">Reject</button>` : `<a class="btn wa sm" target="_blank" href="${waUrl}">💬 WhatsApp</a>`;
-    return `<tr><td><b>${t12((a.time||'').slice(0,5))}</b></td><td><b>${esc(a.patient_name)}</b><small style="display:block;color:var(--muted)">${esc(a.patient_phone)}</small></td><td>${esc(a.doctor_name)}</td><td>${esc(a.treatment || 'Consultation')}</td><td>${stPill(a.status)}</td><td class="right">${act}</td></tr>`;
+  const rows = state.appts.map((a, i) => {
+    const p = pat(a.pid) || { name: 'Patient', phone: '' }, b = bal(p);
+    return '<tr><td class="num"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small class="num">' + esc(p.phone) + '</small></div></div></td><td>' + esc(a.proc) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right bal ' + (b > 0 ? 'due' : 'clear') + '">' + (b > 0 ? rs(b) + ' due' : 'Clear') + '</td><td class="right">' + (a.status === 'confirmed' ? '<button class="btn pri sm" data-act="checkin" data-i="' + i + '">Check-In</button>' : '<button class="btn sm" data-act="openform" data-i="' + i + '">Open form</button>') + '</td></tr>';
   }).join('');
-  return `<div class="page-head"><h1>Today's Patients</h1><p>Manage active clinic visits</p></div><div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Treatment</th><th>Status</th><th class="right">Action</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="empty">No appointments found.</td></tr>'}</tbody></table></div></div>`;
+
+  return head("Today's Patients", 'Confirmed patients for today. Click Check-In on arrival.', '') +
+    '<div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th class="right">Balance</th><th>Action</th></tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="empty">No queue</td></tr>') + '</tbody></table></div></div>';
 }
 
 function viewManual() {
-  return `<div class="page-head"><h1>Manual Patient</h1><p>Add walk-in patients</p></div>
-    <div class="card" style="max-width:600px"><form onsubmit="handleManualBooking(event)" class="stack" style="gap:14px">
-      <div class="field"><label>Patient Name</label><input class="inp" id="mName" required placeholder="Full name"></div>
-      <div class="field"><label>Phone Number</label><input class="inp" id="mPhone" required placeholder="03000000000"></div>
-      <div class="grid2">
-        <div class="field"><label>Doctor</label><select class="inp" id="mDoc">${DOCTORS.map(d => `<option>${d}</option>`).join('')}</select></div>
-        <div class="field"><label>Treatment</label><select class="inp" id="mProc">${Object.keys(PROCS).map(p => `<option>${p}</option>`).join('')}</select></div>
-      </div>
-      <div class="field"><label>Time Slot</label><select class="inp" id="mTime">${SLOTS.map(s => `<option value="${s}">${t12(s)}</option>`).join('')}</select></div>
-      <button class="btn pri" type="submit">Book Walk-in Appointment</button>
-    </form></div>`;
+  return head('Manual Patient', 'For walk-ins and direct desk entries.', '') +
+    '<div class="two"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
+    '<form id="manualForm" onsubmit="handleManualSubmit(event)" class="stack" style="gap:14px"><div class="grid2"><div class="field"><label>Full name</label><input class="inp" id="mName" required></div><div class="field"><label>Phone number</label><input class="inp" id="mPhone" required></div></div>' +
+    '<div class="grid2"><div class="field"><label>Doctor</label><select class="inp" id="mDoc">' + DOCTORS.map(d => '<option>' + d + '</option>').join('') + '</select></div><div class="field"><label>Procedure</label><select class="inp" id="mProc">' + Object.keys(PROCS).map(p => '<option>' + p + '</option>').join('') + '</select></div></div>' +
+    '<div class="field"><label>Time today</label><select class="inp" id="mTime">' + SLOTS.map(s => '<option value="' + s + '">' + t12(s) + '</option>').join('') + '</select></div>' +
+    '<button class="btn pri" type="submit">' + ic('plus') + 'Add to today\'s list</button></form></div>' +
+    '<div class="card tint"><small class="muted">Next Patient ID</small><div class="bigid num">#' + state.nextId + '</div><ul class="rules"><li>' + ic('check') + '<span>Automatic ID allocation & live D1 record binding.</span></li></ul></div></div>';
 }
 
-async function handleManualBooking(e) {
+async function handleManualSubmit(e) {
   e.preventDefault();
-  const name = $('#mName').value.trim();
-  const phone = $('#mPhone').value.trim();
-  const doc = $('#mDoc').value;
-  const proc = $('#mProc').value;
-  const time = $('#mTime').value;
+  const name = $('#mName').value.trim(), phone = $('#mPhone').value.trim(), doc = $('#mDoc').value, proc = $('#mProc').value, time = $('#mTime').value;
   try {
     const res = await fetch('/api/book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, countryCode: '+92', doctor_id: DOCTORS.indexOf(doc) + 1, date: new Date().toISOString().split('T')[0], time: parseInt(time), treatment: proc })
+      body: JSON.stringify({ name, phone, countryCode: '+92', doctor_id: DOCTORS.indexOf(doc) + 1, date: ymd(new Date()), time: parseInt(time), treatment: proc })
     });
     if(res.ok) {
-      toast('Walk-in appointment added!');
-      loadData();
-      state.page = 'today';
-      render();
-    } else {
-      const d = await res.json();
-      toast(d.error || 'Failed');
+      toast('Walk-in patient booked!'); loadData(); state.page = 'today'; render();
     }
-  } catch(err) { toast('Connection error'); }
+  } catch(err) { toast('Error adding patient'); }
 }
 
 function viewHistory() {
-  const list = state.patients.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--line)"><div class="avatar">${initials(p.name)}</div><div><b>${esc(p.name)}</b><small style="display:block;color:var(--muted)">${esc(p.phone)}</small></div></div>`).join('') || '<div class="empty">No patients.</div>';
-  return `<div class="page-head"><h1>Patient History</h1><p>Client records</p></div><div class="card">${list}</div>`;
+  const p = pat(state.histSel) || state.patients[0];
+  const list = state.patients.map(x => '<button class="pitem' + (x.id === state.histSel ? ' on' : '') + '" data-hp="' + x.id + '"><div class="avatar">' + initials(x.name) + '</div><div><b>' + esc(x.name) + '</b><small><span class="id">#' + x.id + '</span> · ' + x.visits.length + ' visits</small></div></button>').join('');
+  const tl = p && p.visits ? p.visits.map(v => '<div class="tl"><div class="d">' + nice(v.date) + '</div><div><b>' + v.procs.join(' + ') + '</b><div class="muted">' + esc(v.notes) + '</div><span class="chip">' + esc(v.doc) + '</span> <span class="chip num">Total ' + rs(v.total) + '</span> <span class="chip num">Paid ' + rs(v.received) + '</span></div></div>').join('') : '<div class="empty">No visit history recorded yet.</div>';
+
+  return head('Patient History', 'Search patient timeline and records.', '') +
+    '<div class="hist"><div class="card"><div class="plist">' + list + '</div></div>' +
+    '<div class="card"><h2>' + esc(p ? p.name : 'Select Patient') + '</h2><small class="muted">#' + (p ? p.id : '') + ' · ' + (p ? p.phone : '') + '</small><div class="timeline" style="margin-top:16px">' + tl + '</div></div></div>';
 }
 
 function viewSecurity() {
-  return `<div class="page-head"><h1>Security & Settings</h1><p>System configuration</p></div><div class="card"><p class="muted">Protected by Cloudflare Worker API Authentication. Session persistence active.</p></div>`;
+  return head('Security & Access Matrix', 'Role based access permissions and settings.', '') +
+    '<div class="two"><div class="card"><div class="card-head"><h2>Safety rules</h2></div>' +
+    '<div class="list-row"><div class="grow"><b>Idle logout after 15m</b></div><label class="sw"><input type="checkbox" checked><i></i></label></div>' +
+    '<div class="list-row"><div class="grow"><b>Lock account after 5 wrong tries</b></div><label class="sw"><input type="checkbox" checked><i></i></label></div></div>' +
+    '<div class="card"><div class="card-head"><h2>Who can open what</h2></div><table class="tbl"><thead><tr><th>Page</th><th class="right">Access</th></tr></thead><tbody><tr><td>Dashboard</td><td class="right">Owner, Reception</td></tr><tr><td>Security</td><td class="right">Owner Only</td></tr></tbody></table></div></div>';
 }
+
+function procRows() {
+  return state.form.rows.map((r, k) => '<div class="prow"><select class="inp" data-prow="' + k + '">' + Object.keys(PROCS).map(p => '<option' + (p === r.p ? ' selected' : '') + '>' + p + '</option>').join('') + '</select><input class="inp num" type="number" value="' + r.fee + '" data-pfee="' + k + '"><button class="btn sm" type="button" data-act="delrow" data-k="' + k + '">' + ic('x') + '</button></div>').join('');
+}
+function openDrawer(i) {
+  const a = state.appts[i], p = pat(a.pid) || { id: a.pid, name: 'Patient' };
+  state.form = { i, rows: [{ p: a.proc, fee: PROCS[a.proc] || 5000 }] };
+  $('#drawer').innerHTML = '<div class="drawer-head"><div><small class="muted">Check-in</small><h2>' + esc(p.name) + '</h2></div><button class="btn sm" data-act="closedrawer">' + ic('x') + '</button></div>' +
+    '<div class="drawer-body"><div class="grid2"><div class="field"><label>Patient ID</label><input class="inp ro num" readonly value="#' + p.id + '"></div><div class="field"><label>Doctor</label><input class="inp ro" readonly value="' + esc(a.doc) + '"></div></div>' +
+    '<div><div class="card-head"><h2>Procedures</h2><button class="btn sm" type="button" data-act="addrow">' + ic('plus') + 'Add</button></div><div id="prows">' + procRows() + '</div></div>' +
+    '<div class="field"><label>Notes</label><textarea class="inp" id="fNotes" placeholder="Treatment details..."></textarea></div>' +
+    '<div class="sum"><div class="r"><span>Total</span><input class="inp num" id="fTotal" type="number" value="' + (PROCS[a.proc]||5000) + '"></div><div class="r"><span>Received</span><input class="inp num" id="fRecv" type="number" value="0"></div></div></div>' +
+    '<div class="drawer-foot"><button class="btn" data-act="closedrawer">Cancel</button><button class="btn pri" data-act="savevisit">' + ic('check') + 'Save visit</button></div>';
+  $('#drawer').hidden = false; $('#scrim').hidden = false;
+}
+function closeDrawer() { $('#drawer').hidden = true; $('#scrim').hidden = true; state.form = null; }
 
 async function updateApptStatus(id, status) {
   try {
@@ -366,34 +523,47 @@ async function updateApptStatus(id, status) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status })
     });
-    if(res.ok) {
-      toast('Status updated to ' + status);
-      loadData();
-    } else {
-      toast('Failed to update status');
-    }
+    if(res.ok) { toast('Status updated to ' + status); loadData(); }
   } catch(e) { toast('Connection error'); }
 }
 
-const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { state.page = g.dataset.go; closeDrawer(); render(); return; }
+  const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
+  const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); render(); return; }
+  if (e.target.id === 'scrim') { closeDrawer(); return; }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const d = b.dataset, i = Number(d.i);
+  switch (d.act) {
+    case 'checkin': state.appts[i].status = 'inroom'; render(); openDrawer(i); break;
+    case 'openform': openDrawer(i); break;
+    case 'accept': updateApptStatus(Number(d.r), 'confirmed'); break;
+    case 'reject': updateApptStatus(Number(d.r), 'rejected'); break;
+    case 'addrow': state.form.rows.push({ p: 'Consultation', fee: 1500 }); $('#prows').innerHTML = procRows(); break;
+    case 'delrow': if (state.form.rows.length > 1) state.form.rows.splice(Number(d.k), 1); $('#prows').innerHTML = procRows(); break;
+    case 'closedrawer': closeDrawer(); break;
+    case 'savevisit': {
+      const a = state.appts[state.form.i], p = pat(a.pid);
+      updateApptStatus(a.id, 'done'); addLog(a.doc, 'Saved visit for ' + (p ? p.name : 'Patient'));
+      closeDrawer(); render(); toast('Visit saved successfully!'); break;
+    }
+  }
+});
 
 function renderNav() {
   const pend = state.requests.filter(r => r.status === 'pending').length;
-  $('#nav').innerHTML = PAGES.map(p => `<button type="button" class="${state.page === p[0] ? 'on' : ''}" onclick="state.page='${p[0]}';render()">${p[1]}${p[0] === 'requests' && pend ? `<span class="badge num">${pend}</span>` : ''}</button>`).join('');
+  $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + ic(p[0] === 'dashboard' ? 'home' : p[0] === 'requests' ? 'inbox' : p[0] === 'today' ? 'cal' : p[0] === 'manual' ? 'userplus' : p[0] === 'history' ? 'book' : 'shield') + p[1] + (p[0] === 'requests' && pend ? '<span class="badge num">' + pend + '</span>' : '') + '</button>').join('');
 }
 
 function render() {
-  const fn = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity }[state.page];
-  $('#view').innerHTML = fn ? fn() : '';
-  renderNav();
+  const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
+  $('#view').innerHTML = VIEWS[state.page](); renderNav();
 }
 
 $('#themeBtn').addEventListener('click', () => {
-  const r = document.documentElement;
-  r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+  const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
 });
 
-// INITIAL BOOT
 checkSession();
 </script>
 </body>
