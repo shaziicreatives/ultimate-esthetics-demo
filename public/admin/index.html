@@ -156,8 +156,35 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
 .err{color:var(--bad);font-size:12.5px}
 .visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
-.visit-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
-.proc-line{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px;margin:8px 0}
+.visit-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.proc-line{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;margin:8px 0}
+.invoice-brand{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+.invoice-brand h2{font:30px var(--font-display);color:var(--ink)}
+.invoice-brand p,.invoice-meta{font-size:12px;color:var(--muted);line-height:1.6}
+.invoice-title{font:26px var(--font-display);margin:10px 0 14px}
+.invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.invoice-summary .stat-box{padding:12px}
+.invoice-summary .val{font:22px var(--font-display)}
+.invoice-table{width:100%;border-collapse:collapse;margin:12px 0}
+.invoice-table th,.invoice-table td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left}
+.invoice-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.invoice-table td:last-child,.invoice-table th:last-child{text-align:right}
+.invoice-print-area{display:none}
+@media print{
+ @page{size:A4;margin:14mm}
+ body{background:#fff!important;color:#2F2619!important}
+ body *{visibility:hidden!important}
+ #visitInvoicePrint,#visitInvoicePrint *{visibility:visible!important}
+ #visitInvoicePrint{display:block!important;position:absolute;inset:0;width:100%;padding:0;background:#fff!important;color:#2F2619!important;font-family:Arial,sans-serif}
+ #visitInvoicePrint .invoice-brand h2,#visitInvoicePrint .invoice-title{color:#2F2619!important}
+ #visitInvoicePrint .invoice-brand p,#visitInvoicePrint .invoice-meta{color:#6c6255!important}
+ #visitInvoicePrint table{width:100%;border-collapse:collapse}
+ #visitInvoicePrint th,#visitInvoicePrint td{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+ #visitInvoicePrint th:last-child,#visitInvoicePrint td:last-child{text-align:right}
+ #visitInvoicePrint .invoice-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+ #visitInvoicePrint .stat-box{border:1px solid #ddd;padding:12px}
+ #visitInvoicePrint .val{font-size:18px;font-weight:bold}
+}
 /* reference dashboard proportions */
 @media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:205px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
 
@@ -574,15 +601,21 @@ function viewHistory() {
 const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
 
 function openVisitForm(id) {
- const a=state.appts.find(x=>x.id===id); if(!a)return;
+ const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
  const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
- const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><h2>Patient visit form</h2><button class="btn sm" type="button" data-act="closevisit">Close</button></div><div class="card tint" style="margin-bottom:12px"><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small>Patient #'+a.pid+' · '+esc(prettyPhone(a.phone))+'</small><small>'+esc(a.doc)+' · '+nice(a.date)+' · '+t12(a.time)+'</small></div></div><div class="req-meta"><span class="chip">Booked treatment: '+esc(a.proc||'Not specified')+'</span><span class="chip">Previous balance: Rs '+prev.toLocaleString('en-PK')+'</span></div></div><form id="visitForm" data-id="'+a.id+'" class="col" style="gap:10px"><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" value="0" required></div></div><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button><div class="field"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="3"></textarea></div><div class="alert-item info" id="visitPrevious">Previous balance: Rs <b id="visitPrevValue">0</b></div><div class="two-col"><div class="field"><label>Total bill (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" value="0" required></div><div class="field"><label>Received now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" value="0" required></div></div><div class="two-col"><div class="stat-box"><div class="lbl">Total due before payment</div><div class="val num" id="visitDue">Rs 0</div></div><div class="stat-box"><div class="lbl">Remaining after payment</div><div class="val num" id="visitRemaining">Rs 0</div></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option>cash</option><option>card</option><option>bank transfer</option><option>online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></form></section></div>';
- html=html.replace('id="visitPrevValue">0','id="visitPrevValue">'+prev.toLocaleString('en-PK'));
+ const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><div><h2>Patient visit & invoice</h2><small class="muted">Complete treatment details and record payment</small></div><button class="btn sm" type="button" data-act="closevisit">Close</button></div><div class="card tint" style="margin-bottom:12px"><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small>Patient #'+a.pid+' · '+esc(prettyPhone(a.phone))+'</small><small>'+esc(a.doc)+' · '+nice(a.date)+' · '+t12(a.time)+'</small></div></div><div class="req-meta"><span class="chip">Booked treatment: '+esc(a.proc||'Not specified')+'</span><span class="chip">Previous balance: Rs '+prev.toLocaleString('en-PK')+'</span></div></div><form id="visitForm" data-id="'+a.id+'" data-pid="'+a.pid+'" class="col" style="gap:10px"><div class="card"><div class="card-head"><h2>Treatment & charges</h2><button class="btn sm" type="button" id="addProcedure">+ Add treatment</button></div><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div></div><div class="field" style="margin-top:10px"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="2" placeholder="Optional notes"></textarea></div></div><div class="card"><div class="card-head"><h2>Invoice & payment</h2><span class="chip">PKR · Rs</span></div><div class="alert-item info">Previous outstanding balance: <b>Rs <span id="visitPrevValue">'+prev.toLocaleString('en-PK')+'</span></b></div><div class="two-col"><div class="field"><label>Total amount (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" step="1" value="0" required></div><div class="field"><label>Received amount now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0" required></div></div><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val num" id="visitPrevCard">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val num" id="visitDue">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box hero"><div class="lbl">Remaining balance</div><div class="val num" id="visitRemaining">Rs '+prev.toLocaleString('en-PK')+'</div></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><div class="actions"><button class="btn" type="button" data-act="printinvoice">Print invoice</button><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></div></div></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>';
  document.body.insertAdjacentHTML('beforeend',html);
- const calc=()=>{const due=prev+Number($('#visitTotal').value||0),left=due-Number($('#visitReceived').value||0);$('#visitDue').textContent='Rs '+due.toLocaleString('en-PK');$('#visitRemaining').textContent='Rs '+Math.max(0,left).toLocaleString('en-PK');};
- $('#visitTotal').addEventListener('input',calc);$('#visitReceived').addEventListener('input',calc);calc();
+ const form=$('#visitForm'),total=$('#visitTotal'),received=$('#visitReceived'),procBox=$('#visitProcedures');
+ const money=n=>'Rs '+Math.max(0,Number(n)||0).toLocaleString('en-PK');
+ const getProcedures=()=>[...procBox.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value||0)}));
+ const calc=()=>{const due=prev+Number(total.value||0),paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
+ const autoTotal=()=>{total.value=getProcedures().reduce((n,p)=>n+(Number.isFinite(p.fee)?p.fee:0),0);calc();};
+ procBox.addEventListener('input',e=>{if(e.target.name==='fee')autoTotal();});
+ total.addEventListener('input',calc);received.addEventListener('input',calc);calc();
+ const invoice=()=>{const procs=getProcedures(),bill=Number(total.value||0),paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString());return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>Phone: 0334 0005909<br>Mon to Sat · 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>Invoice #: UE-'+a.id+'<br>Date: '+esc(today)+'</div></div><div class="invoice-title">Patient Invoice</div><div class="invoice-meta"><b>Patient:</b> '+esc(a.name)+'<br><b>Patient ID:</b> #'+a.pid+'<br><b>Phone:</b> '+esc(prettyPhone(a.phone))+'<br><b>Doctor:</b> '+esc(a.doc)+'<br><b>Appointment:</b> '+nice(a.date)+' · '+t12(a.time)+'</div><table class="invoice-table"><thead><tr><th>Treatment / Procedure</th><th>Amount (Rs)</th></tr></thead><tbody>'+procs.map(p=>'<tr><td>'+esc(p.name||'Treatment')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val">'+money(prev)+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val">'+money(due)+'</div></div><div class="stat-box"><div class="lbl">Received now</div><div class="val">'+money(paid)+'</div></div></div><h2 style="text-align:right;margin:12px 0">Balance remaining: '+money(left)+'</h2><p class="invoice-meta">Payment method: '+esc($('#visitMethod').value)+'<br>Thank you for choosing Ultimate Esthetics.</p>';};
+ const print=()=>{$('#visitInvoicePrint').innerHTML=invoice();$('#visitInvoicePrint').style.display='block';window.print();$('#visitInvoicePrint').style.display='none';};
+ $('#visitModal').dataset.printReady='1'; $('#visitModal')._printInvoice=print;
 }
-
 function renderNav() {
   const n = pending().length;
   $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
@@ -629,6 +662,7 @@ document.addEventListener('click', async e => {
     case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){toast('Patient checked in. Select Open form to record the visit.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
     case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in reversed.');await loadData();}else toast(r.data.error||'Update failed');}); break;
     case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
+    case 'printinvoice': document.querySelector('#visitModal')?._printInvoice?.(); b.disabled=false; break;
     case 'accept': setStatus(id, 'confirmed', 'Appointment accepted. You can send the confirmation from Requests > Accepted.'); break;
     case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
     case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
@@ -650,7 +684,7 @@ document.addEventListener('input', e => {
 });
 
 document.addEventListener('click',e=>{
- if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" required></div>');}
+ if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='visitForm')return;e.preventDefault();
