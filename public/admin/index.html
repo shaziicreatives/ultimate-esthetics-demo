@@ -155,6 +155,9 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
 .err{color:var(--bad);font-size:12.5px}
+.visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
+.visit-card{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.proc-line{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px;margin:8px 0}
 
 @media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:900px){
@@ -438,7 +441,7 @@ function viewToday() {
   const all = todays(), t = todayStr();
   const fl = [['all', 'All'], ['confirmed', 'Awaiting'], ['done', 'Done'], ['no_show', 'No-show']];
   const rows = all.filter(a => state.filter === 'all' || a.status === state.filter).map(a => {
-    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="done" data-id="' + a.id + '">Mark done</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
+    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="visit" data-id="' + a.id + '">Check in / Visit</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
       : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', aap aaj aa nahi sakay. Kya hum naya time de dein? Ultimate Esthetics.') + '">New time</a> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>'
       : '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>';
     return '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + act + '</td></tr>';
@@ -498,6 +501,13 @@ function viewHistory() {
 
 /* ---------- render + events ---------- */
 const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
+
+function openVisitForm(id) {
+ const a=state.appts.find(x=>x.id===id); if(!a)return;
+ const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><h2>Check-in & visit · '+esc(a.name)+'</h2><button class="btn sm" type="button" data-act="closevisit">Close</button></div><form id="visitForm" data-id="'+a.id+'" class="col" style="gap:10px"><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" value="0" required></div></div><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button><div class="field"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="3"></textarea></div><div class="two-col"><div class="field"><label>Total bill (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" value="0" required></div><div class="field"><label>Received now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" value="0" required></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option>cash</option><option>card</option><option>bank transfer</option><option>online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></form></section></div>';
+ document.body.insertAdjacentHTML('beforeend',html);
+}
+
 function renderNav() {
   const n = pending().length;
   $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
@@ -531,6 +541,8 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = Number(b.dataset.id); b.disabled = true;
   switch (b.dataset.act) {
+    case 'visit': b.disabled=false; openVisitForm(id); break;
+    case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
     case 'accept': setStatus(id, 'confirmed', 'Accepted. Requests > Accepted se WhatsApp bhej sakte hain.'); break;
     case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
     case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
@@ -550,6 +562,20 @@ document.addEventListener('input', e => {
     else { h.textContent = 'Wapas aane par isi se patient milega.'; h.className = 'hint'; }
   }
 });
+
+document.addEventListener('click',e=>{
+ if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee" required></div>');}
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='visitForm')return;e.preventDefault();
+ const form=e.target,err=$('#visitErr'),btn=$('#visitSave'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value)}));
+ const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value);
+ if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>total){err.textContent='Procedure, fee, total aur received amount check karein.';err.hidden=false;return;}
+ btn.disabled=true;btn.textContent='Saving…';
+ try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,total_amount:total,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Visit save nahi hui.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}$('#visitModal').remove();toast('Visit and payment saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
+ catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
+});
+
 document.addEventListener('submit', async e => {
   if (e.target.id !== 'manualForm') return;
   e.preventDefault();
