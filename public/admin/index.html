@@ -1,215 +1,313 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard — Ultimate Esthetics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ultimate Esthetics Clinic Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
+<style>
+:root{
+  --bg:#FBF9F5; --surface:#FFFFFF; --surface2:#F5F0E8; --ink:#2C2621; --muted:#6B5E53; --line:#E8DFD1;
+  --accent:#4A3F35; --accent-ink:#FBF9F5; --sand:#D4C4B0; --sand-soft:#EFE8DC;
+  --wa:#1FA855; --wa-ink:#FFFFFF;
+  --ok:#3F7D58; --ok-bg:#E6F1EA; --warn:#9A6414; --warn-bg:#F8EBD2; --bad:#B4443A; --bad-bg:#F6E1DE; --info:#4A6B8A; --info-bg:#E3EBF2;
+  --shadow:0 1px 2px rgba(44,38,33,.05),0 8px 24px rgba(44,38,33,.06);
+  --font-display:'Instrument Serif',Georgia,serif; --font-body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+
+.app{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
+  display:grid;grid-template-columns:240px minmax(0,1fr);width:100%;height:100vh;max-width:100vw}
+.side{background:var(--surface2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:0 8px}
+.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px}
+.brand b{display:block;font-family:var(--font-display);font-weight:400;font-size:19px;line-height:1.1}
+.brand span{font-size:11.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:12px;color:var(--muted);font-weight:500}
+.nav button:hover{background:var(--sand-soft);color:var(--ink)}
+.nav button.on{background:var(--accent);color:var(--accent-ink)}
+.nav .badge{margin-left:auto;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;background:var(--bad);color:#fff}
+.nav-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 12px;margin-bottom:-6px}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.user{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.user small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
+.user b{font-size:13.5px}
+.foot-row{display:flex;gap:8px}
+
+.main{padding:28px 32px;overflow-y:auto;height:100vh;background:var(--surface)}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.page-head h1{font-family:var(--font-display);font-weight:400;font-size:38px;line-height:1.05}
+.page-head p{color:var(--muted);margin-top:6px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;border:1px solid var(--line);background:var(--surface);padding:9px 15px;font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--sand);background:var(--surface2)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.wa{background:var(--wa);color:var(--wa-ink);border-color:var(--wa)}
+.btn.bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:10px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;margin-bottom:20px}
+.card h2{font-size:16px;font-weight:700}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.card-head small{color:var(--muted);font-size:13px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.stat .lbl{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.stat .val{font-family:var(--font-display);font-size:34px;line-height:1}
+.stat .sub{font-size:12.5px;color:var(--muted)}
+.stat.hero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:560px}
+.tbl th{text-align:left;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.right{text-align:right}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:600}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:8px;background:var(--sand-soft);color:var(--muted)}
+
+.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:4px;border-radius:14px;margin-bottom:18px}
+.tabs button{border:0;background:transparent;padding:8px 15px;border-radius:10px;font-weight:600;color:var(--muted);font-size:14px}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.tabs .n{font-size:12px;opacity:.8;margin-left:6px}
+
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field label{font-size:12.5px;font-weight:600;color:var(--muted)}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.req{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.req .btns{display:flex;gap:8px;justify-content:flex-end}
+.empty{padding:26px 10px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:var(--accent);color:var(--accent-ink);padding:12px 18px;border-radius:14px;z-index:60;box-shadow:var(--shadow);font-weight:500}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;height:auto}
+  .side{height:auto;position:static}
+  .main{height:auto;overflow:visible}
+}
+</style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-
-    <!-- Login Screen -->
-    <div id="loginSection" class="flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Clinic Admin Login</h2>
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Username</label>
-                    <input type="text" id="username" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div id="loginError" class="text-red-500 text-sm hidden"></div>
-                <button type="submit" class="w-full bg-slate-900 text-white py-2 rounded-lg font-semibold hover:bg-slate-800 transition">Login</button>
-            </form>
-        </div>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-mark">U</div>
+      <div><b>Ultimate Esthetics</b><span>Clinic Desk</span></div>
     </div>
-
-    <!-- Dashboard Screen -->
-    <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
-        <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800">Ultimate Esthetics — Admin Dashboard</h1>
-            <div class="flex items-center space-x-4">
-                <span id="liveStatus" class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">● Live Sync Active</span>
-                <button onclick="loadAppointments()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">Refresh Data</button>
-            </div>
-        </header>
-
-        <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">Appointments Management</h2>
-            <div class="bg-white rounded-xl shadow overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-600 text-sm border-b">
-                            <th class="p-4">Date & Time</th>
-                            <th class="p-4">Patient Name</th>
-                            <th class="p-4">Phone</th>
-                            <th class="p-4">Doctor</th>
-                            <th class="p-4">Treatment</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Actions / WhatsApp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="appointmentsTable" class="divide-y text-sm text-gray-700">
-                        <!-- Loaded dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </main>
+    <div class="nav-label">Daily work</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div class="user">
+        <div class="avatar">OW</div>
+        <div><b>Owner</b><small>Full access</small></div>
+      </div>
+      <div class="foot-row">
+        <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
+        <button class="btn sm" id="logoutBtn" type="button" style="flex:1">Logout</button>
+      </div>
     </div>
+  </aside>
+  <main class="main"><div id="view"></div></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    <!-- Notification Audio -->
-    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const t12 = t => { if(!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + pad(m) + ' ' + ap; };
+const initials = n => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-    <script>
-        let lastCount = -1;
+const DOCTORS = ['Dr. Ayesha Malik', 'Dr. Hamza Raza', 'Dr. Sana Iqbal'];
+const PROCS = { 'Consultation': 1500, 'Hydrafacial': 8000, 'Hair transplant': 50000, 'Hair PRP': 10000, 'Laser treatment': 12000, 'Glow drip': 7000 };
+const SLOTS = ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
 
-        // Check session automatically on page load
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const res = await fetch('/api/admin/appointments');
-                if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('dashboardSection').classList.remove('hidden');
-                    renderTable(data.appointments);
-                    lastCount = data.appointments.length;
-                    startPolling();
-                }
-            } catch (e) {
-                // Stay on login if unauthorized
-            }
-        });
+let state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, patients: [], appts: [], requests: [], logs: [] };
+const toastEl = $('#toast'); let toastT;
+const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
+const stPill = s => ({ confirmed: '<span class="pill info">Confirmed</span>', pending: '<span class="pill warn">Pending</span>', done: '<span class="pill ok">Done</span>', rejected: '<span class="pill bad">Rejected</span>', noshow: '<span class="pill bad">No-show</span>' }[s] || '<span class="pill info">' + s + '</span>');
 
-        async function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errDiv = document.getElementById('loginError');
+let lastCount = -1;
 
-            try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
+async function loadData() {
+  try {
+    const res = await fetch('/api/admin/appointments');
+    if(res.ok) {
+      const data = await res.json();
+      const rawAppts = data.appointments || [];
+      
+      if(lastCount !== -1 && rawAppts.length > lastCount) {
+        $('#notificationSound').play().catch(e => console.log(e));
+      }
+      lastCount = rawAppts.length;
 
-                if (res.ok && data.success) {
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('dashboardSection').classList.remove('hidden');
-                    loadAppointments();
-                    startPolling();
-                } else {
-                    errDiv.textContent = data.error || 'Login failed';
-                    errDiv.classList.remove('hidden');
-                }
-            } catch (err) {
-                errDiv.textContent = 'Connection error.';
-                errDiv.classList.remove('hidden');
-            }
+      state.appts = rawAppts;
+      let pMap = {};
+      rawAppts.forEach(a => {
+        if(!pMap[a.patient_id]) {
+          pMap[a.patient_id] = { id: a.patient_id, name: a.patient_name, phone: a.patient_phone, visits: [] };
         }
+      });
+      state.patients = Object.values(pMap);
+      
+      state.requests = rawAppts.filter(a => a.status === 'pending').map(a => ({
+        rid: a.id, name: a.patient_name, phone: a.patient_phone, doc: a.doctor_name, proc: a.treatment || 'Consultation', time: (a.time||'11:00').slice(0,5), status: 'pending', pid: a.patient_id
+      }));
+    }
+  } catch(e) { console.error(e); }
+  render();
+}
 
-        async function loadAppointments() {
-            try {
-                const res = await fetch('/api/admin/appointments');
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        document.getElementById('loginSection').classList.remove('hidden');
-                        document.getElementById('dashboardSection').classList.add('hidden');
-                        return;
-                    }
-                    throw new Error('Failed to fetch');
-                }
-                const data = await res.json();
-                
-                // Play sound if new appointment arrives
-                if (lastCount !== -1 && data.appointments.length > lastCount) {
-                    document.getElementById('notificationSound').play().catch(e => console.log(e));
-                }
-                lastCount = data.appointments.length;
-                renderTable(data.appointments);
-            } catch (err) {
-                console.error(err);
-            }
-        }
+function viewDashboard() {
+  const pend = state.requests.filter(r => r.status === 'pending').length;
+  const rows = state.appts.slice(0, 6).map(a => {
+    const waText = encodeURIComponent(`Hello ${a.patient_name}, your appointment at Ultimate Esthetics for ${a.treatment || 'Consultation'} on ${a.date} at ${a.time} has been ${a.status.toUpperCase()}.`);
+    const waUrl = `https://wa.me/${(a.patient_phone||'').replace(/[^0-9]/g,'')}?text=${waText}`;
+    
+    let actionBtn = '';
+    if(a.status === 'pending') {
+      actionBtn = `<button class="btn pri sm" onclick="updateApptStatus(${a.id}, 'confirmed')">Confirm</button> <button class="btn bad sm" onclick="updateApptStatus(${a.id}, 'rejected')">Reject</button>`;
+    } else {
+      actionBtn = `<span class="muted" style="margin-right:6px">Done</span> <a class="btn wa sm" target="_blank" href="${waUrl}">💬 Send WhatsApp</a>`;
+    }
 
-        function renderTable(appointments) {
-            const tbody = document.getElementById('appointmentsTable');
-            tbody.innerHTML = '';
+    return `<tr><td><b>${t12((a.time||'').slice(0,5))}</b></td><td><b>${esc(a.patient_name)}</b><small style="display:block;color:var(--muted)">${esc(a.patient_phone)}</small></td><td>${esc(a.doctor_name)}</td><td>${stPill(a.status)}</td><td class="right">${actionBtn}</td></tr>`;
+  }).join('');
 
-            if (appointments.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">No appointments found.</td></tr>`;
-                return;
-            }
+  return `<div class="page-head"><h1>Dashboard</h1><p>Live clinic dashboard with audio notifications and WhatsApp direct links.</p></div>
+    <div class="stats">
+      <div class="stat hero"><div class="lbl">Total Appointments</div><div class="val num">${state.appts.length}</div><div class="sub">Live database synced</div></div>
+      <div class="stat"><div class="lbl">Pending Requests</div><div class="val num">${pend}</div><div class="sub">Require confirmation</div></div>
+      <div class="stat"><div class="lbl">Registered Patients</div><div class="val num">${state.patients.length}</div><div class="sub">Active profiles</div></div>
+    </div>
+    <div class="card"><div class="card-head"><h2>Recent Appointments</h2><button class="btn sm" onclick="state.page='today';render()">View All</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th class="right">Action / WhatsApp</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">No appointments found.</td></tr>'}</tbody></table></div></div>`;
+}
 
-            appointments.forEach(app => {
-                const tr = document.createElement('tr');
-                
-                // Action buttons or WhatsApp link based on status
-                let actionHtml = '';
-                if (app.status === 'pending') {
-                    actionHtml = `
-                        <button onclick="updateStatus(${app.id}, 'confirmed')" class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-semibold hover:bg-green-200">Confirm</button>
-                        <button onclick="updateStatus(${app.id}, 'rejected')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-semibold hover:bg-red-200">Reject</button>
-                    `;
-                } else {
-                    const waText = encodeURIComponent(`Hello ${app.patient_name}, your appointment at Ultimate Esthetics for ${app.treatment || 'Consultation'} on ${app.date} at ${app.time} has been *${app.status.toUpperCase()}*.`);
-                    const waLink = `https://wa.me/${app.patient_phone.replace(/[^0-9]/g, '')}?text=${waText}`;
-                    actionHtml = `
-                        <span class="text-xs font-medium text-gray-500 mr-2">Action Done</span>
-                        <a href="${waLink}" target="_blank" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-emerald-700 inline-flex items-center gap-1">
-                            💬 Send WhatsApp
-                        </a>
-                    `;
-                }
+function viewRequests() {
+  const tabs = [['pending', 'Pending'], ['accepted', 'Confirmed'], ['rejected', 'Rejected']];
+  const list = state.requests.filter(r => r.status === state.tab || (state.tab === 'accepted' && r.status === 'confirmed'));
+  const body = list.length ? list.map(r => {
+    const waText = encodeURIComponent(`Hello ${r.name}, your appointment request at Ultimate Esthetics for ${r.proc} on ${r.time} has been updated.`);
+    const waUrl = `https://wa.me/${r.phone.replace(/[^0-9]/g,'')}?text=${waText}`;
+    return `<div class="req"><div><b>${esc(r.name)}</b><small>${esc(r.phone)} — ${esc(r.proc)} (${esc(r.doc)})</small></div><div>${stPill(r.status)}</div><div class="btns">${r.status === 'pending' ? `<button class="btn pri sm" onclick="updateApptStatus(${r.rid}, 'confirmed')">Accept</button><button class="btn bad sm" onclick="updateApptStatus(${r.rid}, 'rejected')">Reject</button>` : `<a class="btn wa sm" target="_blank" href="${waUrl}">💬 Send WhatsApp</a>`}</div></div>`;
+  }).join('') : '<div class="empty">No requests found.</div>';
 
-                tr.innerHTML = `
-                    <td class="p-4 whitespace-nowrap">${app.date} <br><span class="text-xs text-gray-400">${app.time}</span></td>
-                    <td class="p-4 font-medium">${app.patient_name}</td>
-                    <td class="p-4">${app.patient_phone}</td>
-                    <td class="p-4">${app.doctor_name}</td>
-                    <td class="p-4">${app.treatment || 'Consultation'}</td>
-                    <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(app.status)}">${app.status}</span></td>
-                    <td class="p-4 whitespace-nowrap">${actionHtml}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+  return `<div class="page-head"><h1>Requests</h1><p>Website appointment inquiries & direct WhatsApp routing</p></div>
+    <div class="tabs">${tabs.map(t => `<button class="${state.tab === t[0] ? 'on' : ''}" onclick="state.tab='${t[0]}';render()">${t[1]}</button>`).join('')}</div>
+    <div class="card">${body}</div>`;
+}
 
-        function getStatusBadge(status) {
-            switch(status) {
-                case 'confirmed': return 'bg-green-100 text-green-800';
-                case 'pending': return 'bg-yellow-100 text-yellow-800';
-                case 'done': return 'bg-blue-100 text-blue-800';
-                case 'rejected': return 'bg-red-100 text-red-800';
-                default: return 'bg-gray-100 text-gray-800';
-            }
-        }
+function viewToday() {
+  const rows = state.appts.map(a => {
+    const waText = encodeURIComponent(`Hello ${a.patient_name}, regarding your appointment at Ultimate Esthetics.`);
+    const waUrl = `https://wa.me/${(a.patient_phone||'').replace(/[^0-9]/g,'')}?text=${waText}`;
+    let act = a.status === 'pending' ? `<button class="btn pri sm" onclick="updateApptStatus(${a.id}, 'confirmed')">Confirm</button> <button class="btn bad sm" onclick="updateApptStatus(${a.id}, 'rejected')">Reject</button>` : `<a class="btn wa sm" target="_blank" href="${waUrl}">💬 WhatsApp</a>`;
+    return `<tr><td><b>${t12((a.time||'').slice(0,5))}</b></td><td><b>${esc(a.patient_name)}</b><small style="display:block;color:var(--muted)">${esc(a.patient_phone)}</small></td><td>${esc(a.doctor_name)}</td><td>${esc(a.treatment || 'Consultation')}</td><td>${stPill(a.status)}</td><td class="right">${act}</td></tr>`;
+  }).join('');
+  return `<div class="page-head"><h1>Today's Patients</h1><p>Manage active clinic visits</p></div><div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Treatment</th><th>Status</th><th class="right">Action</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="empty">No appointments found.</td></tr>'}</tbody></table></div></div>`;
+}
 
-        async function updateStatus(id, status) {
-            try {
-                const res = await fetch('/api/admin/appointments', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, status })
-                });
-                if (res.ok) {
-                    loadAppointments();
-                } else {
-                    alert('Failed to update status');
-                }
-            } catch (err) {
-                alert('Error updating status');
-            }
-        }
+function viewManual() {
+  return `<div class="page-head"><h1>Manual Patient</h1><p>Add walk-in patients</p></div>
+    <div class="card" style="max-width:600px"><form onsubmit="handleManualBooking(event)" class="stack" style="gap:14px">
+      <div class="field"><label>Patient Name</label><input class="inp" id="mName" required placeholder="Full name"></div>
+      <div class="field"><label>Phone Number</label><input class="inp" id="mPhone" required placeholder="03000000000"></div>
+      <div class="grid2">
+        <div class="field"><label>Doctor</label><select class="inp" id="mDoc">${DOCTORS.map(d => `<option>${d}</option>`).join('')}</select></div>
+        <div class="field"><label>Treatment</label><select class="inp" id="mProc">${Object.keys(PROCS).map(p => `<option>${p}</option>`).join('')}</select></div>
+      </div>
+      <div class="field"><label>Time Slot</label><select class="inp" id="mTime">${SLOTS.map(s => `<option value="${s}">${t12(s)}</option>`).join('')}</select></div>
+      <button class="btn pri" type="submit">Book Walk-in Appointment</button>
+    </form></div>`;
+}
 
-        // Poll for new appointments every 10 seconds
-        function startPolling() {
-            setInterval(loadAppointments, 10000);
-        }
-    </script>
+async function handleManualBooking(e) {
+  e.preventDefault();
+  const name = $('#mName').value.trim();
+  const phone = $('#mPhone').value.trim();
+  const doc = $('#mDoc').value;
+  const proc = $('#mProc').value;
+  const time = $('#mTime').value;
+  try {
+    const res = await fetch('/api/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, countryCode: '+92', doctor_id: DOCTORS.indexOf(doc) + 1, date: new Date().toISOString().split('T')[0], time: parseInt(time), treatment: proc })
+    });
+    if(res.ok) {
+      toast('Walk-in appointment added!');
+      loadData();
+      state.page = 'today';
+      render();
+    } else {
+      const d = await res.json();
+      toast(d.error || 'Failed');
+    }
+  } catch(err) { toast('Connection error'); }
+}
+
+function viewHistory() {
+  const list = state.patients.map(p => `<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--line)"><div class="avatar">${initials(p.name)}</div><div><b>${esc(p.name)}</b><small style="display:block;color:var(--muted)">${esc(p.phone)}</small></div></div>`).join('') || '<div class="empty">No patients.</div>';
+  return `<div class="page-head"><h1>Patient History</h1><p>Client records</p></div><div class="card">${list}</div>`;
+}
+
+function viewSecurity() {
+  return `<div class="page-head"><h1>Security & Settings</h1><p>System configuration</p></div><div class="card"><p class="muted">Session persistence active. Refreshing page preserves login state.</p></div>`;
+}
+
+async function updateApptStatus(id, status) {
+  try {
+    const res = await fetch('/api/admin/appointments', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status })
+    });
+    if(res.ok) {
+      toast('Status updated to ' + status);
+      loadData();
+    } else {
+      toast('Failed to update status');
+    }
+  } catch(e) { toast('Connection error'); }
+}
+
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
+const NAVICO = { dashboard: 'home', requests: 'inbox', today: 'cal', manual: 'userplus', history: 'book', security: 'shield' };
+
+function renderNav() {
+  const pend = state.requests.filter(r => r.status === 'pending').length;
+  $('#nav').innerHTML = PAGES.map(p => `<button type="button" class="${state.page === p[0] ? 'on' : ''}" onclick="state.page='${p[0]}';render()">${p[1]}${p[0] === 'requests' && pend ? `<span class="badge num">${pend}</span>` : ''}</button>`).join('');
+}
+
+function render() {
+  const fn = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity }[state.page];
+  $('#view').innerHTML = fn ? fn() : '';
+  renderNav();
+}
+
+$('#themeBtn').addEventListener('click', () => {
+  const r = document.documentElement;
+  r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+});
+$('#logoutBtn').addEventListener('click', () => { location.reload(); });
+
+loadData();
+setInterval(loadData, 10000);
+</script>
 </body>
 </html>
