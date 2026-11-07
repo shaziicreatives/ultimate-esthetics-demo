@@ -306,7 +306,14 @@ async function loadData(first) {
   state.sig = sig; state.appts = appts;
   const pm = {};
   appts.forEach(a => { (pm[a.pid] = pm[a.pid] || { id: a.pid, name: a.name, phone: a.phone, appts: [] }).appts.push(a); });
-  state.patients = Object.values(pm).sort((x, y) => x.id - y.id);
+  // Keep the complete patient register, including patients with no recent booking.
+  const merged = new Map(Object.values(pm).map(p => [Number(p.id), p]));
+  (state.financialPatients || []).forEach(p => {
+    const id = Number(p.id), existing = merged.get(id);
+    if (existing) { existing.name = p.name || existing.name; existing.phone = p.phone || existing.phone; }
+    else merged.set(id, { id, name: p.name || 'Unknown', phone: p.phone || '', appts: [] });
+  });
+  state.patients = [...merged.values()].sort((x, y) => x.id - y.id);
   if (!state.histSel && state.patients.length) state.histSel = state.patients[0].id;
 
   if (first || !state.doctors.length) await loadDoctors();
@@ -393,7 +400,7 @@ function viewDashboard() {
   const nos = td.filter(a => a.status === 'no_show').length;
   const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
 
-  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="done" data-id="' + a.id + '">Mark done</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">Aaj koi confirmed patient nahi hai.</td></tr>';
+  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="visit" data-id="' + a.id + '">Check-in / Open form</button>' : a.status === 'done' ? '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">Aaj koi confirmed patient nahi hai.</td></tr>';
 
   const fu = state.appts.filter(a => a.fu && a.fu <= plusDays(7) && !['cancelled', 'rejected'].includes(a.status)).sort((x, y) => x.fu.localeCompare(y.fu));
   const fuHtml = fu.length ? fu.slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + (a.fu < t ? 'Overdue since ' : 'Due ') + nice(a.fu) + ' · #' + a.pid + '</small></div><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', Ultimate Esthetics se yaad dahani: aap ka follow-up ' + nice(a.fu) + ' ko due hai.') + '">Remind</a></div>').join('') : '<div class="empty">Is hafte koi follow-up due nahi.</div>';
@@ -405,16 +412,22 @@ function viewDashboard() {
 
   const recent = state.appts.slice().sort((x, y) => y.id - x.id).slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + nice(a.date) + ' · ' + t12(a.time) + ' · ' + esc(procName(a)) + '</small></div>' + stPill(a.status) + '</div>').join('') || '<div class="empty">Abhi koi booking nahi.</div>';
 
+  const collectedToday = state.visits.reduce((sum,v) => sum + (v.payments||[]).filter(p => String(p.created_at||'').slice(0,10) === t).reduce((n,p)=>n+Number(p.amount||0),0), 0);
+  const balanceDue = state.financialPatients.reduce((sum,p)=>sum+Number(p.balance||0),0);
+  const totalPatients = state.financialPatients.length || state.patients.length;
+  const daily = Array.from({length:7},(_,i)=>{const d=plusDays(i-6);return {date:d,count:state.appts.filter(a=>a.date===d && ['confirmed','done','no_show'].includes(a.status)).length};});
+  const maxDaily = Math.max(1,...daily.map(x=>x.count));
+  const chart = '<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:112px;padding:8px 4px 0">' + daily.map(x=>'<div style="display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:5px"><b class="muted" style="font-size:10px">'+x.count+'</b><div title="'+nice(x.date)+': '+x.count+' patients" style="width:100%;max-width:28px;height:'+Math.max(4,Math.round(x.count/maxDaily*72))+'px;background:var(--sand);border:1px solid var(--line);border-radius:5px 5px 0 0"></div><small class="muted">'+WD[new Date(x.date+'T12:00:00').getDay()]+'</small></div>').join('') + '</div>';
   return head(greet + ', Owner', wday(t) + ', ' + nice(t) + '. Yeh hai aaj ka haal.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
     '<div class="stats-grid">' +
-    '<div class="stat-box hero"><div class="lbl">Pending requests</div><div class="val num">' + pend.length + '</div><div class="sub">Reply ka intezar</div></div>' +
+    '<div class="stat-box hero"><div class="lbl">Collected today</div><div class="val num">Rs ' + collectedToday.toLocaleString('en-PK') + '</div><div class="sub">Payments received today</div></div>' +
+    '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + totalPatients + '</div><div class="sub">Patient register</div></div>' +
     '<div class="stat-box"><div class="lbl">Today\'s patients</div><div class="val num">' + td.length + '</div><div class="sub">' + left + ' still to arrive</div></div>' +
-    '<div class="stat-box"><div class="lbl">Done today</div><div class="val num">' + done + '</div><div class="sub">Finished visits</div></div>' +
-    '<div class="stat-box"><div class="lbl">Upcoming</div><div class="val num">' + upcoming + '</div><div class="sub">Confirmed, aane wale din</div></div>' +
-    '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + state.patients.length + '</div><div class="sub">Database me</div></div></div>' +
+    '<div class="stat-box"><div class="lbl">Pending requests</div><div class="val num">' + pend.length + '</div><div class="sub">Waiting for reply</div></div>' +
+    '<div class="stat-box"><div class="lbl">Balance due</div><div class="val num">Rs ' + balanceDue.toLocaleString('en-PK') + '</div><div class="sub">Across all patients</div></div></div>' +
     '<div class="dash-layout"><div class="col">' +
     '<div class="card"><div class="card-head"><h2>Today\'s queue</h2><button class="btn sm" data-go="today">Open full list</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
-    '<div class="card"><div class="card-head"><h2>Follow-ups due</h2><small class="muted">Next 7 days</small></div>' + fuHtml + '</div>' +
+    '<div class="two-col"><div class="card"><div class="card-head"><h2>Patients per day</h2><small class="muted">Last 7 days</small></div>' + chart + '</div><div class="card"><div class="card-head"><h2>Follow-ups due</h2><small class="muted">Next 7 days</small></div>' + fuHtml + '</div></div>' +
     '</div><div class="col">' +
     (alerts.length ? '<div class="card"><div class="card-head"><h2>Needs attention</h2></div><div class="alert-box">' + alerts.join('') + '</div></div>' : '') +
     '<div class="card"><div class="card-head"><h2>Latest bookings</h2></div>' + recent + '</div></div></div>';
