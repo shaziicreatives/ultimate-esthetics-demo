@@ -198,6 +198,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="side-foot">
         <div class="user-box"><div class="avatar">OW</div><div><b>Owner</b><small>Live data</small></div></div>
         <div class="foot-btns">
+          <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
           <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
           <button class="btn sm" id="logoutBtn" type="button" style="flex:1">Logout</button>
         </div>
@@ -252,18 +253,28 @@ async function api(path, opts) {
 }
 
 let beepCtx = null;
+let soundEnabled = localStorage.getItem('ue_admin_sound') !== 'off';
 function beep() {
+  if (!soundEnabled) return;
   try {
     beepCtx = beepCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (beepCtx.state === 'suspended') beepCtx.resume();
-    const o = beepCtx.createOscillator(), g = beepCtx.createGain();
-    o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.3, beepCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.01, beepCtx.currentTime + .3);
-    o.connect(g); g.connect(beepCtx.destination); o.start(); o.stop(beepCtx.currentTime + .3);
+    [0, .34, .68].forEach((delay, i) => {
+      const o = beepCtx.createOscillator(), g = beepCtx.createGain();
+      const start = beepCtx.currentTime + delay;
+      o.type = 'sine'; o.frequency.value = [880, 1046, 1318][i];
+      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.22, start + .025);
+      g.gain.exponentialRampToValueAtTime(.0001, start + .22);
+      o.connect(g); g.connect(beepCtx.destination); o.start(start); o.stop(start + .24);
+    });
   } catch (e) { }
 }
+function updateSoundButton() {
+  const b = $('#soundBtn');
+  if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
+}
 
-let lastPending = -1, timer = null;
+let seenPendingIds = null, timer = null;
 async function loadData(first) {
   let r;
   try { r = await api('/api/admin/appointments'); } catch (e) { return; }
@@ -274,9 +285,14 @@ async function loadData(first) {
     did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
     proc: a.treatment || '', status: a.status === 'noshow' ? 'no_show' : a.status, source: a.source || '', fu: a.follow_up_date || ''
   }));
-  const pend = appts.filter(a => a.status === 'pending').length;
-  if (lastPending !== -1 && pend > lastPending) { beep(); toast('New website booking request!'); }
-  lastPending = pend;
+  const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
+  if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
+    beep(); toast('New website booking request!');
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('Ultimate Esthetics', { body: 'A new appointment request has arrived.' }); } catch (e) { }
+    }
+  }
+  seenPendingIds = new Set(pendingIds);
 
   const sig = JSON.stringify(appts);
   const changed = sig !== state.sig;
@@ -321,11 +337,21 @@ function showLogin() {
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
 async function boot() {
   try {
-    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin' });
+    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
     if (res.status === 401) { showLogin(); return; }
-  } catch (e) { }
-  showApp(); await loadData(true);
-  if (!timer) timer = setInterval(() => loadData(false), 8000);
+    if (!res.ok) {
+      showLogin();
+      const err = $('#loginErr'); err.textContent = 'Server API error (' + res.status + '). Cloudflare Pages Functions deployment check karein.'; err.hidden = false;
+      return;
+    }
+    showApp();
+    await loadData(true);
+    updateSoundButton();
+    if (!timer) timer = setInterval(() => loadData(false), 8000);
+  } catch (e) {
+    showLogin();
+    const err = $('#loginErr'); err.textContent = 'Server se connection nahi hua. Admin API unavailable hai.'; err.hidden = false;
+  }
 }
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -333,7 +359,7 @@ $('#loginForm').addEventListener('submit', async e => {
   try {
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success !== false) { $('#uPass').value = ''; lastPending = -1; await boot(); }
+    if (res.ok && d.success !== false) { $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await boot(); }
     else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
   } catch (x) { err.textContent = 'Server se connection nahi hua.'; err.hidden = false; }
   btn.disabled = false; btn.textContent = 'Sign In';
@@ -343,6 +369,7 @@ $('#logoutBtn').addEventListener('click', async () => {
   state.sig = ''; showLogin();
 });
 $('#themeBtn').addEventListener('click', () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; });
+$('#soundBtn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('ue_admin_sound', soundEnabled ? 'on' : 'off'); updateSoundButton(); if (soundEnabled) beep(); });
 
 /* ---------- views ---------- */
 const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
@@ -481,7 +508,7 @@ document.addEventListener('click', e => {
     case 'accept': setStatus(id, 'confirmed', 'Accepted. Requests > Accepted se WhatsApp bhej sakte hain.'); break;
     case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
     case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
-    case 'restore': setStatus(id, 'pending', 'Wapas pending me.'); break;
+    case 'restore': state.tab = 'pending'; setStatus(id, 'pending', 'Wapas pending me.'); break;
     case 'done': setStatus(id, 'done', 'Visit done mark ho gayi.'); break;
     case 'noshow': setStatus(id, 'no_show', 'No-show mark ho gaya.'); break;
     case 'undo': setStatus(id, 'confirmed', 'Wapas awaiting me.'); break;
