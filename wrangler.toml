@@ -1,3 +1,14 @@
-name = "ultimate-esthetics"
-pages_build_output_dir = "public"
-compatibility_date = "2026-11-06"
+name = "ultimate-esthetics-demo"
+compatibility_date = "2026-03-01"
+
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "ultimate-esthetics-db"
+database_id = "YOUR_LIVE_DB_ID_HERE"
+
+[env.preview]
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "ultimate-esthetics-db-preview"
+database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
