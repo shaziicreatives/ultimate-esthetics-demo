@@ -196,7 +196,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media(max-width:900px){.page-head h1{font-size:30px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .activity-list .row{font-size:11px;padding:7px 0}
 .security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.security-grid .card{padding:14px}
+.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 18px;margin:0 0 16px;box-shadow:var(--shadow)}\n.patient-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}\n.patient-calendar-title{font-family:var(--font-display);font-size:23px;color:var(--ink)}\n.patient-calendar-nav{display:flex;align-items:center;gap:7px}\n.patient-calendar-nav button,.patient-date-all{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:7px 11px;font-weight:600}\n.patient-calendar-nav button:hover,.patient-date-all:hover{background:var(--sand-soft)}\n.patient-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}\n.patient-calendar-grid .weekday{text-align:center;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;padding:4px}\n.patient-day{position:relative;min-height:39px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:600}\n.patient-day:hover{background:var(--surface2);border-color:var(--line)}\n.patient-day.muted-day{color:var(--muted);opacity:.4}\n.patient-day.selected{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}\n.patient-day.today:not(.selected){border-color:var(--sand);background:var(--surface2)}\n.patient-day .dot{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--sand)}\n.patient-day.selected .dot{background:var(--accent-ink)}\n.patient-calendar-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}\n@media(max-width:600px){.patient-calendar{padding:12px}.patient-day{min-height:34px}.patient-calendar-title{font-size:20px}}\n.security-grid .card{padding:14px}
 .security-grid h2{font-size:13px}
 .permission-table{width:100%;border-collapse:collapse;font-size:11px}
 .permission-table th,.permission-table td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:center}
@@ -277,7 +277,7 @@ const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
 
 /* ---------- state ---------- */
-const state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
+const state = { page: 'dashboard', tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -490,17 +490,28 @@ function viewRequests() {
 
 function viewToday() {
   const all = patientRoster(), t = todayStr();
+  const [cy,cm]=state.calendarMonth.split('-').map(Number);
+  const first=new Date(Date.UTC(cy,cm-1,1)), offset=first.getUTCDay(), days=new Date(Date.UTC(cy,cm,0)).getUTCDate();
+  const monthLabel=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  const dateCounts={}; all.forEach(a=>dateCounts[a.date]=(dateCounts[a.date]||0)+1);
+  const cells=[];
+  for(let n=0;n<offset;n++){const d=new Date(Date.UTC(cy,cm-1,1-offset+n));cells.push({date:d.toISOString().slice(0,10),day:d.getUTCDate(),outside:true});}
+  for(let n=1;n<=days;n++)cells.push({date:cy+'-'+pad(cm)+'-'+pad(n),day:n,outside:false});
+  while(cells.length%7) {const d=new Date(Date.UTC(cy,cm-1,days+(cells.length-(offset+days))+1));cells.push({date:d.toISOString().slice(0,10),day:d.getUTCDate(),outside:true});}
+  const calendar='<section class="patient-calendar"><div class="patient-calendar-head"><div><div class="patient-calendar-title">'+monthLabel+'</div><small class="muted">Choose a date to view appointments</small></div><div class="patient-calendar-nav"><button type="button" data-cal-prev aria-label="Previous month">‹</button><button type="button" data-cal-today>Today</button><button type="button" data-cal-next aria-label="Next month">›</button></div></div><div class="patient-calendar-grid">'+['SUN','MON','TUE','WED','THU','FRI','SAT'].map(x=>'<div class="weekday">'+x+'</div>').join('')+cells.map(c=>'<button type="button" class="patient-day '+(c.outside?'muted-day ':'')+(c.date===state.patientDate?'selected ':'')+(c.date===t?'today':'')+'" data-patient-date="'+c.date+'">'+c.day+(dateCounts[c.date]?'<span class="dot"></span>':'')+'</button>').join('')+'</div><div class="patient-calendar-foot"><span>'+(state.patientDate?'Showing '+nice(state.patientDate):'Showing all appointment dates')+'</span><button type="button" class="patient-date-all" data-date-all>All dates</button></div></section>';
+  const scoped=state.patientDate?all.filter(a=>a.date===state.patientDate):all;
   const fl = [['all', 'All'], ['confirmed', 'Awaiting check-in'], ['in_room', 'Checked in'], ['done', 'Completed'], ['no_show', 'No-show']];
-  const rows = all.filter(a => state.filter === 'all' || a.status === state.filter).map(a => {
-    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="checkin" data-id="' + a.id + '">Check-in</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
-      : a.status === 'in_room' ? '<button class="btn pri sm" data-act="visit" data-id="' + a.id + '">Open form</button>'
-      : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', we missed you today. Would you like to reschedule? Ultimate Esthetics.') + '">New time</a> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>'
-      : '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>';
-    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const bal=Number(fp?.balance||0); return '<tr><td class="num nowrap"><b>' + nice(a.date) + '</b><small class="muted" style="display:block">' + t12(a.time) + '</small></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">' + act + '</td></tr>';
-  }).join('') || '<tr><td colspan="7" class="empty">No patients match this filter.</td></tr>';
-  return head('Patients', 'All accepted appointments and walk-in patients. Use Check-in or No-show when the patient is due.', '<button class="btn pri" data-go="manual">Add walk-in</button>') +
-    '<div class="tabs">' + fl.map(f => '<button class="' + (state.filter === f[0] ? 'on' : '') + '" data-filter="' + f[0] + '">' + f[1] + '<span class="n num">' + (f[0] === 'all' ? all.length : all.filter(a => a.status === f[0]).length) + '</span></button>').join('') + '</div>' +
-    '<div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  const rows = scoped.filter(a => state.filter === 'all' || a.status === state.filter).map(a => {
+    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
+      : a.status === 'in_room' ? '<button class="btn pri sm" data-act="visit" data-id="'+a.id+'">Open form</button> <button class="btn sm" data-act="done" data-id="'+a.id+'">Mark completed</button>'
+      : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(a.phone,'Hello '+a.name+', we missed you today. Would you like to reschedule? Ultimate Esthetics.')+'">New time</a> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>'
+      : '<button class="btn sm" data-act="hist" data-p="'+a.pid+'">History</button> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>';
+    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const bal=Number(fp?.balance||0);
+    return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
+  }).join('') || '<tr><td colspan="7" class="empty">No patients match this date and filter.</td></tr>';
+  return head('Patients', 'All accepted appointments and walk-in patients. Select a date to navigate your schedule.', '<button class="btn pri" data-go="manual">Add walk-in</button>') + calendar +
+    '<div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div>' +
+    '<div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 
 function viewManual() {
@@ -605,6 +616,11 @@ document.addEventListener('click', async e => {
   const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
+  const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
+  const calNext=e.target.closest('[data-cal-next]'); if(calNext){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
+  if(e.target.closest('[data-cal-today]')){state.patientDate=todayStr();state.calendarMonth=todayStr().slice(0,7);render();return;}
+  if(e.target.closest('[data-date-all]')){state.patientDate=null;render();return;}
+  const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
   const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = Number(b.dataset.id); b.disabled = true;
