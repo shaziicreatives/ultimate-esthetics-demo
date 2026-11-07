@@ -13,7 +13,7 @@ export async function onRequestGet(context) {
         }
 
         const { results } = await env.DB.prepare(
-            "SELECT time FROM appointments WHERE doctor_id = ? AND date = ? AND status = 'booked'"
+            "SELECT time FROM appointments WHERE doctor_id = ? AND date = ? AND status IN ('pending', 'confirmed')"
         ).bind(doctor_id, date).all();
 
         const bookedSlots = results.map(row => row.time);
