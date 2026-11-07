@@ -5,7 +5,7 @@ compatibility_date = "2026-03-01"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "ultimate-esthetics-db"
-database_id = "YOUR_LIVE_DB_ID_HERE"
+database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
 
 [env.preview]
 [[env.preview.d1_databases]]
