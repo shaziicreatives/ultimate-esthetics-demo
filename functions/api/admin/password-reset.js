@@ -13,7 +13,7 @@ export async function onRequestPost({request,env}) {
   const email="imat2025maths@gmail.com";
   const user=await env.DB.prepare("SELECT id,username FROM users WHERE email=? COLLATE NOCASE AND is_active=1").bind(email).first();
   if(user){
-   const raw=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(x=>x.toString(16).padStart(2,"0")).join(""),tokenHash=await hash(raw),expires=new Date(Date.now()+3600000).toISOString();
+   const raw=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(x=>x.toString(16).padStart(2,"0")).join(""),tokenHash=await hash(raw),expires=new Date(Date.now()+3600000).toISOString().replace('T',' ').slice(0,19);
    await env.DB.prepare("INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES(?,?,?)").bind(user.id,tokenHash,expires).run();
    const base=new URL(request.url).origin,link=base+"/admin/reset-password.html?token="+raw;
    if(!env.RESEND_API_KEY||!env.MAIL_FROM)return json({error:"Email delivery is not configured. Add RESEND_API_KEY and MAIL_FROM in Cloudflare Pages environment variables."},503);
