@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     if (!name || digits.length !== 10 || !Number.isSafeInteger(doctorId) || doctorId < 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ error: "Patient, phone, doctor, valid date aur time zaroori hain." }, 400);
     const doctor = await env.DB.prepare("SELECT id FROM doctors WHERE id = ? AND is_active = 1").bind(doctorId).first();
     if (!doctor) return json({ error: "Selected doctor is unavailable." }, 400);
-    const phone = "92" + digits;
+    const phone = "+92" + digits;
     let patient = await env.DB.prepare("SELECT id FROM patients WHERE phone = ?").bind(phone).first();
     if (patient) {
       await env.DB.prepare("UPDATE patients SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, patient.id).run();
