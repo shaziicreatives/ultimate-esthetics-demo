@@ -20,14 +20,14 @@ export async function onRequestPost({request,env}) {
  const b=await request.json(), appointmentId=Number(b.appointment_id), total=Number(b.total_amount), procedures=Array.isArray(b.procedures)?b.procedures:[];
  if(!appointmentId||!Number.isSafeInteger(total)||total<0||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Visit details invalid"},400);
  const a=await env.DB.prepare("SELECT * FROM appointments WHERE id=?").bind(appointmentId).first();if(!a)return json({error:"Appointment not found"},404);
- const run=await env.DB.batch([
-  env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,follow_up_date) VALUES(?,?,?,?,?,?,?)").bind(a.id,a.patient_id,a.doctor_id,u.user_id,String(b.notes||"").slice(0,5000),total,b.follow_up_date||null),
-  env.DB.prepare("UPDATE appointments SET status='done',follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,a.id)
- ]);
- const visitId=run[0].meta.last_row_id;
- for(const p of procedures)await env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,String(p.name).trim().slice(0,160),Number(p.fee)).run();
- const received=Number(b.received_now||0);if(!Number.isSafeInteger(received)||received<0||received>total)return json({error:"Payment amount invalid"},400);
- if(received)await env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,a.patient_id,received,String(b.payment_method||"cash").slice(0,30),String(b.payment_reference||"").slice(0,120)||null,u.user_id).run();
+ const received=Number(b.received_now||0);
+ if(!Number.isSafeInteger(received)||received<0||received>total)return json({error:"Payment amount invalid"},400);
+ const inserted=await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,follow_up_date) VALUES(?,?,?,?,?,?,?)").bind(a.id,a.patient_id,a.doctor_id,u.user_id,String(b.notes||"").slice(0,5000),total,b.follow_up_date||null).run();
+ const visitId=inserted.meta.last_row_id;
+ const statements=procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,String(p.name).trim().slice(0,160),Number(p.fee)));
+ if(received)statements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,a.patient_id,received,String(b.payment_method||"cash").slice(0,30),String(b.payment_reference||"").slice(0,120)||null,u.user_id));
+ statements.push(env.DB.prepare("UPDATE appointments SET status='done',follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,a.id));
+ await env.DB.batch(statements);
  await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'visit_saved','visit',?,?)").bind(u.user_id,u.username,visitId,"Total "+total+", received "+received).run();
  return json({success:true,visit_id:visitId,balance:total-received},201);
 }
