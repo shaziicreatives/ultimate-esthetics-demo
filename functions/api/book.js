@@ -48,12 +48,16 @@ export async function onRequestPost(context) {
         // Ensure time is formatted correctly as string (e.g., '14:00')
         const timeStr = String(hourNum).padStart(2, '0') + ':00';
 
-        // Insert appointment
+        // Insert appointment with pending status
         await env.DB.prepare(
             "INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source) VALUES (?, ?, ?, ?, ?, 'pending', 'website')"
         ).bind(doctor_id, patient_id, date, timeStr, treatment || null).run();
 
-        return new Response(JSON.stringify({ success: true, message: "Appointment requested successfully!" }), {
+        return new Response(JSON.stringify({ 
+            success: true, 
+            message: "Appointment requested successfully!", 
+            status: "pending" 
+        }), {
             headers: { "Content-Type": "application/json" }
         });
 
