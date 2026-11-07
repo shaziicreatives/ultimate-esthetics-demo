@@ -1,7 +1,5 @@
 -- One-time repair for databases created with the older table-level UNIQUE constraint.
 -- Rebuild appointments so rejected/cancelled/no-show rows release their time slot.
-PRAGMA foreign_keys = OFF;
-
 CREATE TABLE appointments_rebuilt (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   doctor_id INTEGER NOT NULL REFERENCES doctors(id),
@@ -34,5 +32,3 @@ CREATE INDEX IF NOT EXISTS idx_appt_date ON appointments (date);
 CREATE INDEX IF NOT EXISTS idx_appt_status ON appointments (status);
 CREATE INDEX IF NOT EXISTS idx_appt_patient ON appointments (patient_id);
 CREATE INDEX IF NOT EXISTS idx_appt_doctor_date ON appointments (doctor_id, date);
-
-PRAGMA foreign_keys = ON;
