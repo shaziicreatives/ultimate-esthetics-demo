@@ -57,7 +57,15 @@ export async function onRequestPatch(context) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
-        const { id, status } = await request.json();
+        const { id, status, check_in } = await request.json();
+        if (id && typeof check_in === 'boolean') {
+            const beforeCheck = await env.DB.prepare("SELECT id,status FROM appointments WHERE id=?").bind(id).first();
+            if (!beforeCheck) return new Response(JSON.stringify({error:"Appointment not found"}),{status:404,headers:{"Content-Type":"application/json"}});
+            if (beforeCheck.status !== 'confirmed') return new Response(JSON.stringify({error:"Only confirmed appointments can be checked in."}),{status:409,headers:{"Content-Type":"application/json"}});
+            await env.DB.prepare("UPDATE appointments SET checked_in_at = " + (check_in ? "CURRENT_TIMESTAMP" : "NULL") + ", updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
+            await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details,ip) VALUES(?,?,'patient_checkin','appointment',?,?,?)").bind(session.user_id,session.username,id,check_in?'Checked in':'Check-in undone',request.headers.get('CF-Connecting-IP')||'').run();
+            return new Response(JSON.stringify({success:true,checked_in:check_in}),{headers:{"Content-Type":"application/json"}});
+        }
         const validStatuses = ['pending', 'confirmed', 'done', 'cancelled', 'rejected', 'no_show'];
         if (!id || !validStatuses.includes(status)) {
             return new Response(JSON.stringify({ error: "Invalid parameters" }), { status: 400, headers: { "Content-Type": "application/json" } });
