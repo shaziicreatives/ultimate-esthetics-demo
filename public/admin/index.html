@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ultimate Esthetics Clinic Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
+<style>
+:root{
+  --bg:#FAF6EE; --surface:#FFFFFF; --surface2:#F4EDE1; --ink:#2F2619; --muted:#7A6A50; --line:#E0D4BC;
+  --accent:#3E3325; --accent-ink:#FFFFFF; --sand:#D8C6A2; --sand-soft:#EBE2D2;
+  --wa:#15A046; --wa-ink:#FFFFFF;
+  --ok:#287D43; --ok-bg:#E2F2E6; --warn:#9B6E1A; --warn-bg:#F8EFDB; --bad:#B84337; --bad-bg:#F9E5E2; --info:#3B6B98; --info-bg:#E2ECF5;
+  --shadow:0 2px 8px rgba(47,38,25,.06);
+  --font-display:'Instrument Serif',Georgia,serif; --font-body:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+}
+:root[data-theme="dark"]{
+  --bg:#16120F; --surface:#221D19; --surface2:#2B251F; --ink:#F1EAE0; --muted:#B5A797; --line:#3A322B;
+  --accent:#E8DFD1; --accent-ink:#241E19; --sand:#6B5A48; --sand-soft:#2F2822;
+  --wa:#2FBF71; --wa-ink:#0E1A13;
+  --ok:#7CC49A; --ok-bg:#1F3328; --warn:#E3B568; --warn-bg:#3A2D17; --bad:#E58B80; --bad-bg:#3C201C; --info:#8FB3D4; --info-bg:#1E2C3A;
+  --shadow:0 2px 8px rgba(0,0,0,.3); color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg)}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+.nowrap{white-space:nowrap}
+
+/* login */
+#loginView{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center}
+.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px;flex:none}
+.login-card .brand-mark{width:46px;height:46px;font-size:26px;margin:0 auto 12px}
+.login-card h2{font-family:var(--font-display);font-size:28px;font-weight:400;margin-bottom:4px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:20px}
+
+/* shell: minmax(0,1fr) is the fix for text getting cut / half-white */
+#appView{display:none;padding:16px}
+.app{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 32px);max-width:1440px;margin:0 auto}
+.side{background:var(--surface2);border-right:1px solid var(--line);border-radius:24px 0 0 24px;padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 6px}
+.brand b{display:block;font-family:var(--font-display);font-weight:400;font-size:18px;line-height:1.1}
+.brand span{font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.nav-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:-8px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;border-radius:12px;color:var(--muted);font-weight:500;font-size:13.5px}
+.nav button:hover{background:var(--sand-soft);color:var(--ink)}
+.nav button.on{background:var(--accent);color:var(--accent-ink)}
+.nav .badge{margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--bad);color:#fff}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.user-box{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.user-box>div:last-child{min-width:0}
+.user-box b{font-size:13px;display:block}
+.user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;color:var(--accent)}
+.foot-btns{display:flex;gap:6px}
+
+.main{padding:26px 30px;min-width:0}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.page-head h1{font-family:var(--font-display);font-weight:400;font-size:40px;line-height:1.05}
+.page-head p{color:var(--muted);font-size:13.5px;margin-top:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;font-weight:600;font-size:13px;text-decoration:none;color:var(--ink);white-space:nowrap}
+.btn:hover{border-color:var(--sand);background:var(--surface2)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.wa{background:var(--wa);color:var(--wa-ink);border-color:var(--wa)}
+.btn.bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
+.card.tint{background:var(--surface2)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.card-head h2{font-size:15px;font-weight:700}
+.muted{color:var(--muted)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.stat-box{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.stat-box .lbl{font-size:12px;color:var(--muted);margin-bottom:4px}
+.stat-box .val{font-family:var(--font-display);font-size:30px;line-height:1}
+.stat-box .sub{font-size:11.5px;color:var(--muted);margin-top:5px}
+.stat-box.hero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stat-box.hero .lbl,.stat-box.hero .sub{color:inherit;opacity:.78}
+
+.dash-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+
+.tbl-wrap{width:100%;overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:520px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px}
+.tbl tr:last-child td{border-bottom:0}
+.right{text-align:right}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.who>div:last-child{min-width:0}
+.who b{display:block;line-height:1.2;font-size:13.5px}
+.who small{color:var(--muted);font-size:12px;display:block}
+.id{font-weight:700;color:var(--accent)}
+:root[data-theme="dark"] .id{color:var(--sand)}
+
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.pill.info{background:var(--info-bg);color:var(--info)}
+.pill.mute{background:var(--sand-soft);color:var(--muted)}
+.chip{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--sand-soft);color:var(--muted)}
+
+.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:3px;border-radius:12px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;padding:7px 14px;border-radius:9px;font-weight:600;color:var(--muted);font-size:13px}
+.tabs button.on{background:var(--accent);color:var(--accent-ink)}
+.tabs .n{font-size:11px;padding:1px 6px;border-radius:99px;background:var(--sand);color:var(--ink);margin-left:4px}
+
+.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.req-item:last-child{border-bottom:0}
+.req-meta{display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row>div:first-child{min-width:0}
+.row small{display:block;color:var(--muted);font-size:12px}
+.alert-box{display:flex;flex-direction:column;gap:8px}
+.alert-item{padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.4}
+.alert-item.warn{background:var(--warn-bg);color:var(--warn)}
+.alert-item.bad{background:var(--bad-bg);color:var(--bad)}
+.alert-item.info{background:var(--info-bg);color:var(--info)}
+
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:12px;font-weight:600;color:var(--muted)}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px;min-width:0}
+.hint{font-size:12px;color:var(--muted)}
+.hint.ok{color:var(--ok)}
+.empty{padding:26px 10px;text-align:center;color:var(--muted)}
+.bigid{font-family:var(--font-display);font-size:64px;line-height:1;color:var(--accent)}
+:root[data-theme="dark"] .bigid{color:var(--sand)}
+
+.hist{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+.plist{display:flex;flex-direction:column;gap:2px;max-height:560px;overflow-y:auto}
+.pitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid transparent;background:transparent;padding:10px;border-radius:12px}
+.pitem:hover{background:var(--surface2)}
+.pitem.on{background:var(--surface2);border-color:var(--sand)}
+.pitem>div:nth-child(2){flex:1;min-width:0}
+.pitem small{color:var(--muted);font-size:12px;display:block}
+.tl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.tl:first-child{border-top:0}
+.tl .d{font-weight:700;font-size:13px}
+.tl .d small{display:block;color:var(--muted);font-weight:500}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
+.err{color:var(--bad);font-size:12.5px}
+.visit-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.proc-line td{padding:6px!important}
+.stamp-box{border:1px dashed var(--sand);border-radius:12px;min-height:90px;margin-top:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}
+.invoice-footer{text-align:center;color:var(--muted);font-family:var(--font-display);font-style:italic;font-size:18px;padding:8px}
+.invoice-footer small{display:block;font:11px var(--font-body);margin-top:8px}
+@media(max-width:700px){.visit-info-grid{grid-template-columns:1fr}.visit-card{padding:12px!important}}
+.visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
+.visit-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.proc-line{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;margin:8px 0}
+.invoice-brand{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+.invoice-brand h2{font:30px var(--font-display);color:var(--ink)}
+.invoice-brand p,.invoice-meta{font-size:12px;color:var(--muted);line-height:1.6}
+.invoice-title{font:26px var(--font-display);margin:10px 0 14px}
+.invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.invoice-summary .stat-box{padding:12px}
+.invoice-summary .val{font:22px var(--font-display)}
+.invoice-table{width:100%;border-collapse:collapse;margin:12px 0}
+.invoice-table th,.invoice-table td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left}
+.invoice-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.invoice-table td:last-child,.invoice-table th:last-child{text-align:right}
+.invoice-print-area{display:none}
+@media print{
+ @page{size:A4;margin:14mm}
+ body{background:#fff!important;color:#2F2619!important}
+ body *{visibility:hidden!important}
+ #visitInvoicePrint,#visitInvoicePrint *{visibility:visible!important}
+ #visitInvoicePrint{display:block!important;position:absolute;inset:0;width:100%;padding:0;background:#fff!important;color:#2F2619!important;font-family:Arial,sans-serif}
+ #visitInvoicePrint .invoice-brand h2,#visitInvoicePrint .invoice-title{color:#2F2619!important}
+ #visitInvoicePrint .invoice-brand p,#visitInvoicePrint .invoice-meta{color:#6c6255!important}
+ #visitInvoicePrint table{width:100%;border-collapse:collapse}
+ #visitInvoicePrint th,#visitInvoicePrint td{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+ #visitInvoicePrint th:last-child,#visitInvoicePrint td:last-child{text-align:right}
+ #visitInvoicePrint .invoice-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+ #visitInvoicePrint .stat-box{border:1px solid #ddd;padding:12px}
+ #visitInvoicePrint .val{font-size:18px;font-weight:bold}
+}
+/* reference dashboard proportions */
+@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:205px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
+
+
+@media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+  #appView{padding:0}
+  .app{grid-template-columns:minmax(0,1fr);border-radius:0;border:0}
+  .side{border-right:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px;gap:12px}
+  .nav{flex-direction:row;overflow-x:auto}
+  .nav button{width:auto;white-space:nowrap}
+  .nav-label,.user-box{display:none}
+  .main{padding:20px 16px 28px}
+  .page-head h1{font-size:32px}
+  .two-col,.hist{grid-template-columns:minmax(0,1fr)}
+  .req-item{grid-template-columns:minmax(0,1fr)}
+  .btns{justify-content:flex-start}
+  .tl{grid-template-columns:minmax(0,1fr);gap:4px}
+}
+
+/* Screenshot-matched clinic desk refinement */
+@media(min-width:901px){
+ #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:205px minmax(0,1fr)}
+ .side{position:sticky;top:0;height:100vh;border-radius:0;padding:18px 12px}
+ .main{padding:26px 28px;max-width:1600px;width:100%;margin:0 auto}
+ .page-head{margin-bottom:16px}.page-head h1{font-size:36px}
+ .stats-grid{gap:9px;margin-bottom:14px}.stat-box{padding:12px 13px;border-radius:12px}
+ .stat-box .val{font-size:27px}.card{padding:15px;border-radius:14px}
+ .dash-layout{grid-template-columns:minmax(0,1.65fr) minmax(250px,.75fr);gap:12px}
+ .col{gap:12px}.two-col{gap:12px}
+ .tbl th{padding:7px 8px;font-size:10px}.tbl td{padding:8px;font-size:12px}
+ .nav{gap:2px}.nav button{padding:9px 10px;border-radius:9px;font-size:12.5px}
+ .brand b{font-size:16px}
+ .hist{grid-template-columns:240px minmax(0,1fr);gap:14px}
+}
+@media(max-width:900px){.page-head h1{font-size:30px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.activity-list .row{font-size:11px;padding:7px 0}
+.security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);position:sticky;top:18px}
+.patient-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.patient-calendar-title{font-family:var(--font-display);font-size:23px;color:var(--ink)}
+.patient-calendar-nav{display:flex;align-items:center;gap:7px}
+.patient-calendar-nav button,.patient-date-all{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:10px;padding:7px 11px;font-weight:600}
+.patient-calendar-nav button:hover,.patient-date-all:hover{background:var(--sand-soft)}
+.patient-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.patient-calendar-grid .weekday{text-align:center;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;padding:4px}
+.patient-day{position:relative;min-height:39px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--ink);font-weight:600}
+.patient-day:hover{background:var(--surface2);border-color:var(--line)}
+.patient-day.muted-day{color:var(--muted);opacity:.4}
+.patient-day.selected{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.patient-day.today:not(.selected){border-color:var(--sand);background:var(--surface2)}
+.patient-day .dot{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--sand)}
+.patient-day.selected .dot{background:var(--accent-ink)}
+.patient-calendar-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}
+@media(max-width:600px){.patient-calendar{padding:12px}.patient-day{min-height:34px}.patient-calendar-title{font-size:20px}}
+
+.patient-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:18px;align-items:start}
+.patient-list-panel{min-width:0}
+.patient-calendar .patient-day{min-height:36px}
+.patient-calendar .patient-calendar-title{font-size:20px}
+.patient-calendar .patient-calendar-grid{gap:3px}
+.patient-calendar .patient-calendar-foot{flex-wrap:wrap}
+@media(max-width:1100px){.patient-workspace{grid-template-columns:minmax(0,1fr) 285px;gap:12px}}
+@media(max-width:900px){.patient-workspace{grid-template-columns:minmax(0,1fr)}.patient-calendar{position:static;grid-row:1}.patient-list-panel{grid-row:2}}
+.security-grid .card{padding:14px}
+.security-grid h2{font-size:13px}
+.permission-table{width:100%;border-collapse:collapse;font-size:11px}
+.permission-table th,.permission-table td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:center}
+.permission-table th:first-child,.permission-table td:first-child{text-align:left}
+.switch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.switch-row:last-child{border:0}
+.switch{accent-color:#43865d;width:18px;height:18px}
+.device-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
+.device-row:last-child{border:0}
+@media(max-width:700px){.security-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="login-card">
+    <div class="brand-mark">U</div>
+    <h2>Ultimate Esthetics</h2>
+    <p>Sign in to access clinic desk</p>
+    <form id="loginForm" style="display:flex;flex-direction:column;gap:12px;text-align:left" autocomplete="off">
+      <div class="field"><label for="uName">Username</label><input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username"></div>
+      <div class="field"><label for="uPass">Password</label><input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password"></div>
+      <div id="loginErr" class="err" hidden></div>
+      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button><button class="btn" type="button" id="forgotBtn" style="width:100%">Forgot password? Email reset link</button>
+    </form>
+  </div>
+</div>
+
+<div id="appView">
+  <div class="app">
+    <aside class="side">
+      <div class="brand"><div class="brand-mark">U</div><div><b>Ultimate Esthetics</b><span>Clinic Desk</span></div></div>
+      <div class="nav-label">Daily work</div>
+      <nav class="nav" id="nav" aria-label="Main"></nav>
+      <div class="side-foot">
+        <div class="user-box"><div class="avatar">OW</div><div><b>Owner</b><small>Live data</small></div></div>
+        <div class="foot-btns">
+          <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
+          <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
+          <button class="btn sm" id="logoutBtn" type="button" style="flex:1">Logout</button>
+        </div>
+      </div>
+    </aside>
+    <main class="main"><div id="view"></div></main>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const localDateKey = value => { if(!value)return ''; const raw=String(value).trim(); const iso=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw; const d=new Date(iso); return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).format(d); };
+const pkDateTime = value => { if (!value) return '—'; const raw=String(value).trim(); const iso=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)?raw.replace(' ','T')+'Z':raw; const d=new Date(iso); if(Number.isNaN(d.getTime()))return raw; return new Intl.DateTimeFormat('en-PK',{timeZone:'Asia/Karachi',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}).format(d)+' PKT'; };
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayStr = () => { const p = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()); const v=Object.fromEntries(p.map(x=>[x.type,x.value])); return v.year+'-'+v.month+'-'+v.day; };
+const plusDays = n => { const [y,m,d]=todayStr().split('-').map(Number); const dt=new Date(Date.UTC(y,m-1,d+n)); return dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate()); };
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const nice = s => { if (!s) return ''; const [y, m, d] = s.split('-').map(Number); return pad(d) + ' ' + MON[m - 1] + ' ' + y; };
+const wday = s => { const [y, m, d] = s.split('-').map(Number); return WD[new Date(y, m - 1, d).getDay()]; };
+const t12 = t => { if (!t) return ''; let [h, m] = String(t).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + pad(m || 0) + ' ' + ap; };
+const initials = n => String(n || '?').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+/* phones are stored in messy forms like "+92+923125393234" -> always compare on the last 10 digits */
+const last10 = p => String(p || '').replace(/\D/g, '').slice(-10);
+const prettyPhone = p => { const d = last10(p); return d.length === 10 ? '0' + d.slice(0, 3) + ' ' + d.slice(3) : String(p || ''); };
+const waLink = (phone, msg) => 'https://wa.me/92' + last10(phone) + '?text=' + encodeURIComponent(msg);
+const procName = a => a.proc || 'Not specified';
+
+const STATUS = {
+  pending: ['warn', 'Pending'], confirmed: ['info', 'Awaiting check-in'], in_room: ['warn', 'In room'], done: ['ok', 'Done'],
+  no_show: ['bad', 'No-show'], rejected: ['bad', 'Rejected'], cancelled: ['mute', 'Cancelled']
+};
+const stPill = s => { const x = STATUS[s] || ['mute', s]; return '<span class="pill ' + x[0] + '">' + x[1] + '</span>'; };
+
+const toastEl = $('#toast'); let toastT;
+const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
+
+/* ---------- state ---------- */
+const state = { page: 'dashboard', tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
+
+/* ---------- api ---------- */
+async function api(path, opts) {
+  const o = Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {});
+  if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
+  const res = await fetch(path, o);
+  if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
+  let data = null; try { data = await res.json(); } catch (e) { }
+  return { ok: res.ok, status: res.status, data: data || {} };
+}
+
+let beepCtx = null;
+let soundEnabled = localStorage.getItem('ue_admin_sound') !== 'off';
+function beep() {
+  if (!soundEnabled) return;
+  try {
+    beepCtx = beepCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (beepCtx.state === 'suspended') beepCtx.resume();
+    [0, .34, .68].forEach((delay, i) => {
+      const o = beepCtx.createOscillator(), g = beepCtx.createGain();
+      const start = beepCtx.currentTime + delay;
+      o.type = 'sine'; o.frequency.value = [880, 1046, 1318][i];
+      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.22, start + .025);
+      g.gain.exponentialRampToValueAtTime(.0001, start + .22);
+      o.connect(g); g.connect(beepCtx.destination); o.start(start); o.stop(start + .24);
+    });
+  } catch (e) { }
+}
+function updateSoundButton() {
+  const b = $('#soundBtn');
+  if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
+}
+
+let seenPendingIds = null, timer = null;
+async function loadData(first) {
+  let r;
+  try { r = await api('/api/admin/appointments'); } catch (e) { return; }
+  if (!r.ok) { if (first) toast('Unable to load data (' + r.status + ')'); return; }
+  const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
+  const appts = raw.map(a => ({
+    id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
+    did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
+    proc: a.treatment || '', status: a.checked_in_at && a.status === 'confirmed' ? 'in_room' : (a.status === 'noshow' ? 'no_show' : a.status), source: a.source || '', fu: a.follow_up_date || ''
+  }));
+  const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
+  if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
+    beep(); toast('New website booking request!');
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('Ultimate Esthetics', { body: 'A new appointment request has arrived.' }); } catch (e) { }
+    }
+  }
+  seenPendingIds = new Set(pendingIds);
+
+  try { const vr = await api('/api/admin/visits'); if (vr.ok) { state.visits = vr.data.visits || []; state.financialPatients = vr.data.patients || []; } } catch(e) { }
+  const sig = JSON.stringify(appts) + JSON.stringify(state.visits);
+  const changed = sig !== state.sig;
+  state.sig = sig; state.appts = appts;
+  const pm = {};
+  appts.forEach(a => { (pm[a.pid] = pm[a.pid] || { id: a.pid, name: a.name, phone: a.phone, appts: [] }).appts.push(a); });
+  // Keep the complete patient register, including patients with no recent booking.
+  const merged = new Map(Object.values(pm).map(p => [Number(p.id), p]));
+  (state.financialPatients || []).forEach(p => {
+    const id = Number(p.id), existing = merged.get(id);
+    if (existing) { existing.name = p.name || existing.name; existing.phone = p.phone || existing.phone; }
+    else merged.set(id, { id, name: p.name || 'Unknown', phone: p.phone || '', appts: [] });
+  });
+  state.patients = [...merged.values()].sort((x, y) => x.id - y.id);
+  if (!state.histSel && state.patients.length) state.histSel = state.patients[0].id;
+
+  if (first || !state.doctors.length) await loadDoctors();
+  const ae = document.activeElement;
+  const typing = ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && $('#appView').contains(ae);
+  if (first || (changed && !typing)) render(); else renderNav();
+}
+
+async function loadDoctors() {
+  let list = [];
+  try {
+    const r = await fetch('/api/doctors', { credentials: 'same-origin' });
+    if (r.ok) { const d = await r.json(); list = (Array.isArray(d) ? d : (d.doctors || [])).filter(x => x.is_active !== 0).map(x => ({ id: x.id, name: x.name })); }
+  } catch (e) { }
+  if (!list.length) {
+    const m = {}; state.appts.forEach(a => { if (a.did && a.doc) m[a.did] = a.doc; });
+    list = Object.keys(m).map(k => ({ id: Number(k), name: m[k] }));
+  }
+  state.doctors = list;
+}
+
+async function setStatus(id, status, msg) {
+  try {
+    const r = await api('/api/admin/appointments', { method: 'PATCH', body: { id, status } });
+    if (r.ok) { toast(msg || 'Updated'); await loadData(); }
+    else { toast(r.data.error || 'Update failed (' + r.status + ')'); render(); }
+  } catch (e) {
+    if (e.message !== 'unauthorized') { toast('Status update failed. Check your connection and try again.'); render(); }
+  }
+}
+
+/* ---------- auth ---------- */
+function showLogin() {
+  if (timer) { clearInterval(timer); timer = null; }
+  $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
+}
+function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
+async function boot() {
+  try {
+    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
+    if (res.status === 401) { showLogin(); return; }
+    if (!res.ok) {
+      showLogin();
+      const err = $('#loginErr'); err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.'; err.hidden = false;
+      return;
+    }
+    showApp();
+    await loadData(true);
+    updateSoundButton();
+    if (!timer) timer = setInterval(() => loadData(false), 8000);
+  } catch (e) {
+    showLogin();
+    const err = $('#loginErr'); err.textContent = 'Unable to connect to the server. The admin API is unavailable.'; err.hidden = false;
+  }
+}
+$('#loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('#loginErr'), btn = $('#loginBtn'); err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
+    let d = {}; try { d = await res.json(); } catch (x) { }
+    if (res.ok && d.success !== false) { $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
+boot(); }
+    else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
+  } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
+  btn.disabled = false; btn.textContent = 'Sign In';
+});
+$('#logoutBtn').addEventListener('click', async () => {
+  try { await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { }
+  state.sig = ''; showLogin();
+});
+$('#themeBtn').addEventListener('click', () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; });
+$('#soundBtn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('ue_admin_sound', soundEnabled ? 'on' : 'off'); updateSoundButton(); if (soundEnabled) beep(); });
+
+/* ---------- views ---------- */
+const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
+const todays = () => state.appts.filter(a => a.date === todayStr() && ['confirmed', 'in_room', 'done', 'no_show'].includes(a.status)).sort((x, y) => x.time.localeCompare(y.time));
+const patientRoster = () => state.appts.filter(a => ['confirmed','in_room','done','no_show'].includes(a.status)).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
+const pending = () => state.appts.filter(a => a.status === 'pending');
+
+function viewDashboard() {
+  const td = todays(), pend = pending(), t = todayStr();
+  const done = td.filter(a => a.status === 'done').length, left = td.filter(a => a.status === 'confirmed').length;
+  const upcoming = state.appts.filter(a => a.status === 'confirmed' && a.date > t).length;
+  const stale = state.appts.filter(a => a.status === 'confirmed' && a.date < t).length;
+  const nos = td.filter(a => a.status === 'no_show').length;
+  const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+
+  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="checkin" data-id="' + a.id + '">Check-in</button>' : a.status === 'in_room' ? '<button class="btn sm pri" data-act="visit" data-id="' + a.id + '">Open form</button>' : a.status === 'done' ? '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">No confirmed patients scheduled for today.</td></tr>';
+
+  const fu = state.appts.filter(a => a.fu && a.fu <= plusDays(7) && !['cancelled', 'rejected'].includes(a.status)).sort((x, y) => x.fu.localeCompare(y.fu));
+  const fuHtml = fu.length ? fu.slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + (a.fu < t ? 'Overdue since ' : 'Due ') + nice(a.fu) + ' · #' + a.pid + '</small></div><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', this is a reminder from Ultimate Esthetics that your follow-up is due on ' + nice(a.fu) + '.') + '">Remind</a></div>').join('') : '<div class="empty">No follow-ups are due this week.</div>';
+
+  const alerts = [];
+  if (pend.length) alerts.push('<div class="alert-item warn"><b>' + pend.length + ' online request' + (pend.length > 1 ? 's' : '') + ' waiting.</b> Review and accept or reject them on the Requests page.</div>');
+  if (stale) alerts.push('<div class="alert-item bad"><b>' + stale + ' overdue confirmed appointment' + (stale > 1 ? 's' : '') + '</b> still need to be marked completed or no-show.</div>');
+  if (nos) alerts.push('<div class="alert-item info">' + nos + ' no-show appointments today. Offer a new time through WhatsApp.</div>');
+
+  const recent = state.appts.slice().sort((x, y) => y.id - x.id).slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + nice(a.date) + ' · ' + t12(a.time) + ' · ' + esc(procName(a)) + '</small></div>' + stPill(a.status) + '</div>').join('') || '<div class="empty">No bookings yet.</div>';
+
+  const collectedToday = state.visits.reduce((sum,v) => sum + (v.payments||[]).filter(p => localDateKey(p.created_at) === t).reduce((n,p)=>n+Number(p.amount||0),0), 0);
+  const balanceDue = state.financialPatients.reduce((sum,p)=>sum+Number(p.balance||0),0);
+  const totalPatients = state.financialPatients.length || state.patients.length;
+  const daily = Array.from({length:7},(_,i)=>{const d=plusDays(i-6);return {date:d,count:state.appts.filter(a=>a.date===d && ['confirmed','done','no_show'].includes(a.status)).length};});
+  const maxDaily = Math.max(1,...daily.map(x=>x.count));
+  const chart = '<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:112px;padding:8px 4px 0">' + daily.map(x=>'<div style="display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:5px"><b class="muted" style="font-size:10px">'+x.count+'</b><div title="'+nice(x.date)+': '+x.count+' patients" style="width:100%;max-width:28px;height:'+Math.max(4,Math.round(x.count/maxDaily*72))+'px;background:var(--sand);border:1px solid var(--line);border-radius:5px 5px 0 0"></div><small class="muted">'+WD[new Date(x.date+'T12:00:00').getDay()]+'</small></div>').join('') + '</div>';
+  return head(greet + ', Owner', wday(t) + ', ' + nice(t) + '. Here is your daily overview.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
+    '<div class="stats-grid">' +
+    '<div class="stat-box hero"><div class="lbl">Collected today</div><div class="val num">Rs ' + collectedToday.toLocaleString('en-PK') + '</div><div class="sub">Payments received today</div></div>' +
+    '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + totalPatients + '</div><div class="sub">Patient register</div></div>' +
+    '<div class="stat-box"><div class="lbl">Today\'s patients</div><div class="val num">' + td.length + '</div><div class="sub">' + left + ' still to arrive</div></div>' +
+    '<div class="stat-box"><div class="lbl">Pending requests</div><div class="val num">' + pend.length + '</div><div class="sub">Waiting for reply</div></div>' +
+    '<div class="stat-box"><div class="lbl">Balance due</div><div class="val num">Rs ' + balanceDue.toLocaleString('en-PK') + '</div><div class="sub">Across all patients</div></div></div>' +
+    '<div class="dash-layout"><div class="col">' +
+    '<div class="card"><div class="card-head"><h2>Today\'s queue</h2><button class="btn sm" data-go="today">Open full list</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="two-col"><div class="card"><div class="card-head"><h2>Patients per day</h2><small class="muted">Last 7 days</small></div>' + chart + '</div><div class="card"><div class="card-head"><h2>Follow-ups due</h2><small class="muted">Next 7 days</small></div>' + fuHtml + '</div></div>' +
+    '</div><div class="col">' +
+    (alerts.length ? '<div class="card"><div class="card-head"><h2>Needs attention</h2></div><div class="alert-box">' + alerts.join('') + '</div></div>' : '') +
+    '<div class="card"><div class="card-head"><h2>Latest bookings</h2></div>' + recent + '</div></div></div>';
+}
+
+function viewRequests() {
+  const lists = {
+    pending: state.appts.filter(a => a.status === 'pending'),
+    accepted: state.appts.filter(a => a.status === 'confirmed' && a.date >= todayStr()),
+    rejected: state.appts.filter(a => a.status === 'rejected' || a.status === 'cancelled')
+  };
+  Object.values(lists).forEach(l => l.sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time)));
+  const tabs = [['pending', 'Pending'], ['accepted', 'Accepted'], ['rejected', 'Rejected']];
+  const list = lists[state.tab];
+  const left = a => '<div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small><div class="req-meta"><span class="chip">' + esc(procName(a)) + '</span><span class="chip">' + esc(a.doc) + '</span><span class="chip">Patient #' + a.pid + '</span>' + (a.source === 'manual' ? '<span class="chip">Manual</span>' : '') + '</div></div></div>';
+  const when = a => '<div><b class="num">' + t12(a.time) + '</b><div class="hint">' + wday(a.date) + ', ' + nice(a.date) + '</div></div>';
+  const body = list.length ? list.map(a => {
+    if (state.tab === 'pending') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><button class="btn pri sm" data-act="accept" data-id="' + a.id + '">Accept</button><a class="btn sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', regarding your appointment request for ' + nice(a.date) + ' at ' + t12(a.time) + ', we can offer an alternative time. Would that work for you?') + '">Offer other time</a><button class="btn bad sm" data-act="reject" data-id="' + a.id + '">Reject</button></div></div>';
+    if (state.tab === 'accepted') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', your appointment is confirmed for ' + wday(a.date) + ', ' + nice(a.date) + ' at ' + t12(a.time) + ' with ' + a.doc + '. Ultimate Esthetics.') + '">Send on WhatsApp</a><button class="btn bad sm" data-act="cancel" data-id="' + a.id + '">Cancel</button></div></div>';
+    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', unfortunately we cannot accommodate your requested time. Would you like us to offer another time? Ultimate Esthetics.') + '">Offer other time</a><button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button></div></div>';
+  }).join('') : '<div class="empty">Nothing to display here.</div>';
+  return head('Requests', 'Online appointment requests. Accepted appointments are added to the Patients list.', '') +
+    '<div class="tabs">' + tabs.map(t => '<button class="' + (state.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<span class="n num">' + lists[t[0]].length + '</span></button>').join('') + '</div>' +
+    '<div class="card">' + body + '</div>';
+}
+
+function viewToday() {
+  const all=patientRoster(),t=todayStr();
+  const [cy,cm]=state.calendarMonth.split('-').map(Number);
+  const first=new Date(Date.UTC(cy,cm-1,1)),offset=first.getUTCDay(),days=new Date(Date.UTC(cy,cm,0)).getUTCDate();
+  const monthLabel=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  const dateCounts={};all.forEach(a=>dateCounts[a.date]=(dateCounts[a.date]||0)+1);
+  const cells=[];
+  for(let n=0;n<offset;n++){const d=new Date(Date.UTC(cy,cm-1,1-offset+n));cells.push({date:d.toISOString().slice(0,10),day:d.getUTCDate(),outside:true});}
+  for(let n=1;n<=days;n++)cells.push({date:cy+'-'+pad(cm)+'-'+pad(n),day:n,outside:false});
+  while(cells.length%7){const d=new Date(Date.UTC(cy,cm-1,days+(cells.length-(offset+days))+1));cells.push({date:d.toISOString().slice(0,10),day:d.getUTCDate(),outside:true});}
+  const calendar='<section class="patient-calendar"><div class="patient-calendar-head"><div><div class="patient-calendar-title">'+monthLabel+'</div><small class="muted">Select a date</small></div><div class="patient-calendar-nav"><button type="button" data-cal-prev aria-label="Previous month">‹</button><button type="button" data-cal-today>Today</button><button type="button" data-cal-next aria-label="Next month">›</button></div></div><div class="patient-calendar-grid">'+['SUN','MON','TUE','WED','THU','FRI','SAT'].map(x=>'<div class="weekday">'+x+'</div>').join('')+cells.map(c=>'<button type="button" class="patient-day '+(c.outside?'muted-day ':'')+(c.date===state.patientDate?'selected ':'')+(c.date===t?'today':'')+'" data-patient-date="'+c.date+'" aria-label="'+c.date+' · '+(dateCounts[c.date]||0)+' appointments">'+c.day+(dateCounts[c.date]?'<span class="dot"></span>':'')+'</button>').join('')+'</div><div class="patient-calendar-foot"><span>'+(state.patientDate?'Showing '+nice(state.patientDate):'Showing all dates in '+monthLabel)+'</span><button type="button" class="patient-date-all" data-date-all>All dates</button></div><div class="alert-item info" style="margin-top:10px">Appointments with a dot have scheduled patients.</div></section>';
+  const monthPrefix=state.calendarMonth+'-';
+  const scoped=state.patientDate?all.filter(a=>a.date===state.patientDate):all.filter(a=>a.date.startsWith(monthPrefix));
+  const fl=[['all','All'],['confirmed','Awaiting check-in'],['in_room','Checked in'],['done','Completed'],['no_show','No-show']];
+  const rows=scoped.filter(a=>state.filter==='all'||a.status===state.filter).map(a=>{
+    const act=a.status==='confirmed'?'<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
+      :a.status==='in_room'?'<button class="btn pri sm" data-act="visit" data-id="'+a.id+'">Open form</button> <button class="btn sm" data-act="done" data-id="'+a.id+'">Mark completed</button>'
+      :a.status==='no_show'?'<a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(a.phone,'Hello '+a.name+', we missed you today. Would you like to reschedule? Ultimate Esthetics.')+'">New time</a> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>'
+      :'<button class="btn sm" data-act="hist" data-p="'+a.pid+'">History</button> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>';
+    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0);
+    return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">No patients scheduled for this date or month.</td></tr>';
+  const title=state.patientDate?nice(state.patientDate):monthLabel;
+  const list='<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">'+title+'</h2><small class="muted">'+scoped.length+' scheduled patient'+(scoped.length===1?'':'s')+'</small></div><button class="btn pri sm" data-go="manual">Add walk-in</button></div><div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
+  return head('Patients','All accepted appointments and walk-in patients. Choose a date to view that day’s schedule.','')+'<div class="patient-workspace">'+list+calendar+'</div>';
+}
+
+function viewManual() {
+  const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
+  const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
+  const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
+  return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
+    '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
+    '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
+    '<div class="two-col"><div class="field"><label for="mName">Full name</label><input class="inp" id="mName" required></div>' +
+    '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" autocomplete="tel" placeholder="+923001234567 or 03001234567"><span class="hint" id="mDup">Enter a Pakistani mobile number: +92 followed by 10 digits, or 11 digits starting with 03.</span></div></div>' +
+    '<div class="two-col"><div class="field"><label for="mDoc">Doctor</label><select class="inp" id="mDoc">' + docs + '</select></div>' +
+    '<div class="field"><label for="mProc">Procedure</label><input class="inp" id="mProc" list="procList" placeholder="e.g. Consultation"><datalist id="procList">' + procs.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist></div></div>' +
+    '<div class="two-col"><div class="field"><label for="mDate">Date</label><input class="inp" id="mDate" type="date" required value="' + todayStr() + '"></div>' +
+    '<div class="field"><label for="mTime">Time</label><input class="inp" id="mTime" type="time" required value="' + pad(new Date().getHours()) + ':00"></div></div>' +
+    '<div class="err" id="mErr" hidden></div>' +
+    '<div><button class="btn pri" type="submit" id="mBtn">Add &amp; confirm</button></div></form></div>' +
+    '<div class="card tint"><small class="muted">Next new patient ID</small><div class="bigid num">#' + nextId + '</div><p class="hint" style="margin-top:12px">New patients receive the next available ID. Returning patients keep their existing ID.</p></div></div>';
+}
+
+function histList() {
+  const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+  const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
+  if (!l.length) return '<div class="empty">No patients found.</div>';
+  return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span></button>';}).join('');
+}
+function histDetail() {
+  const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Select a patient.</div></div>';
+  const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{visit_count:0,billed:0,received:0,balance:0};
+  const list=state.visits.filter(v=>Number(v.patient_id)===Number(p.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  const appt=p.appts.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  const fu=fp.follow_up_date;
+  const tl=list.map(v=>'<div class="tl"><div class="d">'+esc(pkDateTime(v.created_at))+'</div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span></div></div></div>').join('');
+  const bookings=appt.map(a=>'<div class="tl"><div class="d">'+nice(a.date)+'<small>'+t12(a.time)+'</small></div><div><b>'+esc(procName(a))+'</b><div class="req-meta"><span class="chip">'+esc(a.doc)+'</span>'+stPill(a.status)+'</div></div></div>').join('');
+  return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">'+initials(p.name)+'</div><div><b style="font-size:18px">'+esc(p.name)+'</b><small class="num"><span class="id">#'+p.id+'</span> · '+esc(prettyPhone(p.phone))+'</small></div></div><a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(p.phone,'Hello '+p.name+', thank you for contacting Ultimate Esthetics. ')+'">WhatsApp</a></div>'+
+  '<div class="stats-grid" style="margin:14px 0;grid-template-columns:repeat(4,minmax(0,1fr))"><div class="stat-box"><div class="lbl">Visits</div><div class="val num">'+Number(fp.visit_count||0)+'</div></div><div class="stat-box"><div class="lbl">Billed</div><div class="val num">Rs '+Number(fp.billed||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Received</div><div class="val num">Rs '+Number(fp.received||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Balance</div><div class="val num" style="color:var(--bad)">Rs '+Number(fp.balance||0).toLocaleString('en-PK')+'</div></div></div>'+
+  (fu?'<div class="alert-item info" style="margin-bottom:10px">Follow-up due <b>'+nice(fu)+'</b></div>':'')+
+  '<h2 style="font-size:15px;margin:8px 0">Visit timeline</h2>'+(tl||'<div class="empty">No visit records yet.</div>')+
+  '<h2 style="font-size:15px;margin:18px 0 4px">Appointment history</h2>'+(bookings||'<div class="empty">No appointments.</div>')+'</div>';
+}
+
+function viewSecurity() {
+ const live=state.security||{};
+ const rows=(items,fn,empty)=>items&&items.length?items.map(fn).join(''):'<tr><td colspan="5" class="empty">'+empty+'</td></tr>';
+ return head('Security','Account protection, login records and clinic data backups.','<span class="hint">Updates automatically every 5 seconds · Pakistan Standard Time</span>')+
+ '<div class="security-grid">'+
+ '<section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use a strong password. No fixed character limit.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>'+
+ '<section class="card"><div class="card-head"><h2>Login history</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>User</th><th>IP address</th><th>Result</th></tr></thead><tbody>'+rows(live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+ (x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'</tbody></table></div><small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||'IP unavailable')+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join('')||'<div class="empty">No active sessions.</div>')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Activity log</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>'+rows(live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'</tbody></table></div><small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
+ '<section class="card wide"><div class="card-head"><h2>Database backup</h2><span class="pill warn">Not configured</span></div><b>Automatic backup is not active.</b><p class="hint" style="margin-top:6px">No backup is claimed until a separate private storage bucket, scheduled export, retention policy and restore test are configured. Your clinic records remain securely stored.</p></section>'+
+ '</div>';
+}
+function viewHistory() {
+  return head('Patient History', 'Search by name, phone number, or patient ID.', '') +
+    '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
+}
+
+/* ---------- render + events ---------- */
+const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
+
+function openVisitForm(id) {
+ const a=state.appts.find(x=>Number(x.id)===Number(id));if(!a){toast('Appointment details could not be loaded.');return;}
+ const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),prev=Number(fp?.balance||0);
+ const doctorOptions=state.doctors.map(d=>'<option value="'+d.id+'" '+(Number(d.id)===Number(a.did)?'selected':'')+'>'+esc(d.name)+'</option>').join('');
+ const invoiceNo='UE-'+new Date().getFullYear()+'-'+String(a.id).padStart(5,'0');
+ const html='<div class="visit-modal" id="visitModal"><section class="visit-card" style="width:min(1050px,100%);padding:18px"><div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>'+invoiceNo+'<br>'+esc(pkDateTime(new Date().toISOString()))+'</div></div><div class="card-head"><div><h2 style="font:26px var(--font-display)">Patient Visit &amp; Invoice</h2><small class="muted">Appointment information is pre-filled. Complete the treatment, prescription and payment below.</small></div><button class="btn sm" type="button" data-act="closevisit">Close</button></div><form id="visitForm" data-id="'+a.id+'" data-pid="'+a.pid+'" class="col" style="gap:12px"><div class="visit-info-grid"><div class="card"><div class="card-head"><h2>Patient Details</h2><span class="pill info">From booking</span></div><div class="field"><label>Patient name</label><input class="inp" value="'+esc(a.name)+'" readonly></div><div class="field" style="margin-top:8px"><label>Phone number</label><input class="inp" value="'+esc(prettyPhone(a.phone))+'" readonly></div><div class="field" style="margin-top:8px"><label>Patient ID</label><input class="inp" value="#'+a.pid+'" readonly></div></div><div class="card"><div class="card-head"><h2>Doctor</h2><span class="pill info">Editable</span></div><div class="field"><label>Assigned doctor</label><select class="inp" id="visitDoctor" required>'+doctorOptions+'</select></div><div class="field" style="margin-top:8px"><label>Appointment date &amp; time</label><input class="inp" value="'+nice(a.date)+' · '+t12(a.time)+'" readonly></div></div></div><div class="card"><div class="card-head"><h2>Treatment / Procedures</h2><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button></div><div class="tbl-wrap"><table class="tbl" style="min-width:620px"><thead><tr><th>#</th><th>Procedure</th><th>Quantity</th><th>Unit price (Rs)</th><th>Total (Rs)</th><th></th></tr></thead><tbody id="visitProcedures"><tr class="proc-line"><td>1</td><td><input class="inp" name="procedure" value="'+esc(a.proc)+'" placeholder="Procedure name"></td><td><input class="inp" name="qty" type="number" min="1" step="1" value="1"></td><td><input class="inp" name="unit_price" type="number" min="0" step="1" value="0"></td><td class="num line-total">0</td><td><button class="btn bad sm" type="button" data-remove-procedure aria-label="Remove procedure">×</button></td></tr></tbody></table></div><div class="right" style="margin-top:12px;font-weight:700">Total Treatment Amount: <span class="chip" style="font-size:16px" id="visitTotalLabel">Rs 0</span></div></div><div class="card"><div class="card-head"><h2>℞ Prescription</h2><span class="muted">Doctor's instructions</span></div><textarea class="inp" id="visitRx" rows="5" placeholder="Type prescription, medicines, dosage, duration and instructions here..."></textarea></div><div class="visit-info-grid"><div class="card"><div class="card-head"><h2>Payment Details</h2><span class="chip">PKR · Rs</span></div><div class="row"><span>Previous balance</span><b id="visitPrev">Rs '+prev.toLocaleString('en-PK')+'</b></div><div class="row"><span>Total amount</span><b id="visitAmount">Rs 0</b></div><div class="field" style="margin-top:10px"><label>Amount received</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0"></div><div class="field" style="margin-top:8px"><label>Payment method</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="row" style="margin-top:10px;background:var(--ok-bg);padding:10px;border-radius:10px"><b>Remaining balance</b><b id="visitRemaining">Rs '+prev.toLocaleString('en-PK')+'</b></div><div class="field" style="margin-top:8px"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="card"><div class="card-head"><h2>Notes</h2></div><textarea class="inp" id="visitNotes" rows="8" placeholder="Add observations or additional notes..."></textarea><div class="stamp-box"><span>Doctor Stamp</span><small>Optional</small></div></div></div><div class="invoice-footer">Thank you for choosing Ultimate Esthetics.<small>Al-ain Arcade, Old Airport Road, Rawalpindi 46000 · 0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</small></div><div class="err" id="visitErr" hidden></div><div class="actions" style="justify-content:flex-end"><button class="btn" type="button" data-act="printinvoice">Print Invoice</button><button class="btn pri" type="submit" id="visitSave">Save Visit &amp; Payment</button></div></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>';
+ document.body.insertAdjacentHTML('beforeend',html);
+ const modal=$('#visitModal'),tbody=$('#visitProcedures');
+ const money=n=>'Rs '+Math.max(0,Number(n)||0).toLocaleString('en-PK');
+ const calc=()=>{let total=0;[...tbody.querySelectorAll('.proc-line')].forEach((row,i)=>{row.children[0].textContent=i+1;const q=Math.max(1,Number(row.querySelector('[name=qty]').value||1)),p=Math.max(0,Number(row.querySelector('[name=unit_price]').value||0)),line=q*p;row.querySelector('.line-total').textContent=line.toLocaleString('en-PK');total+=line;});$('#visitTotalLabel').textContent=money(total);$('#visitAmount').textContent=money(total);$('#visitRemaining').textContent=money(Math.max(0,prev+total-Number($('#visitReceived').value||0)));return total;};
+ tbody.addEventListener('input',calc);$('#visitReceived').addEventListener('input',calc);calc();
+ const procedures=()=>[...tbody.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=qty]').value||1)*Number(row.querySelector('[name=unit_price]').value||0)}));
+ const invoice=()=>{const ps=procedures(),total=ps.reduce((n,p)=>n+p.fee,0),paid=Number($('#visitReceived').value||0),doctor=state.doctors.find(d=>Number(d.id)===Number($('#visitDoctor').value));return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</p></div><div style="text-align:right"><b>INVOICE</b><br>'+invoiceNo+'<br>'+esc(pkDateTime(new Date().toISOString()))+'</div></div><h2>Patient Details</h2><p>'+esc(a.name)+' · '+esc(prettyPhone(a.phone))+' · Patient #'+a.pid+'</p><h2>Doctor &amp; Appointment</h2><p>'+esc(doctor?.name||a.doc)+' · '+nice(a.date)+' · '+t12(a.time)+'</p><h2>Treatment / Procedures</h2><table><thead><tr><th>Procedure</th><th>Quantity</th><th>Unit price</th><th>Total</th></tr></thead><tbody>'+ps.map((p,i)=>'<tr><td>'+esc(p.name)+'</td><td>'+Number(tbody.querySelectorAll('.proc-line')[i].querySelector('[name=qty]').value||1)+'</td><td>Rs '+(Number(tbody.querySelectorAll('.proc-line')[i].querySelector('[name=unit_price]').value||0)).toLocaleString('en-PK')+'</td><td>Rs '+p.fee.toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><h2>Prescription (Rx)</h2><div style="min-height:100px;white-space:pre-wrap;border:1px solid #ddd;padding:12px">'+esc($('#visitRx').value)+'</div><h2>Payment Details</h2><p>Previous balance: '+money(prev)+'<br>Total amount: '+money(total)+'<br>Amount received: '+money(paid)+'<br>Remaining balance: '+money(Math.max(0,prev+total-paid))+'<br>Payment method: '+esc($('#visitMethod').value)+'</p><h2>Notes</h2><p>'+esc($('#visitNotes').value)+'</p><div style="height:70px;text-align:right;margin-top:24px">Doctor Stamp: __________________</div><p style="text-align:center;margin-top:30px">Thank you for choosing Ultimate Esthetics.</p>';};
+ modal._printInvoice=()=>{const box=$('#visitInvoicePrint');box.innerHTML=invoice();box.style.display='block';window.print();box.style.display='none';};
+}
+function renderNav() {
+  const n = pending().length;
+  $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+}
+
+async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
+let securityAutoRefresh=null;
+function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
+function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
+function go(p) { state.page = p; render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
+
+
+document.addEventListener('click', async e => {
+ if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
+ const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
+ try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request'}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('If owner account exists, reset link email has been sent.'); }
+ catch(x){ if(x.message!=='unauthorized') toast('Reset email request failed.'); }
+ b.disabled=false; b.textContent=old;
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='pwForm') return; e.preventDefault();
+ const current=$('#pwCurrent').value,n=$('#pwNew').value,n2=$('#pwAgain').value,err=$('#pwErr'),btn=$('#pwSave');
+ if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
+ if(!n){err.textContent='Enter a new password.';err.hidden=false;return;}
+ err.hidden=true;btn.disabled=true;btn.textContent='Saving…';
+ try { const r=await api('/api/admin/password',{method:'POST',body:{current_password:current,new_password:n}}); if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save password';return;} toast('Password updated. Please sign in again with your new password.'); showLogin(); }
+ catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Save password';}
+});
+
+document.addEventListener('click', async e => {
+  const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
+  const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
+  const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
+  const calNext=e.target.closest('[data-cal-next]'); if(calNext){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
+  if(e.target.closest('[data-cal-today]')){state.patientDate=todayStr();state.calendarMonth=todayStr().slice(0,7);render();return;}
+  if(e.target.closest('[data-date-all]')){state.patientDate=null;render();return;}
+  const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
+  const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = Number(b.dataset.id); b.disabled = true;
+  switch (b.dataset.act) {
+    case 'visit': b.disabled=false; openVisitForm(id); break;
+    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){toast('Patient checked in. Select Open form to record the visit.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
+    case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in reversed.');await loadData();}else toast(r.data.error||'Update failed');}); break;
+    case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
+    case 'printinvoice': document.querySelector('#visitModal')?._printInvoice?.(); b.disabled=false; break;
+    case 'accept': setStatus(id, 'confirmed', 'Appointment accepted. You can send the confirmation from Requests > Accepted.'); break;
+    case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
+    case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
+    case 'restore': state.tab = 'pending'; setStatus(id, 'pending', 'Moved back to pending.'); break;
+    case 'done': setStatus(id, 'done', 'Visit marked as completed.'); break;
+    case 'noshow': setStatus(id, 'no_show', 'Marked as no-show.'); break;
+    case 'undo': setStatus(id, 'confirmed', 'Moved back to awaiting check-in.'); break;
+    case 'hist': state.histSel = Number(b.dataset.p); b.disabled = false; go('history'); break;
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'hq') { state.histQ = t.value; $('#plist').innerHTML = histList(); return; }
+  if (t.id === 'mPhone') {
+    const d = last10(t.value), m = d.length >= 10 && state.patients.find(p => last10(p.phone) === d), h = $('#mDup');
+    if (m) { h.textContent = 'Existing patient: ' + m.name + ' (#' + m.id + '). The existing patient ID will be reused.'; h.className = 'hint ok'; }
+    else { h.textContent = 'Returning visits will be linked to this patient record.'; h.className = 'hint'; }
+  }
+});
+
+document.addEventListener('click',e=>{
+ if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='visitForm')return;e.preventDefault();
+ const form=e.target,err=$('#visitErr'),btn=$('#visitSave'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value)}));
+ const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value);
+ if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+total){err.textContent='Please check the procedure, fee, total, and amount received.';err.hidden=false;return;}
+ btn.disabled=true;btn.textContent='Saving…';
+ try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,total_amount:total,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}$('#visitModal').remove();toast('Visit/payment saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
+ catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
+});
+
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'manualForm') return;
+  e.preventDefault();
+  const err = $('#mErr'), btn = $('#mBtn'); err.hidden = true;
+  const name = $('#mName').value.trim(), ph = last10($('#mPhone').value), did = Number($('#mDoc').value), date = $('#mDate').value, time = $('#mTime').value, proc = $('#mProc').value.trim();
+  const fail = m => { err.textContent = m; err.hidden = false; };
+  if (!name) return fail('Enter the patient name.');
+  if (ph.length < 10) return fail('Enter a valid 10-digit Pakistani mobile number.');
+  if (!did) return fail('Select a doctor.');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const r = await api('/api/admin/manual', { method: 'POST', body: { name, phone: ph, doctor_id: did, date, time, treatment: proc || null } });
+    if (!r.ok) { fail(r.data.error || 'Unable to save the appointment (' + r.status + ').'); }
+    else {
+      await loadData();
+      toast('Walk-in patient added (#' + r.data.patient_id + ').');
+      state.tab = 'accepted'; state.filter = 'all'; go(date === todayStr() ? 'today' : 'requests');
+      return;
+    }
+  } catch (x) { if (x.message !== 'unauthorized') fail('Unable to connect to the server.'); }
+  btn.disabled = false; btn.textContent = 'Add & confirm';
+});
+
+boot();
+</script>
+</body>
+</html>
