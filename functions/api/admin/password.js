@@ -10,7 +10,7 @@ const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncode
 export async function onRequestPost({request,env}) {
  const u=await session(request,env);if(!u)return json({error:"Unauthorized"},401);
  const b=await request.json(),current=String(b.current_password||""),next=String(b.new_password||"");
- if(next.length<10||!/[0-9]/.test(next))return json({error:"New password must be 10+ characters and include a number."},400);
+ if(!next)return json({error:"New password is required."},400);
  const row=await env.DB.prepare("SELECT id,password_hash,password_salt FROM users WHERE id=?").bind(u.user_id).first();
  if(!row||await hash(current+row.password_salt)!==row.password_hash)return json({error:"Current password is incorrect."},400);
  const saltBytes=crypto.getRandomValues(new Uint8Array(16)),salt=Array.from(saltBytes).map(x=>x.toString(16).padStart(2,"0")).join(""),ph=await hash(next+salt);
