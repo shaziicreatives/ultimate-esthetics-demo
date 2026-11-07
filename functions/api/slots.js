@@ -13,10 +13,14 @@ export async function onRequestGet(context) {
         }
 
         const { results } = await env.DB.prepare(
-            "SELECT time FROM appointments WHERE doctor_id = ? AND date = ? AND status IN ('pending', 'confirmed')"
+            "SELECT time FROM appointments WHERE doctor_id = ? AND date = ? AND status NOT IN ('cancelled', 'rejected', 'no_show')"
         ).bind(doctor_id, date).all();
 
-        const bookedSlots = results.map(row => row.time);
+        // Convert '14:00:00' or '14:00' to numeric hour (14) to perfectly match frontend chips
+        const bookedSlots = results.map(row => {
+            const parts = row.time.split(':');
+            return parseInt(parts[0], 10);
+        });
 
         return new Response(JSON.stringify({ bookedSlots }), {
             headers: { "Content-Type": "application/json" }
