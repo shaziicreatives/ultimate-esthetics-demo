@@ -236,7 +236,7 @@ const waLink = (phone, msg) => 'https://wa.me/92' + last10(phone) + '?text=' + e
 const procName = a => a.proc || 'Not specified';
 
 const STATUS = {
-  pending: ['warn', 'Pending'], confirmed: ['info', 'Awaiting check-in'], done: ['ok', 'Done'],
+  pending: ['warn', 'Pending'], confirmed: ['info', 'Awaiting check-in'], in_room: ['warn', 'In room'], done: ['ok', 'Done'],
   no_show: ['bad', 'No-show'], rejected: ['bad', 'Rejected'], cancelled: ['mute', 'Cancelled']
 };
 const stPill = s => { const x = STATUS[s] || ['mute', s]; return '<span class="pill ' + x[0] + '">' + x[1] + '</span>'; };
@@ -400,7 +400,7 @@ function viewDashboard() {
   const nos = td.filter(a => a.status === 'no_show').length;
   const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
 
-  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="visit" data-id="' + a.id + '">Check-in / Open form</button>' : a.status === 'done' ? '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">Aaj koi confirmed patient nahi hai.</td></tr>';
+  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="checkin" data-id="' + a.id + '">Check-in</button>' : a.status === 'in_room' ? '<button class="btn sm pri" data-act="visit" data-id="' + a.id + '">Open form</button>' : a.status === 'done' ? '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">Aaj koi confirmed patient nahi hai.</td></tr>';
 
   const fu = state.appts.filter(a => a.fu && a.fu <= plusDays(7) && !['cancelled', 'rejected'].includes(a.status)).sort((x, y) => x.fu.localeCompare(y.fu));
   const fuHtml = fu.length ? fu.slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + (a.fu < t ? 'Overdue since ' : 'Due ') + nice(a.fu) + ' · #' + a.pid + '</small></div><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', Ultimate Esthetics se yaad dahani: aap ka follow-up ' + nice(a.fu) + ' ko due hai.') + '">Remind</a></div>').join('') : '<div class="empty">Is hafte koi follow-up due nahi.</div>';
