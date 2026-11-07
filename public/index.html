@@ -249,9 +249,9 @@ const CFG={
  wa:'923340005909',
  stats:[[5000,0,'+','Patients attended'],[8,0,'+','Years of experience'],[15,0,'+','Treatments offered'],[4.9,1,'','Google rating']],
  doctors:[
-  {n:'Dr. Ayesha Malik',q:'Consultant Dermatologist',d:'Acne, scars, pigmentation and skin rejuvenation.',img:''},
-  {n:'Dr. Hamza Raza',q:'Hair Transplant Surgeon',d:'Hair transplant, PRP, exosomes and PRGF.',img:''},
-  {n:'Dr. Sana Iqbal',q:'Aesthetic Physician',d:'Hydrafacial, laser, glow drips and body care.',img:''}
+  {id:1,n:'Dr. Ayesha Malik',q:'Consultant Dermatologist',d:'Acne, scars, pigmentation and skin rejuvenation.',img:''},
+  {id:2,n:'Dr. Hamza Raza',q:'Hair Transplant Surgeon',d:'Hair transplant, PRP, exosomes and PRGF.',img:''},
+  {id:3,n:'Dr. Sana Iqbal',q:'Aesthetic Physician',d:'Hydrafacial, laser, glow drips and body care.',img:''}
  ],
  reviews:[
   ['The team explained the cause of my hair fall before suggesting anything.','Verified Patient'],
@@ -281,7 +281,7 @@ function scrollToBooking(){
 
 /* HELPER TO GENERATE MOVING REVIEWS HTML */
 function renderMovingReviews() {
-  const repeatedReviews = [...CFG.reviews, ...CFG.reviews]; // duplicated for smooth infinite loop
+  const repeatedReviews = [...CFG.reviews, ...CFG.reviews];
   const cardsHtml = repeatedReviews.map(r => `
     <div class="rev-card">
       <div class="stars">${stars(5)}</div>
@@ -373,53 +373,106 @@ function docGrid(){
   return `<div class="docs">${CFG.doctors.map((d,i)=>rv(`<div class="doc"><div class="av">${d.img?`<img src="${d.img}" alt="${d.n}">`:d.n.replace('Dr. ','').split(' ').map(w=>w[0]).join('')}</div><h3>${d.n}</h3><div class="q">${d.q}</div><p>${d.d}</p><button class="btn ghost" onclick="scrollToBooking()">Book Consultation</button></div>`,i*.12)).join('')}</div>`;
 }
 
-/* BOOKING ENGINE LOGIC */
-const mem=[];
-const store={get(){try{return JSON.parse(localStorage.getItem('ue_b2')||'[]')}catch(e){return mem}},add(k){try{const a=this.get();a.push(k);localStorage.setItem('ue_b2',JSON.stringify(a))}catch(e){mem.push(k)}}};
+/* BOOKING ENGINE LOGIC (Connected to Cloudflare D1 APIs) */
 const times=[11,12,13,14,15,16,17,18,19];
 const f12=h=>(h%12||12)+':00 '+(h<12?'am':'pm');
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const days=(()=>{const a=[],d=new Date();while(a.length<14){if(d.getDay()!==0)a.push(new Date(d));d.setDate(d.getDate()+1)}return a})();
-const seeded=(k)=>{let n=0;for(const c of k)n=(n*31+c.charCodeAt(0))>>>0;return n%10<3};
+
 let sel={doc:0,d:iso(days[0]),h:null},done=null;
-const taken=(doc,d,h)=>{const now=new Date();if(d===iso(now)&&h<=now.getHours())return true;return seeded(doc+d+h)||store.get().includes(doc+'|'+d+'|'+h)};
+let bookedSlotsList=[];
+
+async function fetchBookedSlots(){
+  try {
+    const doctorId = CFG.doctors[sel.doc].id;
+    const res = await fetch(`/api/slots?doctor_id=${doctorId}&date=${sel.d}`);
+    const data = await res.json();
+    bookedSlotsList = data.bookedSlots || [];
+  } catch(e) {
+    bookedSlotsList = [];
+  }
+  updateTimeChips();
+}
+
+function updateTimeChips(){
+  const timeContainer = document.querySelector('.times');
+  if(!timeContainer) return;
+  
+  const now=new Date();
+  const nowHour = now.getHours();
+  const isToday = (sel.d === iso(now));
+
+  timeContainer.innerHTML = times.map(h=>{
+    const isPast = isToday && (h <= nowHour);
+    const isTaken = bookedSlotsList.includes(h) || isPast;
+    const isSelected = (sel.h === h);
+    return `<button type="button" class="chip ${isSelected?'sel':''}" data-h="${h}" ${isTaken?'disabled':''}>${f12(h)}<small>${isTaken?'Booked':'Available'}</small></button>`;
+  }).join('');
+}
 
 function drawBook(){
  const el=document.getElementById('bk');if(!el)return;
- if(done){el.innerHTML=`<div class="done" style="grid-column:1/-1"><h3>Request received</h3><p>${done.name}, your slot with ${done.doc} is held for <b>${done.label}</b>. The clinic will confirm on WhatsApp shortly.</p><a class="btn" target="_blank" rel="noopener" href="https://wa.me/${CFG.wa}?text=${encodeURIComponent(done.msg)}">Send details on WhatsApp</a><button class="btn ghost" id="again">Book another</button></div>`;return}
+ if(done){el.innerHTML=`<div class="done" style="grid-column:1/-1"><h3>Request received</h3><p>${done.name}, your slot with ${done.doc} is confirmed for <b>${done.label}</b>. The clinic will verify on WhatsApp shortly.</p><a class="btn" target="_blank" rel="noopener" href="https://wa.me/${CFG.wa}?text=${encodeURIComponent(done.msg)}">Send details on WhatsApp</a><button class="btn ghost" id="again">Book another</button></div>`;return}
  const dl=d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
  el.innerHTML=`<div>
   <span class="lbl">Doctor</span><div class="dr">${CFG.doctors.map((d,i)=>`<button type="button" class="chip ${i===sel.doc?'sel':''}" data-pick="${i}">${d.n}</button>`).join('')}</div>
   <span class="lbl">Date</span><div class="days">${days.map(d=>`<button type="button" class="chip ${iso(d)===sel.d?'sel':''}" data-d="${iso(d)}">${dl(d)}</button>`).join('')}</div>
-  <span class="lbl">Time</span><div class="times">${times.map(h=>{const t=taken(sel.doc,sel.d,h);return `<button type="button" class="chip ${sel.h===h?'sel':''}" data-h="${h}" ${t?'disabled':''}>${f12(h)}<small>${t?'Booked':'Available'}</small></button>`}).join('')}</div></div>
+  <span class="lbl">Time</span><div class="times">Loading slots...</div></div>
  <form id="f" novalidate><span class="lbl">Your details</span>
   <input name="n" placeholder="Full name" autocomplete="name" required>
   <input name="p" placeholder="Phone / WhatsApp number" inputmode="tel" autocomplete="tel" required>
   <select name="s" aria-label="Treatment"><option value="">Treatment (optional)</option>${SERVICES.map(s=>`<option>${s}</option>`).join('')}</select>
-  <div class="err" id="err"></div><button class="btn" style="width:100%;background:var(--sand);color:var(--ink)">Confirm Appointment Slot</button></form>`;
+  <div class="err" id="err"></div><button class="btn" style="width:100%;background:var(--sand);color:var(--ink)" id="submit-btn">Confirm Appointment Slot</button></form>`;
+  
+  fetchBookedSlots();
 }
 
 document.addEventListener('click',e=>{
  const t=e.target;
  const pk=t.closest('[data-pick]');if(pk){sel={doc:+pk.dataset.pick,d:sel.d,h:null};drawBook();return}
  const d=t.closest('[data-d]');if(d){sel.d=d.dataset.d;sel.h=null;drawBook();return}
- const h=t.closest('[data-h]');if(h&&!h.disabled){sel.h=+h.dataset.h;drawBook();return}
+ const h=t.closest('[data-h]');if(h&&!h.disabled){sel.h=+h.dataset.h;updateTimeChips();return}
  if(t.id==='again'){done=null;sel.h=null;drawBook();return}
  const g=t.closest('.gal [data-i]');if(g){const x=CFG.gallery[+g.dataset.i],lb=document.getElementById('lb'),b=document.getElementById('lbi');b.style.setProperty('--g',`linear-gradient(135deg,${x[1]},${x[2]})`);b.innerHTML=(x[3]?`<img src="${x[3]}" alt="">`:'')+`<span style="position:relative">${x[0]}</span>`;lb.classList.add('on');return}
  if(t.closest('#lb'))document.getElementById('lb').classList.remove('on');
 });
 
-document.addEventListener('submit',e=>{
+document.addEventListener('submit',async e=>{
  if(e.target.id!=='f')return;e.preventDefault();
- const fd=new FormData(e.target),n=fd.get('n').trim(),p=fd.get('p').trim(),s=fd.get('s'),err=document.getElementById('err');
+ const fd=new FormData(e.target),n=fd.get('n').trim(),p=fd.get('p').trim(),s=fd.get('s'),err=document.getElementById('err'),submitBtn=document.getElementById('submit-btn');
  if(sel.h===null){err.textContent='Choose an available time first.';return}
  if(n.length<2){err.textContent='Enter your name.';return}
  if(p.replace(/\D/g,'').length<10){err.textContent='Enter a valid phone number.';return}
- store.add(sel.doc+'|'+sel.d+'|'+sel.h);
- const label=new Date(sel.d+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' at '+f12(sel.h),doc=CFG.doctors[sel.doc].n;
- done={name:n,doc,label,msg:`Hello, I booked ${label} with ${doc}.\nName: ${n}\nPhone: ${p}${s?'\nTreatment: '+s:''}`};
- try{window.fbq&&fbq('track','Lead');window.ttq&&ttq.track('SubmitForm');window.gtag&&gtag('event','generate_lead')}catch(x){}
- drawBook();
+
+ submitBtn.disabled = true;
+ submitBtn.textContent = 'Booking...';
+
+ try {
+   const res = await fetch('/api/book', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       name: n,
+       phone: p,
+       doctor_id: CFG.doctors[sel.doc].id,
+       date: sel.d,
+       time: sel.h,
+       treatment: s || null
+     })
+   });
+   const data = await res.json();
+   if(!res.ok) throw new Error(data.error || 'Failed to book');
+
+   const label=new Date(sel.d+'T00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' at '+f12(sel.h),doc=CFG.doctors[sel.doc].n;
+   done={name:n,doc,label,msg:`Hello, I booked ${label} with ${doc}.\nName: ${n}\nPhone: ${p}${s?'\nTreatment: '+s:''}`};
+   try{window.fbq&&fbq('track','Lead');window.ttq&&ttq.track('SubmitForm');window.gtag&&gtag('event','generate_lead')}catch(x){}
+   drawBook();
+ } catch(errObj) {
+   err.textContent = errObj.message;
+   submitBtn.disabled = false;
+   submitBtn.textContent = 'Confirm Appointment Slot';
+   fetchBookedSlots();
+ }
 });
 
 let io;
