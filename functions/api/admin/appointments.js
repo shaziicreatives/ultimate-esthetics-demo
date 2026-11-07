@@ -2,7 +2,7 @@ async function verifySession(request, env) {
     const cookieHeader = request.headers.get('Cookie') || '';
     const match = cookieHeader.match(/admin_token=([^;]+)/);
     if (!match) return null;
-    const token = match[1];
+    const token = decodeURIComponent(match[1]);
 
     const tokenBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
     const tokenHash = Array.from(new Uint8Array(tokenBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -63,11 +63,17 @@ export async function onRequestPatch(context) {
             return new Response(JSON.stringify({ error: "Invalid parameters" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        await env.DB.prepare(
+        const before = await env.DB.prepare("SELECT status, patient_id FROM appointments WHERE id = ?").bind(id).first();
+        if (!before) return new Response(JSON.stringify({ error: "Appointment not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+
+        const updated = await env.DB.prepare(
             "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         ).bind(status, id).run();
+        await env.DB.prepare(
+            "INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, ?, 'appointment', ?, ?, ?)"
+        ).bind(session.id, session.username, "appointment_status", id, before.status + " -> " + status, request.headers.get("CF-Connecting-IP") || "").run();
 
-        return new Response(JSON.stringify({ success: true }), {
+        return new Response(JSON.stringify({ success: true, changes: updated.meta?.changes || 0 }), {
             headers: { "Content-Type": "application/json" }
         });
     } catch (err) {
