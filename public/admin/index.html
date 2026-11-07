@@ -289,7 +289,7 @@ async function loadData(first) {
   const appts = raw.map(a => ({
     id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
     did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
-    proc: a.treatment || '', status: a.status === 'noshow' ? 'no_show' : a.status, source: a.source || '', fu: a.follow_up_date || ''
+    proc: a.treatment || '', status: a.checked_in_at && a.status === 'confirmed' ? 'in_room' : (a.status === 'noshow' ? 'no_show' : a.status), source: a.source || '', fu: a.follow_up_date || ''
   }));
   const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
   if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
@@ -389,7 +389,7 @@ $('#soundBtn').addEventListener('click', () => { soundEnabled = !soundEnabled; l
 
 /* ---------- views ---------- */
 const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
-const todays = () => state.appts.filter(a => a.date === todayStr() && ['confirmed', 'done', 'no_show'].includes(a.status)).sort((x, y) => x.time.localeCompare(y.time));
+const todays = () => state.appts.filter(a => a.date === todayStr() && ['confirmed', 'in_room', 'done', 'no_show'].includes(a.status)).sort((x, y) => x.time.localeCompare(y.time));
 const pending = () => state.appts.filter(a => a.status === 'pending');
 
 function viewDashboard() {
@@ -456,9 +456,10 @@ function viewRequests() {
 
 function viewToday() {
   const all = todays(), t = todayStr();
-  const fl = [['all', 'All'], ['confirmed', 'Awaiting'], ['done', 'Done'], ['no_show', 'No-show']];
+  const fl = [['all', 'All'], ['confirmed', 'Awaiting'], ['in_room', 'In room'], ['done', 'Done'], ['no_show', 'No-show']];
   const rows = all.filter(a => state.filter === 'all' || a.status === state.filter).map(a => {
-    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="visit" data-id="' + a.id + '">Check in / Visit</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
+    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="checkin" data-id="' + a.id + '">Check-in</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
+      : a.status === 'in_room' ? '<button class="btn pri sm" data-act="visit" data-id="' + a.id + '">Open form</button> <button class="btn sm" data-act="undo_checkin" data-id="' + a.id + '">Undo check-in</button>'
       : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', aap aaj aa nahi sakay. Kya hum naya time de dein? Ultimate Esthetics.') + '">New time</a> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>'
       : '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>';
     return '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + act + '</td></tr>';
@@ -564,6 +565,8 @@ document.addEventListener('click', e => {
   const id = Number(b.dataset.id); b.disabled = true;
   switch (b.dataset.act) {
     case 'visit': b.disabled=false; openVisitForm(id); break;
+    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){toast('Patient checked in. Ab Open form par click karein.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
+    case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in undo ho gaya.');await loadData();}else toast(r.data.error||'Update failed');}); break;
     case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
     case 'accept': setStatus(id, 'confirmed', 'Accepted. Requests > Accepted se WhatsApp bhej sakte hain.'); break;
     case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
