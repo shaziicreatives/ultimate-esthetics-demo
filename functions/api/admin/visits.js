@@ -25,7 +25,7 @@ export async function onRequestPost({request,env}) {
   const b=await request.json(), appointmentId=Number(b.appointment_id), total=Number(b.total_amount), procedures=Array.isArray(b.procedures)?b.procedures:[];
   if(!appointmentId||!Number.isSafeInteger(total)||total<0||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Visit details invalid"},400);
   const a=await env.DB.prepare("SELECT * FROM appointments WHERE id=?").bind(appointmentId).first();if(!a)return json({error:"Appointment not found"},404);
-  if(a.status!=='confirmed'||!a.checked_in_at)return json({error:"Patient ka pehle Today's Patients se check-in karein. Uske baad hi visit form save hoga."},409);
+  if(a.status!=='confirmed'||!a.checked_in_at)return json({error:"Please check in the patient from the Patients page before saving the visit."},409);
   const old=await env.DB.prepare("SELECT COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=?),0)-COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=?),0) balance").bind(a.patient_id,a.patient_id).first();
   const previousBalance=Math.max(0,Number(old?.balance||0)), received=Number(b.received_now||0);
   if(!Number.isSafeInteger(received)||received<0||received>total+previousBalance)return json({error:"Received amount cannot exceed the previous balance plus this visit bill."},400);
