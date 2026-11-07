@@ -31,11 +31,14 @@
     <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
         <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-gray-800">Ultimate Esthetics — Admin Dashboard</h1>
-            <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300">Refresh Data</button>
+            <div class="flex items-center space-x-4">
+                <span id="liveStatus" class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">● Live Sync Active</span>
+                <button onclick="loadAppointments()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">Refresh Data</button>
+            </div>
         </header>
 
         <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
-            <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Appointments</h2>
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Appointments Management</h2>
             <div class="bg-white rounded-xl shadow overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -46,7 +49,7 @@
                             <th class="p-4">Doctor</th>
                             <th class="p-4">Treatment</th>
                             <th class="p-4">Status</th>
-                            <th class="p-4">Actions</th>
+                            <th class="p-4">Actions / WhatsApp</th>
                         </tr>
                     </thead>
                     <tbody id="appointmentsTable" class="divide-y text-sm text-gray-700">
@@ -57,7 +60,29 @@
         </main>
     </div>
 
+    <!-- Notification Audio -->
+    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
     <script>
+        let lastCount = -1;
+
+        // Check session automatically on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('/api/admin/appointments');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    renderTable(data.appointments);
+                    lastCount = data.appointments.length;
+                    startPolling();
+                }
+            } catch (e) {
+                // Stay on login if unauthorized
+            }
+        });
+
         async function handleLogin(e) {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -76,6 +101,7 @@
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('dashboardSection').classList.remove('hidden');
                     loadAppointments();
+                    startPolling();
                 } else {
                     errDiv.textContent = data.error || 'Login failed';
                     errDiv.classList.remove('hidden');
@@ -98,34 +124,59 @@
                     throw new Error('Failed to fetch');
                 }
                 const data = await res.json();
-                const tbody = document.getElementById('appointmentsTable');
-                tbody.innerHTML = '';
-
-                if (data.appointments.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">No appointments found.</td></tr>`;
-                    return;
+                
+                // Play sound if new appointment arrives
+                if (lastCount !== -1 && data.appointments.length > lastCount) {
+                    document.getElementById('notificationSound').play().catch(e => console.log(e));
                 }
-
-                data.appointments.forEach(app => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="p-4 whitespace-nowrap">${app.date} <br><span class="text-xs text-gray-400">${app.time}</span></td>
-                        <td class="p-4 font-medium">${app.patient_name}</td>
-                        <td class="p-4">${app.patient_phone}</td>
-                        <td class="p-4">${app.doctor_name}</td>
-                        <td class="p-4">${app.treatment || 'Consultation'}</td>
-                        <td class="p-4"><span class="px-2 py-1 rounded text-xs font-semibold ${getStatusBadge(app.status)}">${app.status}</span></td>
-                        <td class="p-4 whitespace-nowrap space-x-2">
-                            <button onclick="updateStatus(${app.id}, 'confirmed')" class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200">Confirm</button>
-                            <button onclick="updateStatus(${app.id}, 'rejected')" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium hover:bg-red-200">Reject</button>
-                            <button onclick="updateStatus(${app.id}, 'done')" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium hover:bg-blue-200">Done</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                lastCount = data.appointments.length;
+                renderTable(data.appointments);
             } catch (err) {
                 console.error(err);
             }
+        }
+
+        function renderTable(appointments) {
+            const tbody = document.getElementById('appointmentsTable');
+            tbody.innerHTML = '';
+
+            if (appointments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">No appointments found.</td></tr>`;
+                return;
+            }
+
+            appointments.forEach(app => {
+                const tr = document.createElement('tr');
+                
+                // Action buttons or WhatsApp link based on status
+                let actionHtml = '';
+                if (app.status === 'pending') {
+                    actionHtml = `
+                        <button onclick="updateStatus(${app.id}, 'confirmed')" class="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-semibold hover:bg-green-200">Confirm</button>
+                        <button onclick="updateStatus(${app.id}, 'rejected')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-semibold hover:bg-red-200">Reject</button>
+                    `;
+                } else {
+                    const waText = encodeURIComponent(`Hello ${app.patient_name}, your appointment at Ultimate Esthetics for ${app.treatment || 'Consultation'} on ${app.date} at ${app.time} has been *${app.status.toUpperCase()}*.`);
+                    const waLink = `https://wa.me/${app.patient_phone.replace(/[^0-9]/g, '')}?text=${waText}`;
+                    actionHtml = `
+                        <span class="text-xs font-medium text-gray-500 mr-2">Action Done</span>
+                        <a href="${waLink}" target="_blank" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-emerald-700 inline-flex items-center gap-1">
+                            💬 Send WhatsApp
+                        </a>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4 whitespace-nowrap">${app.date} <br><span class="text-xs text-gray-400">${app.time}</span></td>
+                    <td class="p-4 font-medium">${app.patient_name}</td>
+                    <td class="p-4">${app.patient_phone}</td>
+                    <td class="p-4">${app.doctor_name}</td>
+                    <td class="p-4">${app.treatment || 'Consultation'}</td>
+                    <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(app.status)}">${app.status}</span></td>
+                    <td class="p-4 whitespace-nowrap">${actionHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         function getStatusBadge(status) {
@@ -155,7 +206,10 @@
             }
         }
 
-        loadAppointments();
+        // Poll for new appointments every 10 seconds
+        function startPolling() {
+            setInterval(loadAppointments, 10000);
+        }
     </script>
 </body>
 </html>
