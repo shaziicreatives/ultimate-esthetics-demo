@@ -355,11 +355,37 @@ function beep() {
       const o = beepCtx.createOscillator(), g = beepCtx.createGain();
       const start = beepCtx.currentTime + delay;
       o.type = 'sine'; o.frequency.value = [880, 1046, 1318][i];
-      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.22, start + .025);
+      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.48, start + .025);
       g.gain.exponentialRampToValueAtTime(.0001, start + .22);
       o.connect(g); g.connect(beepCtx.destination); o.start(start); o.stop(start + .24);
     });
   } catch (e) { }
+}
+function vibrate(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern || [35,25,45]); } catch(e) {} }
+function playClickTone() {
+ if (!soundEnabled) return;
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime;
+  o.type='sine';o.frequency.setValueAtTime(1150,t);o.frequency.exponentialRampToValueAtTime(780,t+.055);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+.085);
+  o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.09);
+ } catch(e) {}
+}
+function playAppointmentAlert() {
+ // Appointment alerts are intentionally independent of the optional UI click-sound switch.
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  [0,.28,.56,.84,1.12].forEach((delay,i)=>{
+   const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;
+   o.type='sine';o.frequency.value=[880,1175,1480,1175,1480][i];
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.72,t+.025);g.gain.setValueAtTime(.72,t+.16);g.gain.exponentialRampToValueAtTime(.0001,t+.30);
+   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.32);
+  });
+ } catch(e) {}
+ vibrate([350,120,350,120,500]);
 }
 function updateSoundButton() {
   const b = $('#soundBtn');
@@ -379,7 +405,7 @@ async function loadData(first) {
   }));
   const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
   if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
-    beep(); toast('New website booking request!');
+    playAppointmentAlert(); toast('New website booking request!');
     if ('Notification' in window && Notification.permission === 'granted') {
       try { new Notification('Ultimate Esthetics', { body: 'A new appointment request has arrived.' }); } catch (e) { }
     }
@@ -473,6 +499,11 @@ $('#logoutBtn').addEventListener('click', async () => {
 });
 $('#themeBtn').addEventListener('click', () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; });
 $('#soundBtn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('ue_admin_sound', soundEnabled ? 'on' : 'off'); updateSoundButton(); if (soundEnabled) beep(); });
+document.addEventListener('click',e=>{
+ const target=e.target;
+ if(target.closest('#soundBtn'))return;
+ if(target.closest('button,a,[role="button"],[data-act],[data-go],[data-tab],[data-filter],[data-patient-date]')){playClickTone();vibrate([22]);}
+},true);
 
 /* ---------- views ---------- */
 const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
