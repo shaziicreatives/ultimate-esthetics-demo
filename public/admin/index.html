@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ultimate Esthetics Clinic Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
@@ -22,24 +22,29 @@
   --shadow:0 2px 8px rgba(0,0,0,.3); color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;overflow-x:hidden}
+html{background:var(--bg)}
+body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
+button[disabled]{opacity:.5;cursor:not-allowed}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .num{font-variant-numeric:tabular-nums}
+.nowrap{white-space:nowrap}
 
-#loginView{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+/* login */
+#loginView{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
 .login-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center}
-.login-card .brand-mark{width:46px;height:46px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:26px;margin:0 auto 12px}
+.brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px;flex:none}
+.login-card .brand-mark{width:46px;height:46px;font-size:26px;margin:0 auto 12px}
 .login-card h2{font-family:var(--font-display);font-size:28px;font-weight:400;margin-bottom:4px}
 .login-card p{color:var(--muted);font-size:13px;margin-bottom:20px}
 
-#appView{width:100%;min-height:100vh;padding:16px;background:var(--bg)}
+/* shell: minmax(0,1fr) is the fix for text getting cut / half-white */
+#appView{display:none;padding:16px}
 .app{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
-  display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 32px);max-width:1440px;margin:0 auto}
-.side{background:var(--surface2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:18px}
+  display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 32px);max-width:1440px;margin:0 auto}
+.side{background:var(--surface2);border-right:1px solid var(--line);border-radius:24px 0 0 24px;padding:20px 14px;display:flex;flex-direction:column;gap:18px}
 .brand{display:flex;align-items:center;gap:10px;padding:0 6px}
-.brand-mark{width:36px;height:36px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px}
 .brand b{display:block;font-family:var(--font-display);font-weight:400;font-size:18px;line-height:1.1}
 .brand span{font-size:10.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .nav-label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:-8px}
@@ -50,16 +55,17 @@ button{cursor:pointer}
 .nav .badge{margin-left:auto;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;background:var(--bad);color:#fff}
 .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
 .user-box{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.user-box>div:last-child{min-width:0}
+.user-box b{font-size:13px;display:block}
+.user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;color:var(--accent)}
-.user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2}
-.user-box b{font-size:13px}
 .foot-btns{display:flex;gap:6px}
 
-.main{padding:26px 30px;min-width:0;background:var(--surface);overflow-x:hidden}
+.main{padding:26px 30px;min-width:0}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
-.page-head h1{font-family:var(--font-display);font-weight:400;font-size:42px;line-height:1}
+.page-head h1{font-family:var(--font-display);font-weight:400;font-size:40px;line-height:1.05}
 .page-head p{color:var(--muted);font-size:13.5px;margin-top:4px}
-.actions{display:flex;gap:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:8px 14px;font-weight:600;font-size:13px;text-decoration:none;color:var(--ink);white-space:nowrap}
 .btn:hover{border-color:var(--sand);background:var(--surface2)}
@@ -68,648 +74,455 @@ button{cursor:pointer}
 .btn.bad{color:var(--bad);border-color:var(--bad-bg);background:var(--bad-bg)}
 .btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0}
 .card.tint{background:var(--surface2)}
-.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
 .card-head h2{font-size:15px;font-weight:700}
+.muted{color:var(--muted)}
 
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
-.stat-box{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
+.stat-box{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
 .stat-box .lbl{font-size:12px;color:var(--muted);margin-bottom:4px}
-.stat-box .val{font-family:var(--font-display);font-size:26px;line-height:1}
-.stat-box .sub{font-size:11px;color:var(--muted);margin-top:4px}
-.stat-box.hero{background:var(--accent);color:var(--accent-ink)}
+.stat-box .val{font-family:var(--font-display);font-size:30px;line-height:1}
+.stat-box .sub{font-size:11.5px;color:var(--muted);margin-top:5px}
+.stat-box.hero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .stat-box.hero .lbl,.stat-box.hero .sub{color:inherit;opacity:.78}
 
-.dash-layout{display:grid;grid-template-columns:1fr 290px;gap:18px}
+.dash-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
 .col{display:flex;flex-direction:column;gap:18px;min-width:0}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
 
 .tbl-wrap{width:100%;overflow-x:auto}
-.tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl{width:100%;border-collapse:collapse;min-width:520px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 .tbl td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:13px}
+.tbl tr:last-child td{border-bottom:0}
 .right{text-align:right}
-
-.who{display:flex;align-items:center;gap:10px}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.who>div:last-child{min-width:0}
 .who b{display:block;line-height:1.2;font-size:13.5px}
-.who small{color:var(--muted);font-size:12px}
+.who small{color:var(--muted);font-size:12px;display:block}
 .id{font-weight:700;color:var(--accent)}
+:root[data-theme="dark"] .id{color:var(--sand)}
 
-.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 .pill.info{background:var(--info-bg);color:var(--info)}
+.pill.mute{background:var(--sand-soft);color:var(--muted)}
 .chip{display:inline-block;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--sand-soft);color:var(--muted)}
 
-.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:3px;border-radius:12px;margin-bottom:16px}
+.tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:3px;border-radius:12px;margin-bottom:16px;flex-wrap:wrap}
 .tabs button{border:0;background:transparent;padding:7px 14px;border-radius:9px;font-weight:600;color:var(--muted);font-size:13px}
 .tabs button.on{background:var(--accent);color:var(--accent-ink)}
 .tabs .n{font-size:11px;padding:1px 6px;border-radius:99px;background:var(--sand);color:var(--ink);margin-left:4px}
 
-.req-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
 .req-item:last-child{border-bottom:0}
-.req-meta{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap}
-.req-time-box select{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:600}
-
-.follow-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-.follow-item:last-child{border-bottom:0}
-
-.profile-card{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.req-meta{display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row>div:first-child{min-width:0}
+.row small{display:block;color:var(--muted);font-size:12px}
 .alert-box{display:flex;flex-direction:column;gap:8px}
-.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.35}
+.alert-item{padding:10px 12px;border-radius:10px;font-size:12.5px;line-height:1.4}
 .alert-item.warn{background:var(--warn-bg);color:var(--warn)}
 .alert-item.bad{background:var(--bad-bg);color:var(--bad)}
 .alert-item.info{background:var(--info-bg);color:var(--info)}
 
-.log-list{display:flex;flex-direction:column;gap:8px}
-.log-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:10px;font-size:12.5px;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.log-row:last-child{border-bottom:0;padding-bottom:0}
-.log-row time{color:var(--muted);font-size:11.5px}
-
-.sw{position:relative;width:40px;height:22px;flex:none}
-.sw input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.sw i{position:absolute;inset:0;background:var(--line);border-radius:99px;transition:.15s}
-.sw i::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.sw input:checked+i{background:var(--ok)}
-.sw input:checked+i::after{transform:translateX(18px)}
-
-.field{display:flex;flex-direction:column;gap:4px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field label{font-size:12px;font-weight:600;color:var(--muted)}
-.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px}
-.empty{padding:24px 10px;text-align:center;color:var(--muted)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:10px 16px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow)}
+.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px;min-width:0}
+.hint{font-size:12px;color:var(--muted)}
+.hint.ok{color:var(--ok)}
+.empty{padding:26px 10px;text-align:center;color:var(--muted)}
+.bigid{font-family:var(--font-display);font-size:64px;line-height:1;color:var(--accent)}
+:root[data-theme="dark"] .bigid{color:var(--sand)}
 
-.scrim{position:fixed;inset:0;background:rgba(47,38,25,.4);z-index:50}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:min(500px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:60;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.15)}
-.drawer-head{padding:20px 22px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}
-.drawer-head h2{font-family:var(--font-display);font-size:26px;font-weight:400}
-.drawer-body{padding:18px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:16px}
-.drawer-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;background:var(--surface)}
-.prow{display:grid;grid-template-columns:1fr 110px 36px;gap:8px;margin-bottom:8px}
-.sum{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
-.sum .r{display:flex;justify-content:space-between;align-items:center}
-.sum .r .inp{width:130px;text-align:right}
+.hist{display:grid;grid-template-columns:300px minmax(0,1fr);gap:18px;align-items:start}
+.plist{display:flex;flex-direction:column;gap:2px;max-height:560px;overflow-y:auto}
+.pitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid transparent;background:transparent;padding:10px;border-radius:12px}
+.pitem:hover{background:var(--surface2)}
+.pitem.on{background:var(--surface2);border-color:var(--sand)}
+.pitem>div:nth-child(2){flex:1;min-width:0}
+.pitem small{color:var(--muted);font-size:12px;display:block}
+.tl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.tl:first-child{border-top:0}
+.tl .d{font-weight:700;font-size:13px}
+.tl .d small{display:block;color:var(--muted);font-weight:500}
 
-@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(3,1fr)}.dash-layout{grid-template-columns:1fr}}
-@media(max-width:768px){#appView{padding:0}.app{grid-template-columns:1fr;border-radius:0}.side{height:auto}.two-col{grid-template-columns:1fr}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
+.err{color:var(--bad);font-size:12.5px}
+
+@media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+  #appView{padding:0}
+  .app{grid-template-columns:minmax(0,1fr);border-radius:0;border:0}
+  .side{border-right:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px;gap:12px}
+  .nav{flex-direction:row;overflow-x:auto}
+  .nav button{width:auto;white-space:nowrap}
+  .nav-label,.user-box{display:none}
+  .main{padding:20px 16px 28px}
+  .page-head h1{font-size:32px}
+  .two-col,.hist{grid-template-columns:minmax(0,1fr)}
+  .req-item{grid-template-columns:minmax(0,1fr)}
+  .btns{justify-content:flex-start}
+  .tl{grid-template-columns:minmax(0,1fr);gap:4px}
+}
 </style>
 </head>
 <body>
 
-<!-- CLEAN LOGIN SCREEN WITH EMPTY FIELDS & NO AUTOFILL CONFLICTS -->
 <div id="loginView">
   <div class="login-card">
     <div class="brand-mark">U</div>
     <h2>Ultimate Esthetics</h2>
     <p>Sign in to access clinic desk</p>
-    <form style="display:flex;flex-direction:column;gap:12px;text-align:left" onsubmit="handleLogin(event)" autocomplete="off">
-      <div class="field">
-        <label for="uName">Username</label>
-        <input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="off" name="no-username">
-      </div>
-      <div class="field">
-        <label for="uPass">Password</label>
-        <input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="new-password" name="no-password">
-      </div>
-      <div id="loginErr" style="color:var(--bad);font-size:12.5px" hidden></div>
+    <form id="loginForm" style="display:flex;flex-direction:column;gap:12px;text-align:left" autocomplete="off">
+      <div class="field"><label for="uName">Username</label><input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username"></div>
+      <div class="field"><label for="uPass">Password</label><input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password"></div>
+      <div id="loginErr" class="err" hidden></div>
       <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button>
     </form>
   </div>
 </div>
 
-<!-- APP VIEW -->
-<div id="appView" style="display:none">
+<div id="appView">
   <div class="app">
     <aside class="side">
-      <div class="brand">
-        <div class="brand-mark">U</div>
-        <div><b>Ultimate Esthetics</b><span>Clinic Desk</span></div>
-      </div>
-      <div class="nav-label">Daily Work</div>
-      <nav class="nav" id="nav"></nav>
+      <div class="brand"><div class="brand-mark">U</div><div><b>Ultimate Esthetics</b><span>Clinic Desk</span></div></div>
+      <div class="nav-label">Daily work</div>
+      <nav class="nav" id="nav" aria-label="Main"></nav>
       <div class="side-foot">
-        <div class="user-box">
-          <div class="avatar">OW</div>
-          <div><b>Owner</b><small>imat2025maths@gmail.com</small></div>
-        </div>
+        <div class="user-box"><div class="avatar">OW</div><div><b>Owner</b><small>Live data</small></div></div>
         <div class="foot-btns">
           <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
-          <button class="btn sm" id="logoutBtn" type="button" onclick="handleLogout()" style="flex:1">Logout</button>
+          <button class="btn sm" id="logoutBtn" type="button" style="flex:1">Logout</button>
         </div>
       </div>
     </aside>
     <main class="main"><div id="view"></div></main>
   </div>
 </div>
-
-<div class="scrim" id="scrim" hidden></div>
-<aside class="drawer" id="drawer" hidden></aside>
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
 
 <script>
+/* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad = n => String(n).padStart(2, '0');
-const t12 = t => { if(!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + pad(m) + ' ' + ap; };
-const initials = n => n.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayStr = () => ymd(new Date());
+const plusDays = n => { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); };
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const nice = s => { if (!s) return ''; const [y, m, d] = s.split('-').map(Number); return pad(d) + ' ' + MON[m - 1] + ' ' + y; };
+const wday = s => { const [y, m, d] = s.split('-').map(Number); return WD[new Date(y, m - 1, d).getDay()]; };
+const t12 = t => { if (!t) return ''; let [h, m] = String(t).split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return pad(h) + ':' + pad(m || 0) + ' ' + ap; };
+const initials = n => String(n || '?').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+/* phones are stored in messy forms like "+92+923125393234" -> always compare on the last 10 digits */
+const last10 = p => String(p || '').replace(/\D/g, '').slice(-10);
+const prettyPhone = p => { const d = last10(p); return d.length === 10 ? '0' + d.slice(0, 3) + ' ' + d.slice(3) : String(p || ''); };
+const waLink = (phone, msg) => 'https://wa.me/92' + last10(phone) + '?text=' + encodeURIComponent(msg);
+const procName = a => a.proc || 'Not specified';
 
-const DOCTORS = ['Dr. Ayesha Malik', 'Dr. Hamza Raza', 'Dr. Sana Iqbal'];
-const PROCS = { 'Consultation': 1500, 'Hydrafacial': 8000, 'Chemical Peel': 6500, 'Laser Hair Removal': 12000, 'Hair PRP': 18000, 'Botox': 25000, 'Dermal Filler': 35000 };
-const SLOTS = ['11:00', '11:30', '12:00', '12:30', '13:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'];
-const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
-
-let state = {
-  page: 'dashboard', tab: 'pending', todayFilter: 'all', histSel: 1001,
-  appts: [], patients: [], requests: [], logs: [
-    {t:'20:30', a:'Owner Removed Receptionist access to dashboard'},
-    {t:'12:05', a:'Reception Checked in Usman Tariq (#1004)'},
-    {t:'11:48', a:'Reception Accepted request from Ali Hassan'}
-  ], form: null
+const STATUS = {
+  pending: ['warn', 'Pending'], confirmed: ['info', 'Awaiting check-in'], done: ['ok', 'Done'],
+  no_show: ['bad', 'No-show'], rejected: ['bad', 'Rejected'], cancelled: ['mute', 'Cancelled']
 };
+const stPill = s => { const x = STATUS[s] || ['mute', s]; return '<span class="pill ' + x[0] + '">' + x[1] + '</span>'; };
 
 const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
-const stPill = s => ({ confirmed: '<span class="pill info">Awaiting check-in</span>', inroom: '<span class="pill warn">In room</span>', done: '<span class="pill ok">Done</span>', noshow: '<span class="pill bad">No-show</span>', pending: '<span class="pill warn">Pending</span>', rejected: '<span class="pill bad">Rejected</span>' }[s] || '<span class="pill info">' + s + '</span>');
 
-let audioCtx = null;
-function playBeep() {
-  try {
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-  } catch(e) {}
+/* ---------- state ---------- */
+const state = { page: 'dashboard', tab: 'pending', filter: 'all', histSel: null, histQ: '', appts: [], patients: [], doctors: [], sig: '' };
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History']];
+
+/* ---------- api ---------- */
+async function api(path, opts) {
+  const o = Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {});
+  if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
+  const res = await fetch(path, o);
+  if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
+  let data = null; try { data = await res.json(); } catch (e) { }
+  return { ok: res.ok, status: res.status, data: data || {} };
 }
 
-let lastCount = -1, liveInterval = null;
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const username = $('#uName').value.trim(), password = $('#uPass').value.trim();
-  const errEl = $('#loginErr'), btn = $('#loginBtn');
-  errEl.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
-
+let beepCtx = null;
+function beep() {
   try {
-    const res = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-    if(res.ok && data.success) {
-      localStorage.setItem('admin_auth', 'true');
-      showDashboard();
-    } else {
-      errEl.textContent = data.error || 'Invalid credentials.'; errEl.hidden = false;
-    }
-  } catch(err) {
-    if(username === 'admin' && password === 'admin') {
-      localStorage.setItem('admin_auth', 'true');
-      showDashboard();
-    } else {
-      errEl.textContent = 'Connection error (try admin / admin).'; errEl.hidden = false;
-    }
+    beepCtx = beepCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (beepCtx.state === 'suspended') beepCtx.resume();
+    const o = beepCtx.createOscillator(), g = beepCtx.createGain();
+    o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.3, beepCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.01, beepCtx.currentTime + .3);
+    o.connect(g); g.connect(beepCtx.destination); o.start(); o.stop(beepCtx.currentTime + .3);
+  } catch (e) { }
+}
+
+let lastPending = -1, timer = null;
+async function loadData(first) {
+  let r;
+  try { r = await api('/api/admin/appointments'); } catch (e) { return; }
+  if (!r.ok) { if (first) toast('Data load nahi hua (' + r.status + ')'); return; }
+  const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
+  const appts = raw.map(a => ({
+    id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
+    did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
+    proc: a.treatment || '', status: a.status === 'noshow' ? 'no_show' : a.status, source: a.source || '', fu: a.follow_up_date || ''
+  }));
+  const pend = appts.filter(a => a.status === 'pending').length;
+  if (lastPending !== -1 && pend > lastPending) { beep(); toast('New website booking request!'); }
+  lastPending = pend;
+
+  const sig = JSON.stringify(appts);
+  const changed = sig !== state.sig;
+  state.sig = sig; state.appts = appts;
+  const pm = {};
+  appts.forEach(a => { (pm[a.pid] = pm[a.pid] || { id: a.pid, name: a.name, phone: a.phone, appts: [] }).appts.push(a); });
+  state.patients = Object.values(pm).sort((x, y) => x.id - y.id);
+  if (!state.histSel && state.patients.length) state.histSel = state.patients[0].id;
+
+  if (first || !state.doctors.length) await loadDoctors();
+  const ae = document.activeElement;
+  const typing = ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && $('#appView').contains(ae);
+  if (first || (changed && !typing)) render(); else renderNav();
+}
+
+async function loadDoctors() {
+  let list = [];
+  try {
+    const r = await fetch('/api/doctors', { credentials: 'same-origin' });
+    if (r.ok) { const d = await r.json(); list = (Array.isArray(d) ? d : (d.doctors || [])).filter(x => x.is_active !== 0).map(x => ({ id: x.id, name: x.name })); }
+  } catch (e) { }
+  if (!list.length) {
+    const m = {}; state.appts.forEach(a => { if (a.did && a.doc) m[a.did] = a.doc; });
+    list = Object.keys(m).map(k => ({ id: Number(k), name: m[k] }));
   }
-  btn.disabled = false; btn.textContent = 'Sign In';
+  state.doctors = list;
 }
 
-function handleLogout() {
-  localStorage.removeItem('admin_auth');
-  if(liveInterval) clearInterval(liveInterval);
+async function setStatus(id, status, msg) {
+  try {
+    const r = await api('/api/admin/appointments', { method: 'PATCH', body: { id, status } });
+    if (r.ok) { toast(msg || 'Updated'); await loadData(); }
+    else toast(r.data.error || 'Update fail ho gaya (' + r.status + ')');
+  } catch (e) { }
+}
+
+/* ---------- auth ---------- */
+function showLogin() {
+  if (timer) { clearInterval(timer); timer = null; }
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
-  $('#uName').value = ''; $('#uPass').value = '';
 }
-
-function checkSession() {
-  if(localStorage.getItem('admin_auth') === 'true') showDashboard();
-  else { $('#loginView').style.display = 'flex'; $('#appView').style.display = 'none'; }
-}
-
-function showDashboard() {
-  $('#loginView').style.display = 'none'; $('#appView').style.display = 'block';
-  loadData(); if(!liveInterval) liveInterval = setInterval(loadData, 5000);
-}
-
-async function loadData() {
+function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
+async function boot() {
   try {
-    const res = await fetch('/api/admin/appointments');
-    if(res.status === 401) { handleLogout(); return; }
-    if(res.ok) {
-      const data = await res.json();
-      const rawAppts = data.appointments || [];
-
-      const pendReqs = rawAppts.filter(a => a.status === 'pending' || a.status === 'pending_confirmation');
-      if(lastCount !== -1 && pendReqs.length > lastCount) {
-        playBeep();
-        toast('🔔 New website booking request!');
-      }
-      lastCount = pendReqs.length;
-
-      state.appts = rawAppts.map(a => ({
-        id: a.id, pid: a.patient_id, time: String(a.time||'11:00').padStart(2,'0').slice(0,5),
-        doc: a.doctor_name, proc: a.treatment || 'Consultation', status: a.status === 'pending' ? 'confirmed' : a.status
-      }));
-
-      let pMap = {};
-      rawAppts.forEach(a => {
-        if(!pMap[a.patient_id]) {
-          pMap[a.patient_id] = { id: a.patient_id, name: a.patient_name, phone: a.patient_phone, visits: [] };
-        }
-        if(a.status === 'done') {
-          pMap[a.patient_id].visits.push({ date: a.date || '2026-11-07', procs: [a.treatment || 'Consultation'], notes: 'Completed visit', total: PROCS[a.treatment] || 5000, received: PROCS[a.treatment] || 5000, doc: a.doctor_name });
-        }
-      });
-      state.patients = Object.values(pMap);
-      if(!state.patients.length) {
-        state.patients = [{ id: 1001, name: 'Sana Malik', phone: '0300 1234501', visits: [{ date: '2026-10-24', procs: ['Chemical Peel'], notes: 'Good response', total: 6500, received: 4000, doc: DOCTORS[0] }] }];
-      }
-
-      state.requests = rawAppts.map(a => ({
-        rid: a.id, name: a.patient_name, phone: a.patient_phone, doc: a.doctor_name, proc: a.treatment || 'Consultation',
-        time: String(a.time||'11:00').padStart(2,'0').slice(0,5), status: a.status === 'pending' ? 'pending' : a.status, pid: a.patient_id
-      }));
-    }
-  } catch(e) {}
-  render();
+    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin' });
+    if (res.status === 401) { showLogin(); return; }
+  } catch (e) { }
+  showApp(); await loadData(true);
+  if (!timer) timer = setInterval(() => loadData(false), 8000);
 }
-
-async function updateApptStatus(id, status) {
-  try {
-    const res = await fetch('/api/admin/appointments', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status })
-    });
-    if(res.ok) {
-      toast('Request moved to ' + status);
-      loadData();
-    } else {
-      const r = state.requests.find(x => x.rid === id);
-      if(r) { r.status = status; toast('Updated locally to ' + status); render(); }
-    }
-  } catch(e) {
-    const r = state.requests.find(x => x.rid === id);
-    if(r) { r.status = status; toast('Updated locally to ' + status); render(); }
-  }
-}
-
-// VIEW 1: DASHBOARD
-function viewDashboard() {
-  const pend = state.requests.filter(r => r.status === 'pending' || r.status === 'pending_confirmation').length;
-  const collected = state.appts.filter(a => a.status === 'done').reduce((acc, a) => acc + (PROCS[a.proc] || 5000), 0) || 20000;
-  const rows = state.appts.slice(0, 6).map((a, idx) => {
-    const p = state.patients.find(x => x.id === a.pid) || { name: 'Patient', id: a.pid };
-    let actBtn = a.status === 'confirmed' ? `<button class="btn sm pri" onclick="openDrawer(${idx})">Check-In</button>` :
-                 a.status === 'inroom' ? `<button class="btn sm" onclick="openDrawer(${idx})">Open form</button>` : '';
-    return `<tr><td><b>${t12(a.time)}</b></td><td><div class="who"><div class="avatar">${initials(p.name)}</div><div><b>${esc(p.name)}</b><small><span class="id">#${p.id}</span> · ${esc(a.proc)}</small></div></div></td><td>${esc(a.doc)}</td><td>${stPill(a.status)}</td><td class="right">${actBtn}</td></tr>`;
-  }).join('');
-
-  return `<div class="page-head"><div><h1>Good evening, Owner</h1><p>Sat, 07 Nov 2026. Here is what needs you today.</p></div><div class="actions"><button class="btn" onclick="state.page='manual';render()">Manual patient</button><button class="btn pri" onclick="state.page='requests';render()">Requests (${pend})</button></div></div>
-    <div class="stats-grid">
-      <div class="stat-box hero"><div class="lbl">Collected today</div><div class="val num">Rs ${collected.toLocaleString()}</div><div class="sub">From finished visits</div></div>
-      <div class="stat-box"><div class="lbl">Total patients</div><div class="val num">${state.patients.length}</div><div class="sub">IDs run #1001 to #${1000 + state.patients.length}</div></div>
-      <div class="stat-box"><div class="lbl">Today's patients</div><div class="val num">${state.appts.length}</div><div class="sub">${state.appts.filter(a=>a.status==='confirmed').length} still to arrive</div></div>
-      <div class="stat-box"><div class="lbl">Pending requests</div><div class="val num">${pend}</div><div class="sub">Waiting for a reply</div></div>
-      <div class="stat-box"><div class="lbl">Balance due</div><div class="val num">Rs 52,500</div><div class="sub">6 patients owe money</div></div>
-    </div>
-    <div class="dash-layout">
-      <div class="col">
-        <div class="card">
-          <div class="card-head"><h2>Today's queue</h2><button class="btn sm" onclick="state.page='today';render()">Open full list</button></div>
-          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th class="right">Action</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">No queue today</td></tr>'}</tbody></table></div>
-        </div>
-        <div class="two-col">
-          <div class="card">
-            <div class="card-head"><h2>Patients per day</h2><small class="muted">Last 7 days</small></div>
-            <div style="height:110px;position:relative;display:flex;align-items:flex-end">
-              <svg style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" viewBox="0 0 300 80">
-                <path d="M 0 50 Q 50 30 100 40 T 200 35 T 300 60 L 300 80 L 0 80 Z" fill="var(--sand-soft)" opacity="0.6"/>
-                <path d="M 0 50 Q 50 30 100 40 T 200 35 T 300 60" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-                <circle cx="300" cy="60" r="4" fill="var(--accent)"/>
-              </svg>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding-top:6px"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Today</span></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><h2>Follow-ups due</h2><small class="muted">Next 7 days</small></div>
-            <div>
-              <div class="follow-item"><div><b>Ahmed Raza</b><small style="display:block;color:var(--bad)">Overdue since 04 Nov 2026 · #1002</small></div><a class="btn wa sm" target="_blank" href="https://wa.me/923000000000?text=Salam%20Ahmed%20Raza,%20follow-up%20due.">Remind</a></div>
-              <div class="follow-item"><div><b>Hamza Sheikh</b><small style="display:block;color:var(--muted)">Due 07 Nov 2026 · #1006</small></div><a class="btn wa sm" target="_blank" href="https://wa.me/923000000000?text=Salam%20Hamza%20Sheikh,%20follow-up%20due.">Remind</a></div>
-              <div class="follow-item"><div><b>Sana Malik</b><small style="display:block;color:var(--muted)">Due 09 Nov 2026 · #1001</small></div><a class="btn wa sm" target="_blank" href="https://wa.me/923000000000?text=Salam%20Sana%20Malik,%20follow-up%20due.">Remind</a></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col">
-        <div class="profile-card">
-          <div class="who" style="gap:12px;margin-bottom:10px">
-            <div class="avatar" style="width:42px;height:42px">OW</div>
-            <div><b>Owner</b><small>imat2025maths@gmail.com</small></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-top:1px solid var(--line)"><span>Active sessions<br><b>3 devices</b></span><span class="pill ok">● Secure</span></div>
-          <button class="btn sm" style="width:100%;margin-top:10px" onclick="state.page='security';render()">Open security</button>
-        </div>
-        <div class="card">
-          <div class="card-head"><h2>Needs attention</h2></div>
-          <div class="alert-box">
-            <div class="alert-item warn"><span>⚠️</span><span><b>${pend} online requests waiting.</b> Accept or reject them in Requests.</span></div>
-            <div class="alert-item bad"><span>💰</span><span><b>Rs 52,500 still to collect</b> from 6 patients.</span></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-head"><h2>Recent activity</h2></div>
-          <div class="log-list">
-            ${state.logs.map(l => `<div class="log-row"><time>${l.t}</time><span><b>${esc(l.a)}</b></span></div>`).join('')}
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
-// VIEW 2: REQUESTS
-function viewRequests() {
-  const pList = state.requests.filter(r => r.status === 'pending' || r.status === 'pending_confirmation');
-  const aList = state.requests.filter(r => r.status === 'confirmed');
-  const rList = state.requests.filter(r => r.status === 'rejected');
-
-  let body = '';
-  if(state.tab === 'pending') {
-    body = pList.length ? pList.map(r => {
-      const waMsg = encodeURIComponent(`Hello ${r.name}, we can offer you ${t12(r.time)} at Ultimate Esthetics.`);
-      return `<div class="req-item">
-        <div class="who"><div class="avatar">${initials(r.name)}</div><div><b>${esc(r.name)}</b><small>${esc(r.phone)}</small><div class="req-meta"><span class="chip">${esc(r.proc)}</span><span class="chip">${esc(r.doc)}</span><span class="chip">New · gets #${r.pid}</span></div></div></div>
-        <div class="req-time-box"><label>Time for this patient</label><select onchange="r.time=this.value"><option value="${r.time}">${t12(r.time)}</option>${SLOTS.map(s => `<option value="${s}">${t12(s)}</option>`).join('')}</select><small style="display:block;color:var(--muted);margin-top:2px">Asked for ${t12(r.time)}</small></div>
-        <div style="display:flex;gap:6px"><button class="btn pri sm" onclick="updateApptStatus(${r.rid}, 'confirmed')">Accept</button><a class="btn sm" target="_blank" href="https://wa.me/${(r.phone||'').replace(/\D/g,'')}?text=${waMsg}">Offer this time</a><button class="btn bad sm" onclick="updateApptStatus(${r.rid}, 'rejected')">Reject</button></div>
-      </div>`;
-    }).join('') : '<div class="empty">No pending requests right now.</div>';
-  } else if(state.tab === 'accepted') {
-    body = aList.length ? aList.map(r => {
-      const waMsg = encodeURIComponent(`Hello ${r.name}, your appointment at Ultimate Esthetics is confirmed for ${t12(r.time)}.`);
-      return `<div class="req-item">
-        <div class="who"><div class="avatar">${initials(r.name)}</div><div><b>${esc(r.name)}</b><small>${esc(r.phone)}</small><div class="req-meta"><span class="chip">${esc(r.proc)}</span><span class="chip">${esc(r.doc)}</span></div></div></div>
-        <div><span class="pill ok">Confirmed</span><small style="display:block;color:var(--muted);margin-top:4px">${t12(r.time)} today · #${r.pid}</small></div>
-        <div style="display:flex;gap:6px"><a class="btn wa sm" target="_blank" href="https://wa.me/${(r.phone||'').replace(/\D/g,'')}?text=${waMsg}">Send on WhatsApp</a><button class="btn bad sm" onclick="updateApptStatus(${r.rid}, 'rejected')">Reject</button></div>
-      </div>`;
-    }).join('') : '<div class="empty">No accepted requests yet.</div>';
-  } else if(state.tab === 'rejected') {
-    body = rList.length ? rList.map(r => {
-      const waMsg = encodeURIComponent(`Hello ${r.name}, we would like to offer another time slot for your appointment at Ultimate Esthetics.`);
-      return `<div class="req-item">
-        <div class="who"><div class="avatar">${initials(r.name)}</div><div><b>${esc(r.name)}</b><small>${esc(r.phone)}</small><div class="req-meta"><span class="chip">${esc(r.proc)}</span><span class="chip">${esc(r.doc)}</span></div></div></div>
-        <div><span class="pill bad">Rejected</span><small style="display:block;color:var(--muted);margin-top:4px">Slot not available</small></div>
-        <div style="display:flex;gap:6px"><a class="btn wa sm" target="_blank" href="https://wa.me/${(r.phone||'').replace(/\D/g,'')}?text=${waMsg}">Offer other time</a><button class="btn pri sm" onclick="updateApptStatus(${r.rid}, 'confirmed')">Move back</button></div>
-      </div>`;
-    }).join('') : '<div class="empty">No rejected requests.</div>';
-  }
-
-  return `<div class="page-head"><div><h1>Requests</h1><p>Online bookings from the website. Accepted ones move straight to Today's Patients.</p></div></div>
-    <div class="tabs">
-      <button class="${state.tab==='pending'?'on':''}" onclick="state.tab='pending';render()">Pending <span class="n">${pList.length}</span></button>
-      <button class="${state.tab==='accepted'?'on':''}" onclick="state.tab='accepted';render()">Accepted <span class="n">${aList.length}</span></button>
-      <button class="${state.tab==='rejected'?'on':''}" onclick="state.tab='rejected';render()">Rejected <span class="n">${rList.length}</span></button>
-    </div>
-    <div class="card">${body}</div>`;
-}
-
-// VIEW 3: TODAY'S PATIENTS
-function viewToday() {
-  const list = state.appts.filter(a => {
-    if(state.todayFilter === 'awaiting') return a.status === 'confirmed';
-    if(state.todayFilter === 'inroom') return a.status === 'inroom';
-    if(state.todayFilter === 'done') return a.status === 'done';
-    if(state.todayFilter === 'noshow') return a.status === 'noshow';
-    return true;
-  });
-
-  const rows = list.map((a, i) => {
-    const p = state.patients.find(x => x.id === a.pid) || { name: 'Patient', phone: '' };
-    let actBtn = a.status === 'confirmed' ? `<button class="btn pri sm" onclick="openDrawer(${i})">Check-In</button> <button class="btn bad sm" onclick="a.status='noshow';render()">No-show</button>` :
-                 a.status === 'inroom' ? `<button class="btn sm" onclick="openDrawer(${i})">Open form</button>` :
-                 a.status === 'done' ? `<button class="btn sm" onclick="state.page='history';state.histSel=${a.pid};render()">History</button>` :
-                 `<a class="btn wa sm" target="_blank" href="https://wa.me/">New time</a>`;
-
-    return `<tr><td><b>${t12(a.time)}</b></td><td class="id">#${a.pid}</td><td><div class="who"><div class="avatar">${initials(p.name)}</div><div><b>${esc(p.name)}</b><small>${esc(p.phone)}</small></div></div></td><td>${esc(a.proc)}<small style="display:block;color:var(--muted)">${esc(a.doc)}</small></td><td>${stPill(a.status)}</td><td class="right bal due">Rs 4,000 due</td><td class="right">${actBtn}</td></tr>`;
-  }).join('');
-
-  const counts = {
-    all: state.appts.length,
-    awaiting: state.appts.filter(a => a.status === 'confirmed').length,
-    inroom: state.appts.filter(a => a.status === 'inroom').length,
-    done: state.appts.filter(a => a.status === 'done').length,
-    noshow: state.appts.filter(a => a.status === 'noshow').length
-  };
-
-  return `<div class="page-head"><div><h1>Today's Patients</h1><p>Confirmed patients for today. Click Check-In on arrival.</p></div><div class="actions"><button class="btn pri" onclick="state.page='manual';render()">Walk-in</button></div></div>
-    <div class="tabs">
-      <button class="${state.todayFilter==='all'?'on':''}" onclick="state.todayFilter='all';render()">All <span class="n">${counts.all}</span></button>
-      <button class="${state.todayFilter==='awaiting'?'on':''}" onclick="state.todayFilter='awaiting';render()">Awaiting <span class="n">${counts.awaiting}</span></button>
-      <button class="${state.todayFilter==='inroom'?'on':''}" onclick="state.todayFilter='inroom';render()">In room <span class="n">${counts.inroom}</span></button>
-      <button class="${state.todayFilter==='done'?'on':''}" onclick="state.todayFilter='done';render()">Done <span class="n">${counts.done}</span></button>
-      <button class="${state.todayFilter==='noshow'?'on':''}" onclick="state.todayFilter='noshow';render()">No-show <span class="n">${counts.noshow}</span></button>
-    </div>
-    <div class="card"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th class="right">Balance</th><th class="right">Action</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="empty">No queue</td></tr>'}</tbody></table></div></div>`;
-}
-
-// VIEW 4: MANUAL PATIENT
-function viewManual() {
-  return `<div class="page-head"><div><h1>Manual Patient</h1><p>For walk-ins and direct desk entries.</p></div></div>
-    <div class="two-col">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-head"><h2>Patient details</h2></div>
-        <form onsubmit="handleManualBooking(event)" style="display:flex;flex-direction:column;gap:12px">
-          <div class="field"><label>Full name</label><input class="inp" id="mName" required oninput="checkPhone(this.value)"></div>
-          <div class="field"><label>Phone number</label><input class="inp" id="mPhone" required></div>
-          <div id="phoneNotice" class="chip" style="display:none;background:var(--warn-bg);color:var(--warn)"></div>
-          <div class="field"><label>Doctor</label><select class="inp" id="mDoc">${DOCTORS.map(d => `<option>${d}</option>`).join('')}</select></div>
-          <div class="field"><label>Procedure</label><select class="inp" id="mProc">${Object.keys(PROCS).map(p => `<option>${p}</option>`).join('')}</select></div>
-          <div class="field"><label>Time today</label><select class="inp" id="mTime">${SLOTS.map(s => `<option value="${s}">${t12(s)}</option>`).join('')}</select></div>
-          <button class="btn pri" type="submit">Add to today's list</button>
-        </form>
-      </div>
-      <div class="card tint" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
-        <small class="muted">Next Patient ID</small>
-        <div class="num" style="font-family:var(--font-display);font-size:64px;color:var(--accent)">#${1000 + state.patients.length + 1}</div>
-        <p class="muted" style="font-size:13px;max-width:260px;margin-top:10px">Automatic ID allocation & live D1 record binding.</p>
-      </div>
-    </div>`;
-}
-
-function checkPhone(val) {
-  const notice = $('#phoneNotice');
-  const found = state.patients.find(p => p.name.toLowerCase().includes(val.toLowerCase()) || p.phone.includes(val));
-  if(val.length > 2 && found) {
-    notice.textContent = `Already a patient: ${found.name} (#${found.id}). Existing ID will be used.`;
-    notice.style.display = 'block';
-  } else {
-    notice.style.display = 'none';
-  }
-}
-
-async function handleManualBooking(e) {
+$('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const name = $('#mName').value.trim(), phone = $('#mPhone').value.trim(), doc = $('#mDoc').value, proc = $('#mProc').value, time = $('#mTime').value;
+  const err = $('#loginErr'), btn = $('#loginBtn'); err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
   try {
-    const res = await fetch('/api/book', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, phone, countryCode: '+92', doctor_id: DOCTORS.indexOf(doc) + 1, date: '2026-11-07', time: parseInt(time), treatment: proc })
-    });
-    if(res.ok) {
-      toast('Walk-in patient added successfully!');
-      loadData(); state.page = 'today'; render();
-    }
-  } catch(err) {
-    toast('Added walk-in locally');
-    state.appts.push({ id: Date.now(), pid: 1013, time, doc, proc, status: 'confirmed' });
-    state.page = 'today'; render();
-  }
+    const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
+    let d = {}; try { d = await res.json(); } catch (x) { }
+    if (res.ok && d.success !== false) { $('#uPass').value = ''; lastPending = -1; await boot(); }
+    else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
+  } catch (x) { err.textContent = 'Server se connection nahi hua.'; err.hidden = false; }
+  btn.disabled = false; btn.textContent = 'Sign In';
+});
+$('#logoutBtn').addEventListener('click', async () => {
+  try { await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { }
+  state.sig = ''; showLogin();
+});
+$('#themeBtn').addEventListener('click', () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; });
+
+/* ---------- views ---------- */
+const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
+const todays = () => state.appts.filter(a => a.date === todayStr() && ['confirmed', 'done', 'no_show'].includes(a.status)).sort((x, y) => x.time.localeCompare(y.time));
+const pending = () => state.appts.filter(a => a.status === 'pending');
+
+function viewDashboard() {
+  const td = todays(), pend = pending(), t = todayStr();
+  const done = td.filter(a => a.status === 'done').length, left = td.filter(a => a.status === 'confirmed').length;
+  const upcoming = state.appts.filter(a => a.status === 'confirmed' && a.date > t).length;
+  const stale = state.appts.filter(a => a.status === 'confirmed' && a.date < t).length;
+  const nos = td.filter(a => a.status === 'no_show').length;
+  const hr = new Date().getHours(), greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+
+  const rows = td.length ? td.map(a => '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small><span class="id">#' + a.pid + '</span> · ' + esc(procName(a)) + '</small></div></div></td><td>' + esc(a.doc) + '</td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + (a.status === 'confirmed' ? '<button class="btn sm pri" data-act="done" data-id="' + a.id + '">Mark done</button>' : '') + '</td></tr>').join('') : '<tr><td colspan="5" class="empty">Aaj koi confirmed patient nahi hai.</td></tr>';
+
+  const fu = state.appts.filter(a => a.fu && a.fu <= plusDays(7) && !['cancelled', 'rejected'].includes(a.status)).sort((x, y) => x.fu.localeCompare(y.fu));
+  const fuHtml = fu.length ? fu.slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + (a.fu < t ? 'Overdue since ' : 'Due ') + nice(a.fu) + ' · #' + a.pid + '</small></div><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', Ultimate Esthetics se yaad dahani: aap ka follow-up ' + nice(a.fu) + ' ko due hai.') + '">Remind</a></div>').join('') : '<div class="empty">Is hafte koi follow-up due nahi.</div>';
+
+  const alerts = [];
+  if (pend.length) alerts.push('<div class="alert-item warn"><b>' + pend.length + ' online request' + (pend.length > 1 ? 's' : '') + ' waiting.</b> Requests page me accept ya reject karein.</div>');
+  if (stale) alerts.push('<div class="alert-item bad"><b>' + stale + ' purani confirmed appointment' + (stale > 1 ? 's' : '') + '</b> abhi tak done ya no-show mark nahi hui.</div>');
+  if (nos) alerts.push('<div class="alert-item info">' + nos + ' no-show aaj. WhatsApp par naya time offer karein.</div>');
+
+  const recent = state.appts.slice().sort((x, y) => y.id - x.id).slice(0, 6).map(a => '<div class="row"><div><b>' + esc(a.name) + '</b><small>' + nice(a.date) + ' · ' + t12(a.time) + ' · ' + esc(procName(a)) + '</small></div>' + stPill(a.status) + '</div>').join('') || '<div class="empty">Abhi koi booking nahi.</div>';
+
+  return head(greet + ', Owner', wday(t) + ', ' + nice(t) + '. Yeh hai aaj ka haal.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
+    '<div class="stats-grid">' +
+    '<div class="stat-box hero"><div class="lbl">Pending requests</div><div class="val num">' + pend.length + '</div><div class="sub">Reply ka intezar</div></div>' +
+    '<div class="stat-box"><div class="lbl">Today\'s patients</div><div class="val num">' + td.length + '</div><div class="sub">' + left + ' still to arrive</div></div>' +
+    '<div class="stat-box"><div class="lbl">Done today</div><div class="val num">' + done + '</div><div class="sub">Finished visits</div></div>' +
+    '<div class="stat-box"><div class="lbl">Upcoming</div><div class="val num">' + upcoming + '</div><div class="sub">Confirmed, aane wale din</div></div>' +
+    '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + state.patients.length + '</div><div class="sub">Database me</div></div></div>' +
+    '<div class="dash-layout"><div class="col">' +
+    '<div class="card"><div class="card-head"><h2>Today\'s queue</h2><button class="btn sm" data-go="today">Open full list</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+    '<div class="card"><div class="card-head"><h2>Follow-ups due</h2><small class="muted">Next 7 days</small></div>' + fuHtml + '</div>' +
+    '</div><div class="col">' +
+    (alerts.length ? '<div class="card"><div class="card-head"><h2>Needs attention</h2></div><div class="alert-box">' + alerts.join('') + '</div></div>' : '') +
+    '<div class="card"><div class="card-head"><h2>Latest bookings</h2></div>' + recent + '</div></div></div>';
 }
 
-// VIEW 5: PATIENT HISTORY
+function viewRequests() {
+  const lists = {
+    pending: state.appts.filter(a => a.status === 'pending'),
+    accepted: state.appts.filter(a => a.status === 'confirmed' && a.date >= todayStr()),
+    rejected: state.appts.filter(a => a.status === 'rejected' || a.status === 'cancelled')
+  };
+  Object.values(lists).forEach(l => l.sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time)));
+  const tabs = [['pending', 'Pending'], ['accepted', 'Accepted'], ['rejected', 'Rejected']];
+  const list = lists[state.tab];
+  const left = a => '<div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small><div class="req-meta"><span class="chip">' + esc(procName(a)) + '</span><span class="chip">' + esc(a.doc) + '</span><span class="chip">Patient #' + a.pid + '</span>' + (a.source === 'manual' ? '<span class="chip">Manual</span>' : '') + '</div></div></div>';
+  const when = a => '<div><b class="num">' + t12(a.time) + '</b><div class="hint">' + wday(a.date) + ', ' + nice(a.date) + '</div></div>';
+  const body = list.length ? list.map(a => {
+    if (state.tab === 'pending') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><button class="btn pri sm" data-act="accept" data-id="' + a.id + '">Accept</button><a class="btn sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', Ultimate Esthetics. Aap ki ' + nice(a.date) + ' ' + t12(a.time) + ' ki request ke liye hum doosra time de sakte hain. Kya aap ko yeh theek rahega?') + '">Offer other time</a><button class="btn bad sm" data-act="reject" data-id="' + a.id + '">Reject</button></div></div>';
+    if (state.tab === 'accepted') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', aap ki appointment confirm ho gayi hai: ' + wday(a.date) + ' ' + nice(a.date) + ', ' + t12(a.time) + ', ' + a.doc + '. Ultimate Esthetics.') + '">Send on WhatsApp</a><button class="btn bad sm" data-act="cancel" data-id="' + a.id + '">Cancel</button></div></div>';
+    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', maazrat, aap ki request us waqt mumkin nahi thi. Kya hum aap ko koi aur time de dein? Ultimate Esthetics.') + '">Offer other time</a><button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button></div></div>';
+  }).join('') : '<div class="empty">Yahan kuch nahi hai.</div>';
+  return head('Requests', 'Website se aayi bookings. Accept karte hi yeh patient list me chali jati hain.', '') +
+    '<div class="tabs">' + tabs.map(t => '<button class="' + (state.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<span class="n num">' + lists[t[0]].length + '</span></button>').join('') + '</div>' +
+    '<div class="card">' + body + '</div>';
+}
+
+function viewToday() {
+  const all = todays(), t = todayStr();
+  const fl = [['all', 'All'], ['confirmed', 'Awaiting'], ['done', 'Done'], ['no_show', 'No-show']];
+  const rows = all.filter(a => state.filter === 'all' || a.status === state.filter).map(a => {
+    const act = a.status === 'confirmed' ? '<button class="btn pri sm" data-act="done" data-id="' + a.id + '">Mark done</button> <button class="btn sm" data-act="noshow" data-id="' + a.id + '">No-show</button>'
+      : a.status === 'no_show' ? '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Salam ' + a.name + ', aap aaj aa nahi sakay. Kya hum naya time de dein? Ultimate Esthetics.') + '">New time</a> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>'
+      : '<button class="btn sm" data-act="hist" data-p="' + a.pid + '">History</button> <button class="btn sm" data-act="undo" data-id="' + a.id + '">Undo</button>';
+    return '<tr><td class="num nowrap"><b>' + t12(a.time) + '</b></td><td class="id">#' + a.pid + '</td><td><div class="who"><div class="avatar">' + initials(a.name) + '</div><div><b>' + esc(a.name) + '</b><small class="num">' + esc(prettyPhone(a.phone)) + '</small></div></div></td><td>' + esc(procName(a)) + '<small class="muted" style="display:block">' + esc(a.doc) + '</small></td><td>' + stPill(a.status) + '</td><td class="right nowrap">' + act + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" class="empty">Is filter me koi patient nahi.</td></tr>';
+  return head("Today's Patients", 'Confirmed patients for ' + wday(t) + ' ' + nice(t) + '.', '<button class="btn pri" data-go="manual">Walk-in</button>') +
+    '<div class="tabs">' + fl.map(f => '<button class="' + (state.filter === f[0] ? 'on' : '') + '" data-filter="' + f[0] + '">' + f[1] + '<span class="n num">' + (f[0] === 'all' ? all.length : all.filter(a => a.status === f[0]).length) + '</span></button>').join('') + '</div>' +
+    '<div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+}
+
+function viewManual() {
+  const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
+  const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">Koi doctor nahi mila</option>';
+  const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
+  return head('Manual Patient', 'Walk-in aur phone call ke liye. Phone number se purana patient khud mil jata hai.', '') +
+    '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
+    '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
+    '<div class="two-col"><div class="field"><label for="mName">Full name</label><input class="inp" id="mName" required></div>' +
+    '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" placeholder="03xx xxxxxxx"><span class="hint" id="mDup">Wapas aane par isi se patient milega.</span></div></div>' +
+    '<div class="two-col"><div class="field"><label for="mDoc">Doctor</label><select class="inp" id="mDoc">' + docs + '</select></div>' +
+    '<div class="field"><label for="mProc">Procedure</label><input class="inp" id="mProc" list="procList" placeholder="e.g. Consultation"><datalist id="procList">' + procs.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist></div></div>' +
+    '<div class="two-col"><div class="field"><label for="mDate">Date</label><input class="inp" id="mDate" type="date" required value="' + todayStr() + '"></div>' +
+    '<div class="field"><label for="mTime">Time</label><input class="inp" id="mTime" type="time" required value="' + pad(new Date().getHours()) + ':00"></div></div>' +
+    '<div class="err" id="mErr" hidden></div>' +
+    '<div><button class="btn pri" type="submit" id="mBtn">Add &amp; confirm</button></div></form></div>' +
+    '<div class="card tint"><small class="muted">Next new patient ID</small><div class="bigid num">#' + nextId + '</div><p class="hint" style="margin-top:12px">Naya patient agla number leta hai. Purana patient apni purani ID par hi rehta hai.</p></div></div>';
+}
+
+function histList() {
+  const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+  const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
+  if (!l.length) return '<div class="empty">Koi patient nahi mila.</div>';
+  return l.map(p => '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + p.appts.length + ' booking' + (p.appts.length > 1 ? 's' : '') + '</small></div></button>').join('');
+}
+function histDetail() {
+  const p = state.patients.find(x => x.id === state.histSel);
+  if (!p) return '<div class="card"><div class="empty">Patient select karein.</div></div>';
+  const list = p.appts.slice().sort((x, y) => (y.date + y.time).localeCompare(x.date + x.time));
+  const c = s => p.appts.filter(a => a.status === s).length;
+  const fu = p.appts.map(a => a.fu).filter(Boolean).sort().pop();
+  const tl = list.map(a => '<div class="tl"><div class="d">' + nice(a.date) + '<small>' + wday(a.date) + ' · ' + t12(a.time) + '</small></div><div><b>' + esc(procName(a)) + '</b><div class="req-meta"><span class="chip">' + esc(a.doc) + '</span>' + stPill(a.status) + (a.source === 'manual' ? '<span class="chip">Manual</span>' : '') + '</div></div></div>').join('');
+  return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">' + initials(p.name) + '</div><div><b style="font-size:18px">' + esc(p.name) + '</b><small class="num"><span class="id">#' + p.id + '</span> · ' + esc(prettyPhone(p.phone)) + '</small></div></div>' +
+    '<a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(p.phone, 'Salam ' + p.name + ', Ultimate Esthetics se rabta. ') + '">WhatsApp</a></div>' +
+    '<div class="stats-grid" style="margin:14px 0"><div class="stat-box"><div class="lbl">Total bookings</div><div class="val num">' + p.appts.length + '</div></div><div class="stat-box"><div class="lbl">Done</div><div class="val num">' + c('done') + '</div></div><div class="stat-box"><div class="lbl">No-shows</div><div class="val num">' + c('no_show') + '</div></div></div>' +
+    (fu ? '<div class="alert-item info" style="margin-bottom:10px">Follow-up: <b>' + nice(fu) + '</b></div>' : '') +
+    '<h2 style="font-size:15px;margin:8px 0 2px">Timeline</h2>' + tl + '</div>';
+}
 function viewHistory() {
-  const p = state.patients.find(x => x.id === state.histSel) || state.patients[0] || { id: 1001, name: 'Sana Malik', phone: '0300 1234501', visits: [] };
-  const list = state.patients.map(x => `<button class="btn" style="width:100%;justify-content:space-between;margin-bottom:6px;${x.id===state.histSel?'border-color:var(--accent);background:var(--surface2)':''}" onclick="state.histSel=${x.id};render()"><span><b>${esc(x.name)}</b> <small class="muted">#${x.id}</small></span><span class="chip">${x.visits.length} visits</span></button>`).join('');
-  const tl = p.visits && p.visits.length ? p.visits.map(v => `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${v.procs.join(' + ')}</b><small style="display:block;color:var(--muted)">${v.date} · ${esc(v.doc)} · Total Rs ${v.total.toLocaleString()} · Paid Rs ${v.received.toLocaleString()}</small><p style="font-size:13px;margin-top:4px">${esc(v.notes)}</p></div>`).join('') : '<div class="empty">No visit history recorded yet.</div>';
-
-  return `<div class="page-head"><div><h1>Patient History</h1><p>Search patient timeline and records.</p></div></div>
-    <div class="dash-layout">
-      <div class="card" style="margin-bottom:0"><div class="field" style="margin-bottom:12px"><input class="inp" placeholder="Search name, phone, #ID..."></div><div style="max-height:500px;overflow-y:auto">${list}</div></div>
-      <div class="card" style="margin-bottom:0">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div><h2>${esc(p.name)}</h2><small class="muted">#${p.id} · ${esc(p.phone)}</small></div>
-          <a class="btn wa sm" target="_blank" href="https://wa.me/92${(p.phone||'').replace(/\D/g,'')}">WhatsApp</a>
-        </div>
-        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-top:16px">
-          <div class="stat-box"><div class="lbl">Visits</div><div class="val num">${p.visits.length}</div></div>
-          <div class="stat-box"><div class="lbl">Billed</div><div class="val num">Rs 6,500</div></div>
-          <div class="stat-box"><div class="lbl">Paid</div><div class="val num">Rs 4,000</div></div>
-        </div>
-        <div style="margin-top:16px"><h3 style="font-size:14px;margin-bottom:8px">Visit Timeline</h3>${tl}</div>
-      </div>
-    </div>`;
+  return head('Patient History', 'Naam, phone ya #ID se dhoondhein.', '') +
+    '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
 }
 
-// VIEW 6: SECURITY
-function viewSecurity() {
-  return `<div class="page-head"><div><h1>Security</h1><p>Passwords, active sessions, and a record of every change.</p></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-head"><h2>Change password</h2><span class="pill ok">Needs current password</span></div>
-        <form onsubmit="event.preventDefault(); toast('Password successfully changed for admin!'); state.logs.unshift({t: pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()), a: 'Owner changed password'});" style="display:flex;flex-direction:column;gap:12px" autocomplete="off">
-          <div class="field"><label>Current password</label><input class="inp" type="password" required placeholder="••••••••" autocomplete="new-password"></div>
-          <div class="field"><label>New password</label><input class="inp" type="password" required placeholder="••••••••" autocomplete="new-password"><small class="muted">At least 8 characters, with a number.</small></div>
-          <div class="field"><label>Repeat new password</label><input class="inp" type="password" required placeholder="••••••••" autocomplete="new-password"></div>
-          <div style="display:flex;gap:8px;margin-top:4px">
-            <button class="btn pri" type="submit">Save password</button>
-            <button class="btn" type="button" onclick="toast('Reset link successfully sent to imat2025maths@gmail.com!')">Forgot? Email reset link</button>
-          </div>
-          <small class="muted" style="font-size:11.5px">Reset links go to imat2025maths@gmail.com and work for 1 hour, once.</small>
-        </form>
-      </div>
-      <div class="card" style="margin-bottom:0">
-        <div class="card-head"><h2>Safety rules</h2></div>
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between"><div><b>Log out after 15 minutes idle</b><small style="display:block;color:var(--muted)">Stops the next person using an open screen.</small></div><label class="sw"><input type="checkbox" checked onchange="toast('Idle logout rule saved')"><i></i></label></div>
-          <div style="display:flex;align-items:center;justify-content:space-between"><div><b>Lock account after 5 wrong passwords</b><small style="display:block;color:var(--muted)">Also blocks that IP address for 1 hour.</small></div><label class="sw"><input type="checkbox" checked onchange="toast('Account lockout rule saved')"><i></i></label></div>
-          <div style="display:flex;align-items:center;justify-content:space-between"><div><b>Daily backup at 02:00</b><small style="display:block;color:var(--muted)">Patients, visits and payments.</small></div><label class="sw"><input type="checkbox" checked onchange="toast('Daily database backup active')"><i></i></label></div>
-          <div style="display:flex;align-items:center;justify-content:space-between"><div><b>Email code on every login</b><small style="display:block;color:var(--muted)">Sent to imat2025maths@gmail.com.</small></div><label class="sw"><input type="checkbox" onchange="toast('2FA Email verification saved')"><i></i></label></div>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:18px">
-      <div class="card-head"><h2>Logged-in devices</h2></div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>Chrome on Windows</b> <span class="pill ok" style="font-size:10.5px">This device</span><small style="display:block;color:var(--muted)">Front desk PC · 39.45.xx.12 · since Today 09:02</small></div></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>Safari on iPhone</b><small style="display:block;color:var(--muted)">Owner phone · 182.185.xx.40 · since Today 08:15</small></div><button class="btn bad sm" onclick="this.closest('.card, div').remove(); toast('Safari session ended successfully');">End session</button></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0"><div><b>Chrome on Android</b><small style="display:block;color:var(--muted)">Doctor phone · 39.62.xx.77 · since Yesterday 18:40</small></div><button class="btn bad sm" onclick="this.closest('.card, div').remove(); toast('Android session ended successfully');">End session</button></div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-head"><h2>Login attempts</h2><small class="muted">Failed tries are blocked automatically</small></div>
-        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>User</th><th>IP</th><th>Result</th><th>Note</th></tr></thead><tbody>
-          <tr><td>Today 09:02</td><td>owner</td><td>39.45.xx.12</td><td><span class="pill ok">Signed in</span></td><td></td></tr>
-          <tr><td>Yesterday 03:12</td><td>admin</td><td>103.77.xx.9</td><td><span class="pill bad">Failed</span></td><td>Wrong password</td></tr>
-          <tr><td>Yesterday 03:11</td><td>admin</td><td>103.77.xx.9</td><td><span class="pill bad">Failed</span></td><td>IP blocked after 3 tries</td></tr>
-        </tbody></table></div>
-      </div>
-      <div class="card" style="margin-bottom:0">
-        <div class="card-head"><h2>Activity log</h2><small class="muted">Every payment edit is recorded</small></div>
-        <div class="log-list">
-          ${state.logs.map(l => `<div class="log-row"><time>${l.t}</time><span><b>${esc(l.a)}</b></span></div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-}
-
-// CHECK-IN FORM DRAWER
-function procRows() {
-  return state.form.rows.map((r, k) => `<div class="prow"><select class="inp" onchange="state.form.rows[${k}].p=this.value; state.form.rows[${k}].fee=PROCS[this.value]||5000; calcTotal()">${Object.keys(PROCS).map(p => `<option ${p===r.p?'selected':''}>${p}</option>`).join('')}</select><input class="inp num" type="number" value="${r.fee}" oninput="state.form.rows[${k}].fee=Number(this.value); calcTotal()"><button class="btn sm bad" type="button" onclick="state.form.rows.splice(${k},1); renderDrawerRows()">✕</button></div>`).join('');
-}
-function renderDrawerRows() { $('#prows').innerHTML = procRows(); calcTotal(); }
-function calcTotal() {
-  const tot = state.form.rows.reduce((a, b) => a + Number(b.fee || 0), 0);
-  $('#fTotal').value = tot;
-  const recv = Number($('#fRecv').value || 0);
-  const prev = 2500;
-  $('#fRem').textContent = 'Rs ' + (tot + prev - recv).toLocaleString();
-}
-function openDrawer(i) {
-  const a = state.appts[i], p = state.patients.find(x => x.id === a.pid) || { id: a.pid, name: 'Patient' };
-  state.form = { i, rows: [{ p: a.proc, fee: PROCS[a.proc] || 5000 }] };
-  $('#drawer').innerHTML = `<div class="drawer-head"><div><small class="muted">Check-in</small><h2>${esc(p.name)}</h2></div><button class="btn sm" onclick="closeDrawer()">✕</button></div>
-    <div class="drawer-body">
-      <div class="two-col"><div class="field"><label>Patient ID</label><input class="inp ro num" readonly value="#${p.id}"></div><div class="field"><label>Doctor</label><input class="inp ro" readonly value="${esc(a.doc)}"></div></div>
-      <div><div class="card-head"><h2>Procedures done</h2><button class="btn sm" type="button" onclick="state.form.rows.push({p:'Consultation', fee:1500}); renderDrawerRows()">+ Add</button></div><div id="prows">${procRows()}</div></div>
-      <div class="field"><label>Notes / Diary</label><textarea class="inp" id="fNotes" placeholder="Treatment details..."></textarea></div>
-      <div class="sum">
-        <div class="r"><span>Total for today</span><input class="inp num" id="fTotal" type="number" oninput="calcTotal()"></div>
-        <div class="r"><span class="muted">Balance from earlier</span><span class="num">Rs 2,500</span></div>
-        <div class="r"><span>Received now</span><input class="inp num" id="fRecv" type="number" value="0" oninput="calcTotal()"></div>
-        <div class="r" style="font-weight:700;border-top:1px dashed var(--sand);padding-top:8px"><span>Remaining</span><span class="num" id="fRem" style="color:var(--bad)">Rs 8,000</span></div>
-      </div>
-      <div class="field"><label>Follow-up</label><select class="inp"><option>No follow-up</option><option>7 days</option><option selected>14 days</option><option>1 month</option><option>3 months</option></select></div>
-    </div>
-    <div class="drawer-foot"><button class="btn" onclick="closeDrawer()">Close</button><button class="btn pri" onclick="saveVisit()">Save visit</button></div>`;
-  $('#drawer').hidden = false; $('#scrim').hidden = false;
-  calcTotal();
-}
-function closeDrawer() { $('#drawer').hidden = true; $('#scrim').hidden = true; state.form = null; }
-function saveVisit() {
-  const a = state.appts[state.form.i], p = state.patients.find(x => x.id === a.pid);
-  a.status = 'done';
-  const tot = Number($('#fTotal').value || 0), recv = Number($('#fRecv').value || 0);
-  if(p) {
-    if(!p.visits) p.visits = [];
-    p.visits.unshift({ date: '2026-11-07', procs: state.form.rows.map(r=>r.p), notes: $('#fNotes').value || 'Completed session', total: tot, received: recv, doc: a.doc });
-  }
-  state.logs.unshift({ t: pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()), a: `Saved visit for ${p?p.name:'Patient'}: received Rs ${recv.toLocaleString()}` });
-  closeDrawer(); render(); toast('Visit saved successfully!');
-}
-
+/* ---------- render + events ---------- */
+const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory };
 function renderNav() {
-  const pend = state.requests.filter(r => r.status === 'pending' || r.status === 'pending_confirmation').length;
-  $('#nav').innerHTML = PAGES.map(p => `<button type="button" class="${state.page === p[0] ? 'on' : ''}" onclick="state.page='${p[0]}';render()">${p[1]}${p[0] === 'requests' && pend ? '<span class="badge num">' + pend + '</span>' : ''}</button>`).join('');
+  const n = pending().length;
+  $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
 }
+function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
+function go(p) { state.page = p; render(); window.scrollTo(0, 0); }
 
-function render() {
-  const fn = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity }[state.page];
-  $('#view').innerHTML = fn ? fn() : '';
-  renderNav();
-}
-
-$('#themeBtn').addEventListener('click', () => {
-  const r = document.documentElement;
-  r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
+  const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
+  const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = Number(b.dataset.id); b.disabled = true;
+  switch (b.dataset.act) {
+    case 'accept': setStatus(id, 'confirmed', 'Accepted. Requests > Accepted se WhatsApp bhej sakte hain.'); break;
+    case 'reject': setStatus(id, 'rejected', 'Rejected.'); break;
+    case 'cancel': setStatus(id, 'cancelled', 'Cancelled.'); break;
+    case 'restore': setStatus(id, 'pending', 'Wapas pending me.'); break;
+    case 'done': setStatus(id, 'done', 'Visit done mark ho gayi.'); break;
+    case 'noshow': setStatus(id, 'no_show', 'No-show mark ho gaya.'); break;
+    case 'undo': setStatus(id, 'confirmed', 'Wapas awaiting me.'); break;
+    case 'hist': state.histSel = Number(b.dataset.p); b.disabled = false; go('history'); break;
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'hq') { state.histQ = t.value; $('#plist').innerHTML = histList(); return; }
+  if (t.id === 'mPhone') {
+    const d = last10(t.value), m = d.length >= 10 && state.patients.find(p => last10(p.phone) === d), h = $('#mDup');
+    if (m) { h.textContent = 'Pehle se patient hai: ' + m.name + ' (#' + m.id + '). Nayi ID nahi banegi.'; h.className = 'hint ok'; }
+    else { h.textContent = 'Wapas aane par isi se patient milega.'; h.className = 'hint'; }
+  }
+});
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'manualForm') return;
+  e.preventDefault();
+  const err = $('#mErr'), btn = $('#mBtn'); err.hidden = true;
+  const name = $('#mName').value.trim(), ph = last10($('#mPhone').value), did = Number($('#mDoc').value), date = $('#mDate').value, time = $('#mTime').value, proc = $('#mProc').value.trim();
+  const fail = m => { err.textContent = m; err.hidden = false; };
+  if (!name) return fail('Naam likhein.');
+  if (ph.length < 10) return fail('Poora phone number likhein (10 digits).');
+  if (!did) return fail('Doctor select karein.');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const r = await api('/api/book', { method: 'POST', body: { name, phone: ph, countryCode: '+92', doctor_id: did, date, time, treatment: proc || null } });
+    if (!r.ok) { fail(r.data.error || 'Booking save nahi hui (' + r.status + ').'); }
+    else {
+      await loadData();
+      const a = state.appts.find(x => x.status === 'pending' && last10(x.phone) === ph && x.date === date && x.time === time);
+      if (a) await setStatus(a.id, 'confirmed', 'Patient add ho gaya (#' + a.pid + ').');
+      else toast('Patient add ho gaya.');
+      state.tab = 'accepted'; state.filter = 'all'; go(date === todayStr() ? 'today' : 'requests');
+      return;
+    }
+  } catch (x) { if (x.message !== 'unauthorized') fail('Server se connection nahi hua.'); }
+  btn.disabled = false; btn.textContent = 'Add & confirm';
 });
 
-checkSession();
+boot();
 </script>
 </body>
 </html>
