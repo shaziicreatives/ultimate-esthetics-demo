@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Ultimate Esthetics Clinic Desk</title>
+<title>Ultimate Esthetics Clinic Desk - Admin Panel</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
 <style>
 :root{
@@ -22,6 +22,16 @@ button{cursor:pointer}
 h1,h2,h3,p{margin:0}
 .num{font-variant-numeric:tabular-nums}
 
+/* LOGIN SCREEN STYLES */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg)}
+.login-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px;width:100%;max-width:400px;box-shadow:var(--shadow);text-align:center}
+.login-card .brand-mark{width:48px;height:48px;border-radius:14px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:28px;margin:0 auto 12px}
+.login-card h2{font-family:var(--font-display);font-size:28px;font-weight:400;margin-bottom:6px}
+.login-card p{color:var(--muted);font-size:13.5px;margin-bottom:24px}
+.login-form{display:flex;flex-direction:column;gap:14px;text-align:left}
+.login-form label{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+/* APP MAIN LAYOUT */
 .app{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
   display:grid;grid-template-columns:240px minmax(0,1fr);width:100%;height:100vh;max-width:100vw}
 .side{background:var(--surface2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:20px;height:100vh;overflow-y:auto}
@@ -57,13 +67,11 @@ h1,h2,h3,p{margin:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;margin-bottom:20px}
 .card h2{font-size:16px;font-weight:700}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.card-head small{color:var(--muted);font-size:13px}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px;margin-bottom:20px}
 .stat{background:var(--surface2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
 .stat .lbl{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
 .stat .val{font-family:var(--font-display);font-size:34px;line-height:1}
-.stat .sub{font-size:12.5px;color:var(--muted)}
 .stat.hero{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 
 .tbl-wrap{overflow-x:auto}
@@ -72,18 +80,15 @@ h1,h2,h3,p{margin:0}
 .tbl td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .right{text-align:right}
 
-.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:600}
-.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:600}
 .pill.ok{background:var(--ok-bg);color:var(--ok)}
 .pill.warn{background:var(--warn-bg);color:var(--warn)}
 .pill.bad{background:var(--bad-bg);color:var(--bad)}
 .pill.info{background:var(--info-bg);color:var(--info)}
-.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:8px;background:var(--sand-soft);color:var(--muted)}
 
 .tabs{display:inline-flex;gap:4px;background:var(--surface2);border:1px solid var(--line);padding:4px;border-radius:14px;margin-bottom:18px}
 .tabs button{border:0;background:transparent;padding:8px 15px;border-radius:10px;font-weight:600;color:var(--muted);font-size:14px}
 .tabs button.on{background:var(--accent);color:var(--accent-ink)}
-.tabs .n{font-size:12px;opacity:.8;margin-left:6px}
 
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field label{font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -102,7 +107,30 @@ h1,h2,h3,p{margin:0}
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- LOGIN VIEW -->
+<div id="loginView" class="login-screen">
+  <div class="login-card">
+    <div class="brand-mark">U</div>
+    <h2>Ultimate Esthetics</h2>
+    <p>Sign in to access clinic desk</p>
+    <form class="login-form" onsubmit="handleLogin(event)">
+      <div class="field">
+        <label for="uName">Username</label>
+        <input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="uPass">Password</label>
+        <input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <div id="loginErr" style="color:var(--bad);font-size:13px;display:none"></div>
+      <button class="btn pri" type="submit" id="loginBtn" style="margin-top:6px;width:100%">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD APP VIEW -->
+<div class="app" id="appView" style="display:none">
   <aside class="side">
     <div class="brand">
       <div class="brand-mark">U</div>
@@ -117,12 +145,13 @@ h1,h2,h3,p{margin:0}
       </div>
       <div class="foot-row">
         <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
-        <button class="btn sm" id="logoutBtn" type="button" style="flex:1">Logout</button>
+        <button class="btn sm" id="logoutBtn" type="button" onclick="handleLogout()" style="flex:1">Logout</button>
       </div>
     </div>
   </aside>
   <main class="main"><div id="view"></div></main>
 </div>
+
 <div class="toast" id="toast" hidden></div>
 <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
@@ -143,10 +172,70 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 const stPill = s => ({ confirmed: '<span class="pill info">Confirmed</span>', pending: '<span class="pill warn">Pending</span>', done: '<span class="pill ok">Done</span>', rejected: '<span class="pill bad">Rejected</span>', noshow: '<span class="pill bad">No-show</span>' }[s] || '<span class="pill info">' + s + '</span>');
 
 let lastCount = -1;
+let liveInterval = null;
 
+// AUTHENTICATION HANDLERS
+async function handleLogin(e) {
+  e.preventDefault();
+  const username = $('#uName').value.trim();
+  const password = $('#uPass').value.trim();
+  const errEl = $('#loginErr');
+  const btn = $('#loginBtn');
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if(res.ok && data.success) {
+      localStorage.setItem('admin_auth', 'true');
+      showDashboard();
+    } else {
+      errEl.textContent = data.error || 'Invalid credentials.';
+      errEl.style.display = 'block';
+    }
+  } catch(err) {
+    errEl.textContent = 'Connection error.';
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Sign In';
+}
+
+function handleLogout() {
+  localStorage.removeItem('admin_auth');
+  if(liveInterval) clearInterval(liveInterval);
+  $('#appView').style.display = 'none';
+  $('#loginView').style.display = 'flex';
+}
+
+function checkSession() {
+  if(localStorage.getItem('admin_auth') === 'true') {
+    showDashboard();
+  } else {
+    $('#loginView').style.display = 'flex';
+    $('#appView').style.display = 'none';
+  }
+}
+
+function showDashboard() {
+  $('#loginView').style.display = 'none';
+  $('#appView').style.display = 'grid';
+  loadData();
+  if(!liveInterval) liveInterval = setInterval(loadData, 10000);
+}
+
+// DATA FETCHING
 async function loadData() {
   try {
     const res = await fetch('/api/admin/appointments');
+    if(res.status === 401) { handleLogout(); return; }
     if(res.ok) {
       const data = await res.json();
       const rawAppts = data.appointments || [];
@@ -189,11 +278,11 @@ function viewDashboard() {
     return `<tr><td><b>${t12((a.time||'').slice(0,5))}</b></td><td><b>${esc(a.patient_name)}</b><small style="display:block;color:var(--muted)">${esc(a.patient_phone)}</small></td><td>${esc(a.doctor_name)}</td><td>${stPill(a.status)}</td><td class="right">${actionBtn}</td></tr>`;
   }).join('');
 
-  return `<div class="page-head"><h1>Dashboard</h1><p>Live clinic dashboard with audio notifications and WhatsApp direct links.</p></div>
+  return `<div class="page-head"><h1>Dashboard</h1><p>Live clinic desk with audio alerts & direct WhatsApp messaging.</p></div>
     <div class="stats">
-      <div class="stat hero"><div class="lbl">Total Appointments</div><div class="val num">${state.appts.length}</div><div class="sub">Live database synced</div></div>
-      <div class="stat"><div class="lbl">Pending Requests</div><div class="val num">${pend}</div><div class="sub">Require confirmation</div></div>
-      <div class="stat"><div class="lbl">Registered Patients</div><div class="val num">${state.patients.length}</div><div class="sub">Active profiles</div></div>
+      <div class="stat hero"><div class="lbl">Total Appointments</div><div class="val num">${state.appts.length}</div><div class="sub">Live D1 Database</div></div>
+      <div class="stat"><div class="lbl">Pending Requests</div><div class="val num">${pend}</div><div class="sub">Require verification</div></div>
+      <div class="stat"><div class="lbl">Registered Patients</div><div class="val num">${state.patients.length}</div><div class="sub">Total patient records</div></div>
     </div>
     <div class="card"><div class="card-head"><h2>Recent Appointments</h2><button class="btn sm" onclick="state.page='today';render()">View All</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Patient</th><th>Doctor</th><th>Status</th><th class="right">Action / WhatsApp</th></tr></thead><tbody>${rows || '<tr><td colspan="5" class="empty">No appointments found.</td></tr>'}</tbody></table></div></div>`;
 }
@@ -267,7 +356,7 @@ function viewHistory() {
 }
 
 function viewSecurity() {
-  return `<div class="page-head"><h1>Security & Settings</h1><p>System configuration</p></div><div class="card"><p class="muted">Session persistence active. Refreshing page preserves login state.</p></div>`;
+  return `<div class="page-head"><h1>Security & Settings</h1><p>System configuration</p></div><div class="card"><p class="muted">Protected by Cloudflare Worker API Authentication. Session persistence active.</p></div>`;
 }
 
 async function updateApptStatus(id, status) {
@@ -287,7 +376,6 @@ async function updateApptStatus(id, status) {
 }
 
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', "Today's Patients"], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
-const NAVICO = { dashboard: 'home', requests: 'inbox', today: 'cal', manual: 'userplus', history: 'book', security: 'shield' };
 
 function renderNav() {
   const pend = state.requests.filter(r => r.status === 'pending').length;
@@ -304,10 +392,9 @@ $('#themeBtn').addEventListener('click', () => {
   const r = document.documentElement;
   r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark';
 });
-$('#logoutBtn').addEventListener('click', () => { location.reload(); });
 
-loadData();
-setInterval(loadData, 10000);
+// INITIAL BOOT
+checkSession();
 </script>
 </body>
 </html>
