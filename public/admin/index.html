@@ -535,13 +535,11 @@ document.addEventListener('submit', async e => {
   if (!did) return fail('Doctor select karein.');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const r = await api('/api/book', { method: 'POST', body: { name, phone: ph, countryCode: '+92', doctor_id: did, date, time, treatment: proc || null } });
+    const r = await api('/api/admin/manual', { method: 'POST', body: { name, phone: ph, doctor_id: did, date, time, treatment: proc || null } });
     if (!r.ok) { fail(r.data.error || 'Booking save nahi hui (' + r.status + ').'); }
     else {
       await loadData();
-      const a = state.appts.find(x => x.status === 'pending' && last10(x.phone) === ph && x.date === date && x.time === time);
-      if (a) await setStatus(a.id, 'confirmed', 'Patient add ho gaya (#' + a.pid + ').');
-      else toast('Patient add ho gaya.');
+      toast('Manual patient add ho gaya (#' + r.data.patient_id + ').');
       state.tab = 'accepted'; state.filter = 'all'; go(date === todayStr() ? 'today' : 'requests');
       return;
     }
