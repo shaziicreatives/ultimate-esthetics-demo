@@ -13,7 +13,8 @@ export async function onRequestPost(context) {
     ).bind(username, ip).first();
     if ((recent?.n || 0) >= 10) return new Response(JSON.stringify({ error: "Too many login attempts. Please try again in 15 minutes." }), { status: 429, headers: { "Content-Type": "application/json" } });
 
-    const user = await env.DB.prepare("SELECT * FROM users WHERE username = ? COLLATE NOCASE AND is_active = 1").bind(username).first();
+    const user = await env.DB.prepare("SELECT * FROM users WHERE (username = ? COLLATE NOCASE OR (role = 'owner' AND username = 'admin' AND ? = 'Owner')) AND is_active = 1").bind(username,username).first();
+    if (user?.role === "owner" && username.toLowerCase() === "owner") user.username = "Owner";
     if (user?.locked_until && new Date(user.locked_until.replace(" ", "T") + (user.locked_until.includes("Z") ? "" : "Z")).getTime() > Date.now()) {
       return new Response(JSON.stringify({ error: "Account temporarily locked. Please try again later." }), { status: 423, headers: { "Content-Type": "application/json" } });
     }
