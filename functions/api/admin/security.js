@@ -14,7 +14,7 @@ export async function onRequestGet({request,env}){
    env.DB.prepare("SELECT id,username,ip,success,created_at FROM login_attempts ORDER BY id DESC LIMIT 500").all(),
    env.DB.prepare("SELECT s.id,s.user_id,s.ip,s.user_agent,s.expires_at,s.created_at,u.username FROM sessions s JOIN users u ON u.id=s.user_id WHERE datetime(s.expires_at)>datetime('now') ORDER BY s.created_at DESC LIMIT 50").all(),
    env.DB.prepare("SELECT id,username,action,entity,entity_id,details,ip,created_at FROM activity_log ORDER BY id DESC LIMIT 500").all(),
-   u.role==="owner" ? env.DB.prepare("SELECT id,username,role,is_active FROM users WHERE username IN ('Owner','Admin','Reception') ORDER BY id").all() : Promise.resolve({results:[]})
+   u.role==="owner" ? env.DB.prepare("SELECT id,username,role,is_active FROM users WHERE role='owner' OR username IN ('Admin','Reception') ORDER BY id").all() : Promise.resolve({results:[]})
   ]);
   return json({logins:logins.results||[],sessions:(sessions.results||[]).map(s=>({...s,device:device(s.user_agent),current:s.id===u.session_id})),activity:activity.results||[],users:users.results||[]});
  }catch(e){return json({error:"Security records unavailable: "+String(e.message||"database error")},500);}
