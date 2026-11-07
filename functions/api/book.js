@@ -4,8 +4,17 @@ export async function onRequestPost(context) {
         const data = await request.json();
         let { name, phone, countryCode, doctor_id, date, time, treatment } = data;
 
-        if (!name || !phone || !doctor_id || !date || !time) {
+        if (!name || !phone || !doctor_id || !date || time === undefined) {
             return new Response(JSON.stringify({ error: "All required fields must be filled" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        // Strict time validation (Clinic hours: 11 to 19 i.e., 11:00 AM to 07:00 PM)
+        const hourNum = parseInt(time, 10);
+        if (isNaN(hourNum) || hourNum < 11 || hourNum > 19) {
+            return new Response(JSON.stringify({ error: "Invalid time slot selected. Clinic hours are 11:00 AM to 07:00 PM." }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" }
             });
@@ -37,7 +46,7 @@ export async function onRequestPost(context) {
         }
 
         // Ensure time is formatted correctly as string (e.g., '14:00')
-        const timeStr = String(time).padStart(2, '0') + ':00';
+        const timeStr = String(hourNum).padStart(2, '0') + ':00';
 
         // Insert appointment
         await env.DB.prepare(
@@ -55,7 +64,7 @@ export async function onRequestPost(context) {
                 headers: { "Content-Type": "application/json" }
             });
         }
-        return new Response(JSON.stringify({ error: err.message }), {
+        return new Response(JSON.stringify({ error: "An unexpected error occurred while processing your booking. Please try again." }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
         });
