@@ -556,7 +556,7 @@ document.addEventListener('submit',async e=>{
  catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Save password';}
 });
 
-document.addEventListener('click', e => {
+document.addEventListener('click', async e => {
   const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
