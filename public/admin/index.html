@@ -315,7 +315,7 @@ let seenPendingIds = null, timer = null;
 async function loadData(first) {
   let r;
   try { r = await api('/api/admin/appointments'); } catch (e) { return; }
-  if (!r.ok) { if (first) toast('Data load nahi hua (' + r.status + ')'); return; }
+  if (!r.ok) { if (first) toast('Unable to load data (' + r.status + ')'); return; }
   const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
   const appts = raw.map(a => ({
     id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
@@ -502,13 +502,13 @@ function viewToday() {
 
 function viewManual() {
   const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
-  const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">Koi doctor nahi mila</option>';
+  const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
   const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
-  return head('Manual Patient', 'Walk-in aur phone call ke liye. Phone number se purana patient khud mil jata hai.', '') +
+  return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
     '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
     '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
     '<div class="two-col"><div class="field"><label for="mName">Full name</label><input class="inp" id="mName" required></div>' +
-    '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" placeholder="03xx xxxxxxx"><span class="hint" id="mDup">Wapas aane par isi se patient milega.</span></div></div>' +
+    '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" autocomplete="tel" placeholder="+923001234567 or 03001234567"><span class="hint" id="mDup">Enter a Pakistani mobile number: +92 followed by 10 digits, or 11 digits starting with 03.</span></div></div>' +
     '<div class="two-col"><div class="field"><label for="mDoc">Doctor</label><select class="inp" id="mDoc">' + docs + '</select></div>' +
     '<div class="field"><label for="mProc">Procedure</label><input class="inp" id="mProc" list="procList" placeholder="e.g. Consultation"><datalist id="procList">' + procs.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist></div></div>' +
     '<div class="two-col"><div class="field"><label for="mDate">Date</label><input class="inp" id="mDate" type="date" required value="' + todayStr() + '"></div>' +
@@ -521,11 +521,11 @@ function viewManual() {
 function histList() {
   const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
   const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
-  if (!l.length) return '<div class="empty">Koi patient nahi mila.</div>';
+  if (!l.length) return '<div class="empty">No patients found.</div>';
   return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span></button>';}).join('');
 }
 function histDetail() {
-  const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Patient select karein.</div></div>';
+  const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Select a patient.</div></div>';
   const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{visit_count:0,billed:0,received:0,balance:0};
   const list=state.visits.filter(v=>Number(v.patient_id)===Number(p.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   const appt=p.appts.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
@@ -544,7 +544,7 @@ function viewSecurity() {
  const rows=(items,fn,empty)=>items&&items.length?items.map(fn).join(''):'<tr><td colspan="5" class="empty">'+empty+'</td></tr>';
  return head('Security','Account protection, login records and clinic data backups.','<button class="btn" data-security-refresh>↻ Refresh</button>')+
  '<div class="security-grid">'+
- '<section class="card"><div class="card-head"><h2>Change password</h2><span class="pill ok">Connected to D1</span></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" minlength="10" autocomplete="new-password" required><small class="hint">At least 10 characters and one number.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" minlength="10" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Updates the D1 user record and revokes all existing sessions. Sign in again with the new password.</small></form></section>'+
+ '<section class="card"><div class="card-head"><h2>Change password</h2><span class="pill ok">Connected to D1</span></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use a strong password. No fixed character limit.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Updates the D1 user record and revokes all existing sessions. Sign in again with the new password.</small></form></section>'+
  '<section class="card"><div class="card-head"><h2>Login history</h2><span class="pill ok">Live D1 records</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>User</th><th>IP address</th><th>Result</th></tr></thead><tbody>'+rows(live.logins,(x)=>'<tr><td>'+esc(x.created_at)+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+ (x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'</tbody></table></div><small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Active sessions</h2><span class="pill ok">Live D1 sessions</span></div>'+((live.sessions||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||'IP unavailable')+'<br>Expires '+esc(x.expires_at)+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join('')||'<div class="empty">No active sessions.</div>')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Activity log</h2><span class="pill ok">Live D1 records</span></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>'+rows(live.activity,(x)=>'<tr><td>'+esc(x.created_at)+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'</tbody></table></div><small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
@@ -590,7 +590,7 @@ document.addEventListener('submit',async e=>{
  if(e.target.id!=='pwForm') return; e.preventDefault();
  const current=$('#pwCurrent').value,n=$('#pwNew').value,n2=$('#pwAgain').value,err=$('#pwErr'),btn=$('#pwSave');
  if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
- if(n.length<10||!/[0-9]/.test(n)){err.textContent='Use at least 10 characters and one number.';err.hidden=false;return;}
+ if(!n){err.textContent='Enter a new password.';err.hidden=false;return;}
  err.hidden=true;btn.disabled=true;btn.textContent='Saving…';
  try { const r=await api('/api/admin/password',{method:'POST',body:{current_password:current,new_password:n}}); if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save password';return;} toast('Password updated in D1. Please sign in again with your new password.'); showLogin(); }
  catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Save password';}
