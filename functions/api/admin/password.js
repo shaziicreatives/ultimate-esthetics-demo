@@ -17,8 +17,13 @@ export async function onRequestPost({request,env}) {
   const owner=await env.DB.prepare("SELECT id,password_hash,password_salt FROM users WHERE id=? AND role='owner' AND is_active=1").bind(u.user_id).first();
   if(!owner || await hash(String(b.owner_password||"")+owner.password_salt)!==owner.password_hash)return json({error:"Owner password is incorrect."},403);
   const staff=await env.DB.prepare("SELECT id,username FROM users WHERE username=? COLLATE NOCASE AND is_active=1").bind(target).first();
-  if(!staff)return json({error:"Staff account not found."},404);
   const salt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,"0")).join(""),ph=await hash(next+salt);
+  if(!staff){
+   const email=target==="admin"?"admin.staff@ultimateesthetics.local":"reception@ultimateesthetics.local";
+   await env.DB.prepare("INSERT INTO users(username,email,password_hash,password_salt,role) VALUES(?,?,?,?,?)").bind(target==="admin"?"Admin":"Reception",email,ph,salt,"receptionist").run();
+   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,details) VALUES(?,?,'staff_account_created','user',?)").bind(u.user_id,u.username,target+" account created by Owner").run();
+   return json({success:true,message:(target==="admin"?"Admin":"Reception")+" account created with the new password."});
+  }
   await env.DB.batch([
    env.DB.prepare("UPDATE users SET password_hash=?,password_salt=?,failed_attempts=0,locked_until=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(ph,salt,staff.id),
    env.DB.prepare("DELETE FROM sessions WHERE user_id=?").bind(staff.id),
