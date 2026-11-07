@@ -326,7 +326,9 @@ async function setStatus(id, status, msg) {
     const r = await api('/api/admin/appointments', { method: 'PATCH', body: { id, status } });
     if (r.ok) { toast(msg || 'Updated'); await loadData(); }
     else toast(r.data.error || 'Update fail ho gaya (' + r.status + ')');
-  } catch (e) { }
+  } catch (e) {
+    if (e.message !== 'unauthorized') toast('Status update nahi hui. Server connection check karein.');
+  }
 }
 
 /* ---------- auth ---------- */
