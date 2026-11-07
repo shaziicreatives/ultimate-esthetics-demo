@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Ultimate Esthetics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Login Screen -->
+    <div id="loginSection" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Clinic Admin Login</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Username</label>
+                    <input type="text" id="username" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" required class="mt-1 w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div id="loginError" class="text-red-500 text-sm hidden"></div>
+                <button type="submit" class="w-full bg-slate-900 text-white py-2 rounded-lg font-semibold hover:bg-slate-800 transition">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardSection" class="hidden min-h-screen flex flex-col">
+        <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">Ultimate Esthetics — Admin Dashboard</h1>
+            <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300">Refresh Data</button>
+        </header>
+
+        <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Recent Appointments</h2>
+            <div class="bg-white rounded-xl shadow overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600 text-sm border-b">
+                            <th class="p-4">Date & Time</th>
+                            <th class="p-4">Patient Name</th>
+                            <th class="p-4">Phone</th>
+                            <th class="p-4">Doctor</th>
+                            <th class="p-4">Treatment</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsTable" class="divide-y text-sm text-gray-700">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errDiv = document.getElementById('loginError');
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    loadAppointments();
+                } else {
+                    errDiv.textContent = data.error || 'Login failed';
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errDiv.textContent = 'Connection error.';
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        async function loadAppointments() {
+            try {
+                const res = await fetch('/api/admin/appointments');
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        document.getElementById('loginSection').classList.remove('hidden');
+                        document.getElementById('dashboardSection').classList.add('hidden');
+                        return;
+                    }
+                    throw new Error('Failed to fetch');
+                }
+                const data = await res.json();
+                const tbody = document.getElementById('appointmentsTable');
+                tbody.innerHTML = '';
+
+                if (data.appointments.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">No appointments found.</td></tr>`;
+                    return;
+                }
+
+                data.appointments.forEach(app => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-4 whitespace-nowrap">${app.date} <br><span class="text-xs text-gray-400">${app.time}</span></td>
+                        <td class="p-4 font-medium">${app.patient_name}</td>
+                        <td class="p-4">${app.patient_phone}</td>
+                        <td class="p-4">${app.doctor_name}</td>
+                        <td class="p-4">${app.treatment || 'Consultation'}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded text-xs font-semibold ${getStatusBadge(app.status)}">${app.status}</span></td>
+                        <td class="p-4 whitespace-nowrap space-x-2">
+                            <button onclick="updateStatus(${app.id}, 'confirmed')" class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium hover:bg-green-200">Confirm</button>
+                            <button onclick="updateStatus(${app.id}, 'rejected')" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium hover:bg-red-200">Reject</button>
+                            <button onclick="updateStatus(${app.id}, 'done')" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium hover:bg-blue-200">Done</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function getStatusBadge(status) {
+            switch(status) {
+                case 'confirmed': return 'bg-green-100 text-green-800';
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'done': return 'bg-blue-100 text-blue-800';
+                case 'rejected': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        async function updateStatus(id, status) {
+            try {
+                const res = await fetch('/api/admin/appointments', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status })
+                });
+                if (res.ok) {
+                    loadAppointments();
+                } else {
+                    alert('Failed to update status');
+                }
+            } catch (err) {
+                alert('Error updating status');
+            }
+        }
+
+        loadAppointments();
+    </script>
+</body>
+</html>
