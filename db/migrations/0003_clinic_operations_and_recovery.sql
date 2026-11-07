@@ -51,3 +51,6 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
 CREATE INDEX IF NOT EXISTS idx_visits_patient ON visits(patient_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_payments_patient ON payments(patient_id, created_at);
 INSERT OR IGNORE INTO settings(key,value) VALUES ('owner_recovery_email','imat2025maths@gmail.com');
+
+-- Set the designated owner recovery address for the initial admin account.
+UPDATE users SET email='imat2025maths@gmail.com', updated_at=CURRENT_TIMESTAMP WHERE username='admin' COLLATE NOCASE;
