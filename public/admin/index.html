@@ -259,6 +259,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .switch{accent-color:#43865d;width:18px;height:18px}
 .device-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
 .device-row:last-child{border:0}
+.security-log-collapsed tbody tr:nth-child(n+9){display:none}
+.security-log-toggle{margin-top:10px}
 @media(max-width:700px){.security-grid{grid-template-columns:1fr}}
 
 </style>
@@ -331,6 +333,7 @@ const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
 
 /* ---------- state ---------- */
+const securityShowAll = { logins:false, activity:false };
 const state = { page: 'dashboard', tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
@@ -642,12 +645,16 @@ function histDetail() {
 function viewSecurity() {
  const live=state.security||{};
  const rows=(items,fn,empty)=>items&&items.length?items.map(fn).join(''):'<tr><td colspan="5" class="empty">'+empty+'</td></tr>';
+ const logRows=(key,items,fn,empty)=>'<div class="tbl-wrap '+(securityShowAll[key]?'':'security-log-collapsed')+'"><table class="tbl"><thead><tr>'+(key==='logins'?'<th>When</th><th>User</th><th>IP address</th><th>Result</th>':'<th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th>')+'</tr></thead><tbody>'+rows((securityShowAll[key]?items:(items||[]).slice(0,8)),fn,empty)+'</tbody></table></div>'+((items||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="'+key+'">'+(securityShowAll[key]?'Show less':'View all ('+items.length+')')+'</button>':'');
+ const accounts=(live.users||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.username)+'</b><small>'+esc(x.role)+' · '+(x.is_active?'Active':'Inactive')+'</small></span></div>').join('');
+ const ownerTools=(live.users||[]).some(x=>x.username.toLowerCase()==='owner')?'<section class="card"><div class="card-head"><h2>Staff accounts</h2><span class="pill info">Owner only</span></div><p class="hint" style="margin-bottom:10px">Enter the Owner password to change the Admin or Reception password. Their active sessions will be signed out.</p>'+accounts+'<form id="staffPwForm" class="col" style="gap:9px;margin-top:12px"><div class="field"><label>Account</label><select class="inp" id="staffTarget"><option value="Admin">Admin</option><option value="Reception">Reception</option></select></div><div class="field"><label>Owner password</label><input class="inp" id="staffOwnerPw" type="password" autocomplete="current-password" required></div><div class="field"><label>New staff password</label><input class="inp" id="staffNewPw" type="password" autocomplete="new-password" required></div><div class="field"><label>Repeat new password</label><input class="inp" id="staffAgainPw" type="password" autocomplete="new-password" required></div><div class="err" id="staffPwErr" hidden></div><button class="btn pri" type="submit" id="staffPwSave">Update staff password</button></form></section>':'';
  return head('Security','Account protection, login records and clinic data backups.','<span class="hint">Updates automatically every 5 seconds · Pakistan Standard Time</span>')+
  '<div class="security-grid">'+
- '<section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use a strong password. No fixed character limit.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>'+
- '<section class="card"><div class="card-head"><h2>Login history</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>User</th><th>IP address</th><th>Result</th></tr></thead><tbody>'+rows(live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+ (x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'</tbody></table></div><small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">No fixed character limit.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>'+
+ ownerTools+
+ '<section class="card"><div class="card-head"><h2>Login history</h2></div>'+logRows('logins',live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+(x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'<small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||'IP unavailable')+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join('')||'<div class="empty">No active sessions.</div>')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
- '<section class="card"><div class="card-head"><h2>Activity log</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>'+rows(live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'</tbody></table></div><small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Activity log</h2></div>'+logRows('activity',live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'<small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
  '<section class="card wide"><div class="card-head"><h2>Database backup</h2><span class="pill warn">Not configured</span></div><b>Automatic backup is not active.</b><p class="hint" style="margin-top:6px">No backup is claimed until a separate private storage bucket, scheduled export, retention policy and restore test are configured. Your clinic records remain securely stored.</p></section>'+
  '</div>';
 }
@@ -680,7 +687,7 @@ function renderNav() {
   $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
 }
 
-async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
+async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
 function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
@@ -695,6 +702,17 @@ document.addEventListener('click', async e => {
  b.disabled=false; b.textContent=old;
 });
 document.addEventListener('submit',async e=>{
+ if(e.target.id!=='staffPwForm')return;e.preventDefault();
+ const err=$('#staffPwErr'),btn=$('#staffPwSave'),owner=$('#staffOwnerPw').value,n=$('#staffNewPw').value,n2=$('#staffAgainPw').value;
+ if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
+ if(!n){err.textContent='Enter a new password.';err.hidden=false;return;}
+ err.hidden=true;btn.disabled=true;btn.textContent='Updating…';
+ try{const r=await api('/api/admin/password',{method:'POST',body:{target_username:$('#staffTarget').value,owner_password:owner,new_password:n}});
+ if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Update staff password';return;}
+ toast(r.data.message||'Staff password updated.');await loadSecurity();
+ }catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Update staff password';}
+});
+document.addEventListener('submit',async e=>{
  if(e.target.id!=='pwForm') return; e.preventDefault();
  const current=$('#pwCurrent').value,n=$('#pwNew').value,n2=$('#pwAgain').value,err=$('#pwErr'),btn=$('#pwSave');
  if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
@@ -705,7 +723,7 @@ document.addEventListener('submit',async e=>{
 });
 
 document.addEventListener('click', async e => {
-  const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
   const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
