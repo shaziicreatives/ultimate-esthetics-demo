@@ -14,7 +14,10 @@ export async function onRequestPost(context) {
     if ((recent?.n || 0) >= 10) return new Response(JSON.stringify({ error: "Too many login attempts. Please try again in 15 minutes." }), { status: 429, headers: { "Content-Type": "application/json" } });
 
     const user = await env.DB.prepare("SELECT * FROM users WHERE (username = ? COLLATE NOCASE OR (role = 'owner' AND username = 'admin' AND ? = 'Owner')) AND is_active = 1").bind(username,username).first();
-    if (user?.role === "owner" && username.toLowerCase() === "owner") user.username = "Owner";
+    if (user?.role === "owner" && username.toLowerCase() === "owner" && user.username.toLowerCase() === "admin") user.username = "Owner";
+    // Legacy Admin rows used role='owner' because the original schema had no admin role.
+    // Keep the stored schema compatible but never grant Admin Owner-only permissions.
+    if (user?.role === "owner" && user.username.toLowerCase() === "admin") user.role = "admin";
     if (user?.locked_until && new Date(user.locked_until.replace(" ", "T") + (user.locked_until.includes("Z") ? "" : "Z")).getTime() > Date.now()) {
       return new Response(JSON.stringify({ error: "Account temporarily locked. Please try again later." }), { status: 423, headers: { "Content-Type": "application/json" } });
     }
@@ -39,6 +42,7 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Invalid username or password" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
 
+    if (user.role === "owner" && username.toLowerCase() !== "owner" && user.username.toLowerCase() === "admin") user.role = "admin";
     if (user.role === "owner") {
       await env.DB.prepare("UPDATE users SET username='Owner', updated_at=CURRENT_TIMESTAMP WHERE id=? AND role='owner' AND username='admin' COLLATE NOCASE").bind(user.id).run();
       user.username = "Owner";
