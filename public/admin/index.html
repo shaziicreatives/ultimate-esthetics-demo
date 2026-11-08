@@ -923,7 +923,9 @@ function openInvoiceEditor(id){
  form.dataset.editVisit=String(v.id);
  form.dataset.saved='1';
  form.dataset.invoiceNumber=v.invoice_number||'';
- form.dataset.patientId=String(v.patient_id);\n form.dataset.patientName=String(v.patient_name||appointment.name||'');\n form.dataset.patientPhone=String(v.phone||appointment.phone||'');
+ form.dataset.patientId=String(v.patient_id);
+ form.dataset.patientName=String(v.patient_name||appointment.name||'');
+ form.dataset.patientPhone=String(v.phone||appointment.phone||'');
  const title=modal.querySelector('.card-head h2');
  if(title)title.textContent='Edit patient visit & invoice';
  const subtitle=modal.querySelector('.card-head small');
