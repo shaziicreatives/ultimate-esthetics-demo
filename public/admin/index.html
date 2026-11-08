@@ -277,6 +277,38 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .security-log-toggle{margin-top:10px}
 @media(max-width:700px){.security-grid{grid-template-columns:1fr}}
 
+
+/* Mobile layout: keep the full menu reachable and add safe edge spacing */
+@media(max-width:900px){
+  #appView{padding:0}
+  .app{width:100%;min-width:0;overflow:visible}
+  .side{padding:12px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));gap:10px}
+  .brand{padding:0 4px}
+  .nav{display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:2px 2px 9px}
+  .nav button{flex:0 0 auto;width:auto;min-height:40px;padding:9px 13px;white-space:nowrap}
+  .nav::-webkit-scrollbar{height:4px}
+  .nav::-webkit-scrollbar-thumb{background:var(--sand);border-radius:99px}
+  .nav-label{display:block;margin:0;padding:0 4px;font-size:9px}
+  .side-foot{gap:7px}
+  .user-box{display:flex}
+  .main{padding:18px max(14px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));min-width:0;width:100%}
+  .page-head{gap:10px}
+  .page-head h1{font-size:29px;overflow-wrap:anywhere}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tbl-wrap{max-width:100%}
+}
+@media(max-width:420px){
+  .side{padding-left:12px;padding-right:12px}
+  .main{padding-left:12px;padding-right:12px}
+  .brand b{font-size:16px}
+  .foot-btns .btn{font-size:10px}
+}
+#appUpdateNotice{display:none;position:sticky;top:8px;z-index:500;background:var(--info-bg);color:var(--ink);border:1px solid var(--info);border-radius:12px;padding:11px 12px;margin:0 0 14px;align-items:center;justify-content:space-between;gap:10px;box-shadow:var(--shadow)}
+#appUpdateNotice.show{display:flex}
+#appUpdateNotice .update-copy{min-width:0;font-weight:600;font-size:13px}
+#appUpdateNotice .update-actions{display:flex;gap:6px;flex:none}
+@media(max-width:480px){#appUpdateNotice{align-items:flex-start;flex-direction:column}#appUpdateNotice .update-actions{width:100%}#appUpdateNotice .update-actions .btn{flex:1}}
+
 </style>
 </head>
 <body>
@@ -312,7 +344,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
         </div>
       </div>
     </aside>
-    <main class="main"><div id="view"></div></main>
+    <main class="main"><div id="appUpdateNotice" role="status" aria-live="polite"><div class="update-copy">A new Clinic Desk update is ready.</div><div class="update-actions"><button class="btn pri sm" id="applyAppUpdate" type="button">Update app</button><button class="btn sm" id="dismissAppUpdate" type="button">Later</button></div></div><div id="view"></div></main>
   </div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -907,8 +939,39 @@ if (installAppButton) installAppButton.addEventListener("click", async () => {
     toast("To install: open the browser menu and choose Install app or Add to Home screen.");
   }
 });
+let waitingClinicWorker = null;
+function showClinicUpdateNotice(reg) {
+  if (!reg || !reg.waiting || !navigator.serviceWorker.controller) return;
+  waitingClinicWorker = reg.waiting;
+  const notice = $('#appUpdateNotice');
+  if (notice) notice.classList.add('show');
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('Ultimate Esthetics update ready', { body:'A new Clinic Desk version is ready. Tap Update app when convenient.', icon:'/admin/icon.svg', tag:'clinic-app-update' }); } catch(e) {}
+  }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#dismissAppUpdate')) { $('#appUpdateNotice')?.classList.remove('show'); return; }
+  if (e.target.closest('#applyAppUpdate')) {
+    if (waitingClinicWorker) waitingClinicWorker.postMessage({type:'SKIP_WAITING'});
+    else location.reload();
+  }
+});
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"}).catch(() => {}));
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"});
+      if (reg.waiting && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
+      reg.addEventListener('updatefound', () => {
+        const worker = reg.installing;
+        if (!worker) return;
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+      reg.update().catch(() => {});
+    } catch(e) {}
+  });
 }
 boot();
 </script>
