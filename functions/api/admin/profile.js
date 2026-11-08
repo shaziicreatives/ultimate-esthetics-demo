@@ -1,7 +1,7 @@
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("")};
 async function currentUser(request,env){
- const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);if(!m)return null;
+ const m=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);if(!m)return null;
  const token=decodeURIComponent(m[1]),h=await hash(token);
  return env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
 }
@@ -26,7 +26,7 @@ export async function onRequestPost({request,env}) {
  }
  if(action==="request_email_change"){
   const email=String(b.new_email||"").trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))return json({error:"Enter a valid new email address."},400);
+  if(!/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email))return json({error:"Enter a valid new email address."},400);
   if(email===String(u.email||"").toLowerCase())return json({error:"This is already your current email address."},400);
   return json({error:"Email verification delivery is not configured yet. Your email has not been changed."},503);
  }
