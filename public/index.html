@@ -36,7 +36,29 @@ nav{display:flex;gap:20px}
 nav a{padding:6px 0;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
 nav a.on,nav a:hover{border-color:var(--gold);color:var(--gold)}
 .bar .btn{padding:10px 20px}
-@media(max-width:820px){.bar{flex-wrap:wrap}nav{order:3;width:100%;justify-content:space-between;gap:6px;font-size:14px}}
+/* Mobile header: compact, fully visible, and smoothly animated */
+@keyframes headerDrop{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes brandReveal{from{opacity:0;transform:translateY(-7px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+header{animation:headerDrop .55s cubic-bezier(.2,.7,.25,1) both}
+.logo{animation:brandReveal .7s .08s both}
+@media(max-width:820px){
+ header{position:sticky;top:0}
+ .bar{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:7px;padding:9px 0 8px}
+ .logo{font-size:22px;line-height:1.02;text-align:center;white-space:normal}
+ .logo small{font-size:9px;letter-spacing:.23em;margin-top:2px}
+ nav{order:initial;display:flex;width:100%;max-width:100%;justify-content:flex-start;gap:20px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:1px 3px 5px;scrollbar-width:thin;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+ nav a{flex:0 0 auto;font-size:13px;padding:4px 0 5px}
+ .bar .btn{padding:7px 16px;font-size:13px;border-radius:9px}
+}
+@media(max-width:420px){
+ .wrap{padding-left:16px;padding-right:16px}
+ .bar{gap:6px;padding:7px 0}
+ .logo{font-size:20px}
+ nav{gap:17px}
+ nav a{font-size:12.5px}
+ .bar .btn{padding:6px 14px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){header,.logo{animation:none!important}}
 
 .hero{background:linear-gradient(115deg,var(--cream) 55%,#e8dac0);padding:clamp(52px,9vw,116px) 0;overflow:hidden;position:relative}
 .hero .wrap{position:relative}
@@ -487,6 +509,10 @@ function route(){
  const r=(location.hash.replace('#','')||'/'),ok=!!pages[r],pg=pages[ok?r:'/'];
  document.getElementById('app').innerHTML=pg();
  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===(ok?r:'/')));
+ const activeNav=document.querySelector('#nav a.on');
+ if(activeNav && window.matchMedia('(max-width:820px)').matches){
+   requestAnimationFrame(()=>activeNav.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'}));
+ }
  const ba=document.getElementById('ba');
  if(ba){const i=ba.querySelector('input');i.oninput=()=>ba.style.setProperty('--p',i.value+'%')}
  done=null;sel.h=null;drawBook();observe();scrollTo(0,0);
