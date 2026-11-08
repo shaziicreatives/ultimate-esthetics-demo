@@ -557,13 +557,9 @@ async function enableClinicNotifications() {
       body:{ subscription: subscription.toJSON() }
     });
     if (!saved.ok) throw new Error(saved.data.error || 'Could not save this device subscription.');
-    await reg.showNotification('Background alerts enabled', {
-      body:'This device is registered for new appointment alerts, even when Clinic Desk is closed.',
-      icon:'/admin/icon.svg',
-      badge:'/admin/icon.svg',
-      tag:'clinic-push-enabled'
-    });
-    toast('Background appointment alerts are enabled on this device.');
+    toast(saved.data.test_push_accepted
+      ? 'Push service accepted a test alert. Check this device’s notification center.'
+      : 'Background appointment alerts are enabled on this device.');
   } catch (e) {
     toast(e.message || 'Could not enable background alerts. Check browser notification settings.');
   } finally {
