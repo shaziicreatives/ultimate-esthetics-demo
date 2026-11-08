@@ -906,7 +906,7 @@ document.addEventListener('submit',async e=>{
  err.hidden=true;btn.disabled=true;btn.textContent='Updating…';
  try{const r=await api('/api/admin/password',{method:'POST',body:{target_username:$('#staffTarget').value,owner_password:owner,new_password:n}});
  if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Update staff password';return;}
- toast(r.data.message||'Staff password updated.');await loadSecurity();
+ toast(r.data.message||'Staff password updated.');$('#staffOwnerPw').value='';$('#staffNewPw').value='';$('#staffAgainPw').value='';btn.disabled=false;btn.textContent='Update staff password';await loadSecurity();
  }catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Update staff password';}
 });
 document.addEventListener('submit',async e=>{
