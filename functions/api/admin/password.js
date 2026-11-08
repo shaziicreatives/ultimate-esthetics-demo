@@ -9,7 +9,7 @@ const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncode
 export async function onRequestPost({request,env}) {
  const u=await session(request,env);if(!u)return json({error:"Unauthorized"},401);
  const b=await request.json(),next=String(b.new_password||"");
- if(!next)return json({error:"New password is required."},400);
+ if(next.length<10||!/[0-9]/.test(next))return json({error:"Use at least 10 characters and include a number."},400);
  if(b.target_username){
   if(u.role!=="owner" || u.username.toLowerCase()!=="owner")return json({error:"Only the Owner can change staff passwords."},403);
   const target=String(b.target_username).toLowerCase();
@@ -31,7 +31,6 @@ export async function onRequestPost({request,env}) {
   ]);
   return json({success:true,message:staff.username+" password updated; their existing sessions were signed out."});
  }
- if(u.role!=="owner")return json({error:"Only the Owner can change staff passwords."},403);
  const current=String(b.current_password||"");
  const row=await env.DB.prepare("SELECT id,password_hash,password_salt FROM users WHERE id=?").bind(u.user_id).first();
  if(!row||await hash(current+row.password_salt)!==row.password_hash)return json({error:"Current password is incorrect."},400);
