@@ -505,26 +505,70 @@ function playAppointmentAlert() {
 async function refreshNotificationAccessButton() {
   const b = $('#notificationAccessBtn');
   if (!b) return;
-  if (!('Notification' in window)) { b.textContent = 'Notifications Unsupported'; b.disabled = true; return; }
-  const granted = Notification.permission === 'granted';
-  b.textContent = granted ? 'Notifications: Enabled' : (Notification.permission === 'denied' ? 'Notifications Blocked in Browser' : 'Enable Notifications');
-  b.disabled = Notification.permission === 'denied';
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    b.textContent = 'Push Notifications Unsupported'; b.disabled = true; return;
+  }
+  if (Notification.permission === 'denied') {
+    b.textContent = 'Notifications Blocked in Browser'; b.disabled = true; return;
+  }
+  b.disabled = false;
+  b.textContent = Notification.permission === 'granted' ? 'Enable Background Alerts' : 'Enable Notifications';
+  try {
+    const response = await fetch('/api/admin/push-subscription', { credentials:'same-origin', cache:'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.subscribed && Notification.permission === 'granted') b.textContent = 'Background Alerts: On';
+      else if (!data.publicKey) b.textContent = 'Push Setup Required';
+    }
+  } catch(e) {}
+}
+function decodeVapidKey(value) {
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from(raw, ch => ch.charCodeAt(0));
 }
 async function enableClinicNotifications() {
-  if (!('Notification' in window)) { toast('This browser does not support notifications.'); return; }
-  if (!('serviceWorker' in navigator)) { toast('Service workers are not supported in this browser.'); return; }
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('Background push is not supported by this browser.'); return;
+  }
+  const b = $('#notificationAccessBtn');
+  if (b) { b.disabled = true; b.textContent = 'Setting up alerts…'; }
   try {
-    const permission = await Notification.requestPermission();
-    await refreshNotificationAccessButton();
-    if (permission !== 'granted') { toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.'); return; }
+    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (permission !== 'granted') {
+      toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.');
+      return;
+    }
+    const info = await api('/api/admin/push-subscription');
+    if (!info.ok || !info.data.publicKey) {
+      toast(info.data.error || 'Push service is not configured on this Preview yet.'); return;
+    }
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification('Ultimate Esthetics Clinic Desk', {
-      body: 'Notifications are enabled on this device. Keep this device signed in to receive in-app alerts.',
-      icon: '/admin/icon.svg',
-      tag: 'clinic-notification-enabled'
+    let subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeVapidKey(info.data.publicKey)
+      });
+    }
+    const saved = await api('/api/admin/push-subscription', {
+      method:'POST',
+      body:{ subscription: subscription.toJSON() }
     });
-    toast('Browser notification access enabled on this device.');
-  } catch (e) { toast('Could not enable notifications on this device.'); }
+    if (!saved.ok) throw new Error(saved.data.error || 'Could not save this device subscription.');
+    await reg.showNotification('Background alerts enabled', {
+      body:'This device is registered for new appointment alerts, even when Clinic Desk is closed.',
+      icon:'/admin/icon.svg',
+      badge:'/admin/icon.svg',
+      tag:'clinic-push-enabled'
+    });
+    toast('Background appointment alerts are enabled on this device.');
+  } catch (e) {
+    toast(e.message || 'Could not enable background alerts. Check browser notification settings.');
+  } finally {
+    await refreshNotificationAccessButton();
+  }
 }
 document.addEventListener('click', e => {
   if (e.target && e.target.id === 'notificationAccessBtn') enableClinicNotifications();
@@ -617,6 +661,7 @@ async function boot() {
     }
     showApp();
     await loadData(true);
+    await refreshNotificationAccessButton();
     updateSoundButton();
     if (!timer) timer = setInterval(() => loadData(false), 8000);
   } catch (e) {
