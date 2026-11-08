@@ -36,10 +36,9 @@ export async function onRequestPost(context) {
     const manualSubtotal = body.manual_subtotal === undefined || body.manual_subtotal === null || body.manual_subtotal === "" ? null : Number(body.manual_subtotal);
     const discountType = String(body.discount_type || "none"), discountValue = Number(body.discount_value || 0), received = Number(body.received_now || 0);
     if (manualSubtotal !== null && (!Number.isSafeInteger(manualSubtotal) || manualSubtotal < 0 || !["none","percentage","fixed"].includes(discountType) || !Number.isFinite(discountValue) || discountValue < 0 || (discountType === "percentage" && discountValue > 100) || (discountType === "fixed" && !Number.isSafeInteger(discountValue)))) return json({ error: "Manual invoice amount or discount is invalid." }, 400);
-    if (manualSubtotal === null && received > 0) return json({ error: "Enter a treatment total before recording a manual payment." }, 400);
     const discountAmount = manualSubtotal === null ? 0 : discountType === "percentage" ? Math.round(manualSubtotal * discountValue / 100) : discountType === "fixed" ? Math.min(manualSubtotal, discountValue) : 0;
     const netTotal = manualSubtotal === null ? 0 : manualSubtotal - discountAmount;
-    if (!Number.isSafeInteger(received) || received < 0 || (manualSubtotal !== null && received > netTotal)) return json({ error: "Received amount must be between zero and the discounted invoice total." }, 400);
+    if (!Number.isSafeInteger(received) || received < 0) return json({ error: "Received amount must be zero or a positive whole number." }, 400);
     if (referralId && (!Number.isSafeInteger(referralId) || !await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(referralId).first())) return json({ error: "Select a valid referring patient." }, 400);
     if (manualSubtotal !== null && !await env.DB.prepare("SELECT id FROM invoice_sequence WHERE id=1").first()) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
     const phone = "+92" + digits;
@@ -50,10 +49,24 @@ export async function onRequestPost(context) {
       const insertedPatient = await env.DB.prepare("INSERT INTO patients (name, phone) VALUES (?, ?)").bind(name, phone).run();
       patient = { id: insertedPatient.meta.last_row_id };
     }
+    const oldBalanceRow = await env.DB.prepare("SELECT COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=?),0)-COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=?),0) balance").bind(patient.id,patient.id).first();
+    const previousBalance = Math.max(0,Number(oldBalanceRow?.balance||0));
+    if (manualSubtotal === null && received > previousBalance) return json({ error: "Payment cannot exceed this patient's outstanding balance of Rs " + previousBalance + "." }, 400);
+    if (manualSubtotal !== null && received > previousBalance + netTotal) return json({ error: "Received amount cannot exceed the previous balance plus this discounted invoice total." }, 400);
+    if (manualSubtotal === null && received > 0) {
+      const outstandingVisit = await env.DB.prepare("SELECT v.id FROM visits v WHERE v.patient_id=? AND v.total_amount>COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) ORDER BY v.created_at ASC LIMIT 1").bind(patient.id).first();
+      if (!outstandingVisit) return json({ error: "No outstanding invoice was found for this patient." }, 400);
+    }
     const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by, follow_up_date) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?, ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id, followUpDate || null).run();
     if (referralId === Number(patient.id)) return json({ error: "A patient cannot refer themselves." }, 400);
     if (referralId || referralNotes) await env.DB.prepare("UPDATE patients SET referred_by_patient_id=?, referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralId, referralNotes || null, patient.id).run();
     let manualInvoice = null;
+    if (manualSubtotal === null && received > 0) {
+      const outstandingVisit = await env.DB.prepare("SELECT v.id FROM visits v WHERE v.patient_id=? AND v.total_amount>COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) ORDER BY v.created_at ASC LIMIT 1").bind(patient.id).first();
+      await env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(outstandingVisit.id,patient.id,received,String(body.payment_method||"cash").slice(0,30),String(body.payment_reference||"").slice(0,120)||null,session.user_id).run();
+      await env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id).run();
+      manualInvoice = { payment_only: true, received, previous_balance: previousBalance, balance: previousBalance-received };
+    }
     if (manualSubtotal !== null) {
       const seq = await env.DB.prepare("UPDATE invoice_sequence SET last_number=last_number+1 WHERE id=1 RETURNING last_number").first();
       if (!seq) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
