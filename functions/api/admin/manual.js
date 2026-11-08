@@ -26,6 +26,8 @@ export async function onRequestPost(context) {
     const date = String(body.date || "");
     const time = String(body.time || "");
     const treatment = String(body.treatment || "").trim();
+    const followUpDate = String(body.follow_up_date || "").trim();
+    if (followUpDate && !/^\\d{4}-\\d{2}-\\d{2}$/.test(followUpDate)) return json({ error: "Follow-up date is invalid." }, 400);
     if (!name || !validPhone || digits.length !== 10 || !Number.isSafeInteger(doctorId) || doctorId < 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ error: "A valid Pakistani mobile number, patient name, doctor, date, and time are required." }, 400);
     const doctor = await env.DB.prepare("SELECT id FROM doctors WHERE id = ? AND is_active = 1").bind(doctorId).first();
     if (!doctor) return json({ error: "Selected doctor is unavailable." }, 400);
@@ -48,7 +50,7 @@ export async function onRequestPost(context) {
       const insertedPatient = await env.DB.prepare("INSERT INTO patients (name, phone) VALUES (?, ?)").bind(name, phone).run();
       patient = { id: insertedPatient.meta.last_row_id };
     }
-    const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id).run();
+    const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by, follow_up_date) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?, ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id, followUpDate || null).run();
     if (referralId === Number(patient.id)) return json({ error: "A patient cannot refer themselves." }, 400);
     if (referralId || referralNotes) await env.DB.prepare("UPDATE patients SET referred_by_patient_id=?, referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralId, referralNotes || null, patient.id).run();
     let manualInvoice = null;
@@ -56,7 +58,7 @@ export async function onRequestPost(context) {
       const seq = await env.DB.prepare("UPDATE invoice_sequence SET last_number=last_number+1 WHERE id=1 RETURNING last_number").first();
       if (!seq) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
       const invoiceNumber = "UE-INV-" + String(seq.last_number);
-      const visit = await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,invoice_number,subtotal_amount,discount_type,discount_value,discount_amount) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(inserted.meta.last_row_id,patient.id,doctorId,session.user_id,String(body.notes||"").slice(0,5000),netTotal,invoiceNumber,manualSubtotal,discountType,discountValue,discountAmount).run();
+      const visit = await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,follow_up_date,invoice_number,subtotal_amount,discount_type,discount_value,discount_amount) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)").bind(inserted.meta.last_row_id,patient.id,doctorId,session.user_id,String(body.notes||"").slice(0,5000),netTotal,followUpDate||null,invoiceNumber,manualSubtotal,discountType,discountValue,discountAmount).run();
       const visitId = visit.meta.last_row_id;
       const paymentStatements = [];
       if (treatment) paymentStatements.push(env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,treatment.slice(0,160),manualSubtotal));
