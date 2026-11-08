@@ -848,7 +848,8 @@ document.addEventListener('submit', async e => {
 
 let deferredInstallPrompt = null;
 const installAppButton = document.getElementById("installAppBtn");
-const isClinicInstalled = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const INSTALL_FLAG = "ultimateClinicInstalled";
+const isClinicInstalled = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || localStorage.getItem(INSTALL_FLAG) === "yes";
 const syncInstallControl = () => {
   if (installAppButton && isClinicInstalled()) {
     installAppButton.hidden = true;
@@ -872,7 +873,7 @@ if (installAppButton) installAppButton.addEventListener("click", async () => {
     deferredInstallPrompt.prompt();
     const choice = await deferredInstallPrompt.userChoice;
     deferredInstallPrompt = null;
-    if (choice && choice.outcome === "accepted") installAppButton.hidden = true;
+    if (choice && choice.outcome === "accepted") { localStorage.setItem(INSTALL_FLAG, "yes"); installAppButton.hidden = true; }
   } else {
     toast("To install: open the browser menu and choose Install app or Add to Home screen.");
   }
