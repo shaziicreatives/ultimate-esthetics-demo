@@ -17,7 +17,7 @@ export async function onRequestPost({request,env}) {
  if(action==="consume_email_change"){
   const token=String(b.token||"");if(!token)return json({error:"Invalid or expired verification link."},400);
   const tokenHash=await hash(token);
-  const pending=await env.DB.prepare("SELECT ec.id,ec.user_id,ec.new_email,ec.current_verified_at,ec.new_token_hash,ec.new_expires_at,ec.token_hash,u.username FROM email_changes ec JOIN users u ON u.id=ec.user_id WHERE (ec.token_hash=? OR ec.new_token_hash=?) AND ec.used_at IS NULL AND u.is_active=1").bind(tokenHash,tokenHash).first();
+  const pending=await env.DB.prepare("SELECT ec.id,ec.user_id,ec.new_email,ec.current_verified_at,ec.new_token_hash,ec.new_expires_at,ec.token_hash,ec.expires_at,u.username FROM email_changes ec JOIN users u ON u.id=ec.user_id WHERE (ec.token_hash=? OR ec.new_token_hash=?) AND ec.used_at IS NULL AND u.is_active=1").bind(tokenHash,tokenHash).first();
   if(!pending)return json({error:"This verification link has expired or has already been used."},400);
   if(pending.token_hash===tokenHash && !pending.current_verified_at){
    if(!pending.expires_at || new Date(pending.expires_at.replace(" ","T")+"Z")<=new Date())return json({error:"Existing-email link has expired. Request a new change."},400);
