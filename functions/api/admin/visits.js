@@ -64,7 +64,11 @@ export async function onRequestPatch(context) {
    if(b.patient_id===undefined)return json({error:"Patient or invoice ID is required."},400);
    await env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId).run();
    await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'patient_edited','patient',?,?)").bind(u.user_id,u.username,patientId,"Patient name and phone updated").run();
-   if(context.waitUntil)context.waitUntil(syncPatientToDrive(env,patientId));
+   if(context.waitUntil){
+    context.waitUntil(syncPatientToDrive(env,patientId));
+    const priorVisits=await env.DB.prepare("SELECT id FROM visits WHERE patient_id=? ORDER BY id").bind(patientId).all();
+    for(const prior of priorVisits.results||[])context.waitUntil(syncVisitToDrive(env,prior.id));
+   }
    return json({success:true,patient_id:patientId});
   }
   const subtotal=Number(b.subtotal_amount),discountType=String(b.discount_type||"none"),discountValue=Number(b.discount_value||0),procedures=Array.isArray(b.procedures)?b.procedures:[];
