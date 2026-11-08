@@ -344,7 +344,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false };
 const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
-const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security'], ['marketing', 'Marketing & Tracking']];
+const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
 async function api(path, opts) {
@@ -673,17 +673,6 @@ function viewHistory() {
     '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
 }
 
-function viewMarketing() {
- const platform=(name,description,items)=>'<section class="card"><div class="card-head"><div><h2>'+name+'</h2><p class="hint">'+description+'</p></div><span class="pill warn">Not connected</span></div><div class="row"><div><b>Account connection</b><small>Authorize your business account to continue.</small></div><button class="btn sm" type="button" disabled>Connect later</button></div>'+items.map(x=>'<div class="row"><div><b>'+x[0]+'</b><small>'+x[1]+'</small></div><span class="pill mute">Not configured</span></div>').join('')+'<p class="hint" style="margin-top:10px">Connection and event testing will be enabled in a later setup step.</p></section>';
- return head('Marketing & Tracking','Manage advertising pixels, analytics accounts and event tracking.','')+
- '<div class="col" style="gap:14px">'+
- '<section class="card tint"><div class="card-head"><h2>Tracking setup</h2><span class="pill info">Setup pending</span></div><p class="hint">Connect your advertising and analytics accounts here when setup is ready. No accounts or pixels are connected yet, and no tracking events are currently verified.</p></section>'+
- platform('Meta','Facebook and Instagram advertising', [['Meta Pixel','Browser events'],['Conversions API','Server-side events']])+
- platform('TikTok','TikTok advertising', [['TikTok Pixel','Browser events'],['Events API','Server-side events']])+
- platform('Google','Google Ads and Analytics', [['Google Tag / GA4','Website analytics'],['Google Ads Conversion','Ad conversion tracking']])+
- '<section class="card"><div class="card-head"><h2>Event testing</h2><span class="pill mute">Not tested</span></div><p class="hint">After accounts are connected, test events such as PageView, ViewContent, Contact and Lead. Patient names, phone numbers, treatment details and other sensitive health information must never be sent to advertising platforms.</p></section>'+
- '</div>';
-}
 
 /* ---------- render + events ---------- */
 function viewProfile() {
@@ -695,7 +684,7 @@ function viewProfile() {
 }
 
 
-const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity, marketing: viewMarketing };
+const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
 
 function openVisitForm(id) {
  const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
