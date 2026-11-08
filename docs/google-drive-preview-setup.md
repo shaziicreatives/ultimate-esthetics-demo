@@ -9,7 +9,7 @@ This integration is Owner-only. It is not active until the following setup is co
 3. Configure the OAuth consent screen and add the Owner's Google account as a test user while the app is in Testing.
 4. Create an OAuth 2.0 Web application client.
 5. Add the exact Preview callback URI:
-   `https://<PREVIEW-DEPLOYMENT-HOST>/api/admin/drive/oauth/callback`
+   `https://feature-clinic-patients-invo.ultimate-esthetics-demo.pages.dev/api/admin/drive/oauth/callback` (stable feature-branch alias; verify it still resolves before adding)
 6. Add the production callback URI only when a Production release is explicitly approved:
    `https://ultimate-esthetics-demo.pages.dev/api/admin/drive/oauth/callback`
 
