@@ -27,9 +27,8 @@ export async function getAdminSession(request, env) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
-  // expires_at is written as an ISO-8601 timestamp. Convert both sides to
-  // SQLite datetimes rather than relying on lexical comparison of mixed formats.
-  return env.DB.prepare(
+  // Normalize the legacy Admin account, which older schemas stored as role='owner'.
+  const user = await env.DB.prepare(
     `SELECT s.id AS session_id, s.user_id, u.username, u.email,
             u.role, u.doctor_id
        FROM sessions s
@@ -38,4 +37,8 @@ export async function getAdminSession(request, env) {
         AND datetime(s.expires_at) > datetime('now')
         AND u.is_active = 1`
   ).bind(tokenHash).first();
+  if (user && user.role === 'owner' && String(user.username).toLowerCase() === 'admin') {
+    user.role = 'admin';
+  }
+  return user;
 }
