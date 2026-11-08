@@ -5,7 +5,7 @@ const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes)));
 const unb64=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
 export async function sha256(value){return hex(await crypto.subtle.digest("SHA-256",enc.encode(String(value))));}
 export async function ownerSession(request,env){
- const match=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);
+ const match=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);
  if(!match)return null;
  let token;try{token=decodeURIComponent(match[1]);}catch{return null;}
  const tokenHash=await sha256(token);
