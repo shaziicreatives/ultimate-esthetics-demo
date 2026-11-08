@@ -549,8 +549,8 @@ async function loadData(first) {
   const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
   if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
     playAppointmentAlert(); toast('New website booking request!');
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try { new Notification('New appointment request', { body: 'A new patient appointment is waiting in Requests.', icon:'/admin/icon.svg', tag:'new-appointment-request', renotify:true, vibrate:[70,45,120,55,190] }); } catch (e) { }
+    if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification('New appointment request',{body:'A new patient appointment is waiting in Requests.',icon:'/admin/icon.svg',badge:'/admin/icon.svg',tag:'new-appointment-request',renotify:true,vibrate:[70,45,120,55,190],data:{url:'/admin/index.html'}})).catch(()=>{});
     }
   }
   seenPendingIds = new Set(pendingIds);
