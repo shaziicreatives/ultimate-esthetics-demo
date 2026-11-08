@@ -22,8 +22,14 @@ export async function onRequestPost({request,env}) {
    const link=new URL("/admin/reset-password.html?token="+encodeURIComponent(raw),new URL(request.url).origin).toString();
    const mail=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:env.MAIL_FROM,to:[recoveryEmail],subject:"Ultimate Esthetics account password reset",html:"<p>Password reset requested for your "+user.username+" account.</p><p><a href='"+link+"'>Reset password</a></p><p>This secure link expires in one hour and can be used once. If you did not request this, you can ignore this email.</p>"})});
    if(!mail.ok){await env.DB.prepare("UPDATE password_resets SET used_at=CURRENT_TIMESTAMP WHERE token_hash=?").bind(tokenHash).run();return json({error:"Email provider rejected the reset email. Check the Resend API key and verified sender address."},502);}
-  } else if(user && (!recoveryEmail || !env.RESEND_API_KEY || !env.MAIL_FROM)){
-   return json({error:"Password reset email is not configured yet. The secure email sender must be connected before reset links can be delivered."},503);
+  } else if(user){
+   // Diagnostic: report only the NAMES of what is missing, never any value.
+   const missing=[];
+   if(!recoveryEmail)missing.push("user_email");
+   if(!env.RESEND_API_KEY)missing.push("RESEND_API_KEY");
+   if(!env.MAIL_FROM)missing.push("MAIL_FROM");
+   console.error("password-reset: missing configuration: "+missing.join(", "));
+   return json({error:"Password reset email is not configured yet. Missing: "+missing.join(", ")+".",missing},503);
   }
   return json({success:true,message:"If the owner account exists, a reset email has been sent."});
  }
