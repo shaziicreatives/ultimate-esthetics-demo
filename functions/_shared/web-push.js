@@ -1,3 +1,4 @@
+import { getAdminSession } from "./admin-session.js";
 const enc = new TextEncoder();
 const VAPID_PUBLIC_KEY = "BFhZkz2mE856noP-pvjj9MIuTG4YWp7iPO_LvYQhePmX4zwU7uHbMpQDh1BX7KYQXk4OlVMXJgUcVPfw9y83cqo";
 const b64u = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
@@ -8,12 +9,7 @@ const fromB64u = value => {
 };
 const json = (value,status=200) => new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 async function getSession(request,env){
-  const match=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);
-  if(!match)return null;
-  const token=decodeURIComponent(match[1]);
-  const digest=await crypto.subtle.digest("SHA-256",enc.encode(token));
-  const hash=Array.from(new Uint8Array(digest)).map(x=>x.toString(16).padStart(2,"0")).join("");
-  return env.DB.prepare("SELECT s.user_id,u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>datetime('now') AND u.is_active=1").bind(hash).first();
+  return getAdminSession(request,env);
 }
 async function deriveHKDF(ikm,salt,info,length){
   const key=await crypto.subtle.importKey("raw",ikm,"HKDF",false,["deriveBits"]);
