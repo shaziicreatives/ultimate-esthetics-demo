@@ -1,4 +1,5 @@
 import { notifyClinicStaff } from "../../_shared/web-push.js";
+import { syncVisitToDrive } from "../../_shared/google-drive-sync.js";
 async function getSession(request, env) {
   const cookie = request.headers.get("Cookie") || "";
   const match = cookie.match(/(?:^|;\s*)admin_token=([^;]+)/);
@@ -92,6 +93,7 @@ export async function onRequestPost(context) {
       if (paymentLeft > 0) paymentStatements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,patient.id,paymentLeft,String(body.payment_method||"cash").slice(0,30),String(body.payment_reference||"").slice(0,120)||null,session.user_id));
       paymentStatements.push(env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id));
       await env.DB.batch(paymentStatements);
+      if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));
       manualInvoice = { visit_id: visitId, invoice_number: invoiceNumber, total_amount: netTotal, received, previous_balance: previousBalance, balance: previousBalance + netTotal - received };
     }
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
