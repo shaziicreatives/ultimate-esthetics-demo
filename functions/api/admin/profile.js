@@ -26,7 +26,7 @@ export async function onRequestPost({request,env}) {
  }
  if(action==="request_email_change"){
   const email=String(b.new_email||"").trim().toLowerCase();
-  if(!/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(email))return json({error:"Enter a valid new email address."},400);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json({error:"Enter a valid new email address."},400);
   if(email===String(u.email||"").toLowerCase())return json({error:"This is already your current email address."},400);
   return json({error:"Email verification delivery is not configured yet. Your email has not been changed."},503);
  }
