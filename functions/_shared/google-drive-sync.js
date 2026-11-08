@@ -72,7 +72,6 @@ export async function syncVisitToDrive(env,visitId){
   if(!visit)return;
   await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,?,'visit','processing') ON CONFLICT(job_kind,visit_id,patient_id) DO UPDATE SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP").bind(visit.patient_id,visit.id).run();
   job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='visit' AND visit_id=? AND patient_id=?").bind(visit.id,visit.patient_id).first();
-  const connection=await getConnection(env);if(!connection?.root_folder_id)throw new Error("Google Drive is not connected or the clinic root folder has not been selected.");
   const tokens=await decryptTokens(connection.encrypted_tokens,env);
   const patient={id:visit.patient_id,name:visit.patient_name,phone:visit.patient_phone};
   const folder=await patientFolder(env,tokens,connection,patient);
