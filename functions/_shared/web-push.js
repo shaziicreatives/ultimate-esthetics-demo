@@ -7,7 +7,7 @@ const fromB64u = value => {
 };
 const json = (value,status=200) => new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 async function getSession(request,env){
-  const match=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);
+  const match=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);
   if(!match)return null;
   const token=decodeURIComponent(match[1]);
   const digest=await crypto.subtle.digest("SHA-256",enc.encode(token));
@@ -33,11 +33,11 @@ async function encryptPayload(subscription,payload){
   const ephemeral=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveBits"]);
   const shared=new Uint8Array(await crypto.subtle.deriveBits({name:"ECDH",public:receiverKey},ephemeral.privateKey,256));
   const asPublic=new Uint8Array(await crypto.subtle.exportKey("raw",ephemeral.publicKey));
-  const keyInfo=new Uint8Array([...enc.encode("WebPush: info\\0"),...uaPublic,...asPublic]);
+  const keyInfo=new Uint8Array([...enc.encode("WebPush: info\0"),...uaPublic,...asPublic]);
   const ikm=await deriveHKDF(shared,authSecret,new TextDecoder().decode(keyInfo),32);
   const salt=crypto.getRandomValues(new Uint8Array(16));
-  const cek=await deriveHKDF(ikm,salt,"Content-Encoding: aes128gcm\\0",16);
-  const nonce=await deriveHKDF(ikm,salt,"Content-Encoding: nonce\\0",12);
+  const cek=await deriveHKDF(ikm,salt,"Content-Encoding: aes128gcm\0",16);
+  const nonce=await deriveHKDF(ikm,salt,"Content-Encoding: nonce\0",12);
   const plain=new Uint8Array([...enc.encode(JSON.stringify(payload)),2]);
   const aes=await crypto.subtle.importKey("raw",cek,{name:"AES-GCM"},false,["encrypt"]);
   const cipher=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:nonce,tagLength:128},aes,plain));
@@ -81,7 +81,7 @@ export async function onRequestPostPush(context){
   if(!session)return json({error:"Unauthorized"},401);
   const body=await context.request.json().catch(()=>({}));
   const sub=body.subscription;
-  if(!sub||!/^https:\\/\\//i.test(String(sub.endpoint||""))||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
+  if(!sub||!/^https:\/\/\//i.test(String(sub.endpoint||""))||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
   if(!context.env.VAPID_PUBLIC_KEY||!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
   await context.env.DB.prepare("INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,user_agent,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(endpoint) DO UPDATE SET user_id=excluded.user_id,p256dh=excluded.p256dh,auth=excluded.auth,user_agent=excluded.user_agent,updated_at=CURRENT_TIMESTAMP").bind(session.user_id,sub.endpoint,sub.keys.p256dh,sub.keys.auth,String(context.request.headers.get("User-Agent")||"").slice(0,300)).run();
   return json({success:true});
