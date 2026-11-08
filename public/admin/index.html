@@ -431,7 +431,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[] };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[], driveFolders:[] };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -865,7 +865,9 @@ function viewDrive(){
  (connected?'<section class="card"><div class="card-head"><h2>Clinic storage folder</h2></div><p style="margin-bottom:12px">Selected folder: <b>'+root+'</b></p>'+
  '<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="Ultimate Esthetics Clinic"></div>'+
  '<div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select clinic folder</button></div>'+
- '<p class="hint" style="margin-top:10px">This first version creates a dedicated clinic folder in My Drive. Existing-folder browsing and Google Picker selection still need to be completed before using an existing folder.</p></section>'+
+ '<p class="hint" style="margin-top:10px">The folder list below shows folders this app can access under My Drive. Arbitrary existing folders may require Google Picker authorization; do not assume every folder will appear here.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Choose an accessible existing folder</h2><small class="muted">My Drive</small></div>'+
+ ((state.driveFolders||[]).length?state.driveFolders.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><small>Google Drive folder</small></div><button class="btn sm" type="button" data-drive-action="select-root" data-folder="'+esc(x.id)+'">Select</button></div>').join(''):'<div class="empty">No app-accessible folders found at the top level of My Drive. Create a clinic folder above.</div>')+'</section>'+
  '<section class="card"><div class="card-head"><h2>Automatic saving preferences</h2></div>'+
  '<label class="switch-row"><span>Automatically save invoice PDF</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Automatically save editable patient record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
@@ -1019,7 +1021,7 @@ async function loadDriveSettings(redraw=true){
   state.driveAllowed=r.status!==403;
   state.driveData=r.data||{};
   if(!r.ok&&r.status>=500)state.driveData.migration_required=true;
-  if(r.ok&&state.driveData.connected){const q=await api('/api/admin/drive/sync');state.driveJobs=q.ok?(q.data.jobs||[]):[];}else state.driveJobs=[];
+  if(r.ok&&state.driveData.connected){const q=await api('/api/admin/drive/sync');state.driveJobs=q.ok?(q.data.jobs||[]):[];const folders=await api('/api/admin/drive?parent=root');state.driveFolders=folders.ok?(folders.data.folders||[]):[];}else{state.driveJobs=[];state.driveFolders=[];}
  }catch(e){state.driveAllowed=e.message!=='unauthorized';state.driveData={migration_required:true};}
  if(redraw)render();
 }
@@ -1038,7 +1040,7 @@ document.addEventListener('click',async e=>{
  try{
   if(action==='refresh'){await loadDriveSettings(true);return;}
   const path=action==='retry'?'/api/admin/drive/sync':'/api/admin/drive';
-  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='retry'?{job_id:Number(b.dataset.job)}:{action:'disconnect'};
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}:action==='retry'?{job_id:Number(b.dataset.job)}:{action:'disconnect'};
   const r=await api(path,{method:'POST',body});
   if(!r.ok)throw new Error(r.data.error||'Google Drive action failed.');
   toast(r.data.message||'Google Drive settings updated.');
