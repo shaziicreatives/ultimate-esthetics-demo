@@ -69,13 +69,21 @@ export async function onRequestPatch({request,env}) {
   const visit=await env.DB.prepare("SELECT * FROM visits WHERE id=?").bind(id).first();if(!visit)return json({error:"Invoice not found."},404);
   if(b.patient_id!==undefined&&Number(visit.patient_id)!==patientId)return json({error:"Patient does not match this invoice."},409);
   const discountAmount=discountType==="percentage"?Math.round(subtotal*discountValue/100):discountType==="fixed"?Math.min(subtotal,discountValue):0,total=subtotal-discountAmount;
-  const paid=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) amount FROM payments WHERE visit_id=?").bind(id).first();
-  if(Number(paid?.amount||0)>total)return json({error:"New invoice total cannot be lower than payments already received."},409);
+  const paymentRows=await env.DB.prepare("SELECT id,amount FROM payments WHERE visit_id=? ORDER BY created_at,id").bind(id).all();
+  const oldPaid=paymentRows.results.reduce((n,p)=>n+Number(p.amount||0),0);
+  const receivedAmount=b.received_amount===undefined?oldPaid:Number(b.received_amount);
+  if(!Number.isSafeInteger(receivedAmount)||receivedAmount<0||receivedAmount>total)return json({error:"Received amount must be a valid amount and cannot exceed the updated invoice total."},400);
   const statements=[
    env.DB.prepare("UPDATE visits SET subtotal_amount=?,discount_type=?,discount_value=?,discount_amount=?,total_amount=?,notes=?,follow_up_date=? WHERE id=?").bind(subtotal,discountType,discountValue,discountAmount,total,String(b.notes||"").slice(0,5000),b.follow_up_date||null,id),
    env.DB.prepare("DELETE FROM visit_procedures WHERE visit_id=?").bind(id),
    ...procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(id,String(p.name).trim().slice(0,160),Number(p.fee)))
   ];
+  let remainingPaid=receivedAmount;
+  for(const payment of paymentRows.results){
+   const amount=Math.min(remainingPaid,Number(payment.amount||0));remainingPaid-=amount;
+   statements.push(env.DB.prepare("UPDATE payments SET amount=?,method=? WHERE id=?").bind(amount,String(b.payment_method||"cash").slice(0,30),payment.id));
+  }
+  if(remainingPaid>0)statements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(id,visit.patient_id,remainingPaid,String(b.payment_method||"cash").slice(0,30),null,u.user_id));
   if(b.patient_id!==undefined)statements.push(env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId));
   if(visit.appointment_id)statements.push(env.DB.prepare("UPDATE appointments SET follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,visit.appointment_id));
   await env.DB.batch(statements);
