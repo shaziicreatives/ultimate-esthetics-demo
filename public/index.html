@@ -46,17 +46,16 @@ header{animation:headerDrop .45s ease-out both}
  .bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;padding:9px 0 7px}
  .logo{font-size:21px;line-height:1.02;text-align:center;white-space:nowrap;margin-left:8px}
  .logo small{font-size:9px;letter-spacing:.23em;margin-top:2px}
- nav{order:3;display:flex;flex:0 0 100%;width:100%;max-width:100%;justify-content:center;gap:clamp(9px,3vw,16px);overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:1px 0 4px;scrollbar-width:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+ nav{order:3;display:flex;flex:0 0 100%;width:100%;max-width:100%;justify-content:space-between;gap:clamp(3px,1.15vw,9px);overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:1px 0 4px;scrollbar-width:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
  nav::-webkit-scrollbar{display:none}
- nav a{flex:0 0 auto;font-size:12px;padding:4px 0 5px}
+ nav a{flex:0 0 auto;font-size:clamp(10px,1.45vw,12px);padding:4px 0 5px}
  .bar .btn{padding:7px 13px;font-size:12px;border-radius:9px;white-space:nowrap}
 }
 @media(max-width:380px){
  .wrap{padding-left:12px;padding-right:12px}
  .bar{gap:7px 9px;padding:7px 0}
  .logo{font-size:19px;margin-left:6px}
- nav{gap:10px}
- nav a{font-size:11.5px}
+ nav{gap:clamp(2px,1vw,5px)}
  .bar .btn{padding:6px 10px;font-size:11.5px}
 }
 @media(prefers-reduced-motion:reduce){header,.logo{animation:none!important}}
