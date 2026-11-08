@@ -132,8 +132,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .tabs button.on{background:var(--accent);color:var(--accent-ink)}
 .tabs .n{font-size:11px;padding:1px 6px;border-radius:99px;background:var(--sand);color:var(--ink);margin-left:4px}
 
-.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
-.req-item:last-child{border-bottom:0}
+.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px;border:1px solid var(--line);border-radius:16px;margin:10px 0;background:linear-gradient(115deg,rgba(66,133,244,.09),rgba(234,67,53,.055) 38%,rgba(251,188,5,.07) 68%,rgba(52,168,83,.07));box-shadow:0 3px 14px rgba(60,70,90,.045)}
+.req-item:last-child{border-bottom:1px solid var(--line)}
 .req-meta{display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap}
 .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -184,6 +184,11 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .invoice-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .invoice-table td:last-child,.invoice-table th:last-child{text-align:right}
 .invoice-print-area{display:none}
+.proc-line{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(110px,.8fr) auto;gap:8px;align-items:center;margin:8px 0}
+.proc-line .remove-procedure{padding:8px 10px}
+.invoice-stamp{width:116px;height:116px;border:3px double #8a6a2a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8a6a2a;font-weight:800;letter-spacing:.08em;line-height:1.2;transform:rotate(-9deg);margin:20px 0 0 auto;opacity:.88}
+.invoice-stamp strong{font:700 13px Arial,sans-serif}.invoice-stamp span{font:700 8px Arial,sans-serif;margin-top:5px}.invoice-stamp small{font:700 7px Arial,sans-serif;margin-top:4px}
+@media(max-width:520px){.proc-line{grid-template-columns:minmax(0,1fr) minmax(95px,.7fr) auto}.proc-line .inp{min-width:0}}
 @media print{
  @page{size:A4;margin:14mm}
  body{background:#fff!important;color:#2F2619!important}
@@ -237,7 +242,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media(max-width:900px){.page-head h1{font-size:30px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .activity-list .row{font-size:11px;padding:7px 0}
 .security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);position:sticky;top:18px}
+.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);position:static;align-self:start}
 .patient-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .patient-calendar-title{font-family:var(--font-display);font-size:23px;color:var(--ink)}
 .patient-calendar-nav{display:flex;align-items:center;gap:7px}
@@ -456,6 +461,7 @@ function beep() {
   } catch (e) { }
 }
 function vibrate(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern || [35,25,45]); } catch(e) {} }
+function playWrongPasswordAlert(){try{beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());if(beepCtx.state==='suspended')beepCtx.resume();[0,.10,.20,.32].forEach((delay,i)=>{const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;o.type='square';o.frequency.value=[520,660,880,1040][i];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.13,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.075);o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.08);});}catch(e){}vibrate([45,35,70]);}
 function playClickTone() {
  if (!soundEnabled) return;
  try {
@@ -489,12 +495,12 @@ function playAppointmentAlert() {
   if(beepCtx.state==='suspended')beepCtx.resume();
   [0,.28,.56,.84,1.12].forEach((delay,i)=>{
    const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;
-   o.type='sine';o.frequency.value=[880,1175,1480,1175,1480][i];
+   o.type='sine';o.frequency.value=[740,880,1046,880,1175][i];
    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.72,t+.025);g.gain.setValueAtTime(.72,t+.16);g.gain.exponentialRampToValueAtTime(.0001,t+.30);
    o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.32);
   });
  } catch(e) {}
- vibrate([350,120,350,120,500]);
+ vibrate([70,45,120,55,190]);
 }
 async function refreshNotificationAccessButton() {
   const b = $('#notificationAccessBtn');
@@ -640,7 +646,7 @@ $('#loginForm').addEventListener('submit', async e => {
     if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
 boot(); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
-    else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
+    else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
   } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
   if(!btn.hidden){btn.disabled = false; btn.textContent = 'Sign In';}
 });
@@ -830,6 +836,8 @@ function viewProfile() {
 
 const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
 
+const INVOICE_TREATMENTS=['Hair transplant','Hair PRP','Hair exosomes','PRGF (3 sessions)','Hydrafacial','PRP & microneedling','Dermapen microneedling','Acne & scar treatment','Skin whitening','Laser treatment','Glow drip'];
+function procedureSelectOptions(selected){const values=[...INVOICE_TREATMENTS];if(selected&&!values.some(x=>x.toLowerCase()===String(selected).toLowerCase()))values.unshift(String(selected));return '<option value="">Select treatment</option>'+values.map(x=>'<option value="'+esc(x)+'"'+(x.toLowerCase()===String(selected||'').toLowerCase()?' selected':'')+'>'+esc(x)+'</option>').join('');}
 function openVisitForm(id) {
  const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
  const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
@@ -839,13 +847,13 @@ function openVisitForm(id) {
  const form=$('#visitForm'),total=$('#visitTotal'),received=$('#visitReceived'),procBox=$('#visitProcedures'),discountType=$('#visitDiscountType'),discountValue=$('#visitDiscountValue');
  const getProcedures=()=>[...procBox.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value||0)}));
  const discount=()=>{const sub=Math.max(0,Number(total.value||0)),v=Math.max(0,Number(discountValue.value||0));return discountType.value==='percentage'?Math.min(sub,Math.round(sub*Math.min(v,100)/100)):discountType.value==='fixed'?Math.min(sub,v):0;};
- const calc=()=>{const net=Math.max(0,Number(total.value||0)-discount()),due=prev+net,paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitNetTotal').textContent=money(net);$('#visitDiscountDisplay').textContent='-'+money(discount());$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
+ const calc=()=>{const net=Math.max(0,Number(total.value||0)-discount()),due=prev+net,paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitNetTotal').textContent=money(net);$('#visitDiscountDisplay').textContent=money(discount());$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
  const autoTotal=()=>{total.value=getProcedures().reduce((n,p)=>n+(Number.isFinite(p.fee)?p.fee:0),0);calc();};
  procBox.addEventListener('input',e=>{if(e.target.name==='fee')autoTotal();});
  total.addEventListener('input',calc);received.addEventListener('input',calc);discountType.addEventListener('change',()=>{discountValue.value='0';calc();});discountValue.addEventListener('input',calc);calc();
- const invoice=()=>{const procs=getProcedures(),subtotal=Number(total.value||0),disc=discount(),bill=subtotal-disc,paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString());return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>Phone: 0334 0005909<br>Mon to Sat · 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>Invoice #: '+esc(a.invoice_number||'Preview · assigned on save')+'<br>Date: '+esc(today)+'</div></div><div class="invoice-title">Patient Invoice</div><div class="invoice-meta"><b>Patient:</b> '+esc(a.name)+'<br><b>Patient ID:</b> #'+a.pid+'<br><b>Phone:</b> '+esc(prettyPhone(a.phone))+'<br><b>Doctor:</b> '+esc(a.doc)+'<br><b>Appointment:</b> '+nice(a.date)+' · '+t12(a.time)+'</div><table class="invoice-table"><thead><tr><th>Treatment / Procedure</th><th>Amount (Rs)</th></tr></thead><tbody>'+procs.map(p=>'<tr><td>'+esc(p.name||'Treatment')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="invoice-meta" style="margin-top:10px"><b>Subtotal:</b> '+money(subtotal)+'<br><b>Discount ('+esc(discountType.value==='percentage'?discountValue.value+'%':discountType.value==='fixed'?money(discountValue.value):'None')+'):</b> -'+money(disc)+'</div><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val">'+money(prev)+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val">'+money(due)+'</div></div><div class="stat-box"><div class="lbl">Received now</div><div class="val">'+money(paid)+'</div></div></div><h2 style="text-align:right;margin:12px 0">Balance remaining: '+money(left)+'</h2><p class="invoice-meta">Payment method: '+esc($('#visitMethod').value)+'<br>Thank you for choosing Ultimate Esthetics.</p>';};
- const print=()=>{$('#visitInvoicePrint').innerHTML=invoice();$('#visitInvoicePrint').style.display='block';window.print();$('#visitInvoicePrint').style.display='none';};
- $('#visitModal').dataset.printReady='1'; $('#visitModal')._printInvoice=print;
+ const invoice=()=>{const procs=getProcedures(),subtotal=Number(total.value||0),disc=discount(),bill=subtotal-disc,paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString());return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>Phone: 0334 0005909<br>Mon to Sat · 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>Invoice #: '+esc(a.invoice_number||'Preview · assigned on save')+'<br>Date: '+esc(today)+'</div></div><div class="invoice-title">Patient Invoice</div><div class="invoice-meta"><b>Patient:</b> '+esc(a.name)+'<br><b>Patient ID:</b> #'+a.pid+'<br><b>Phone:</b> '+esc(prettyPhone(a.phone))+'<br><b>Doctor:</b> '+esc(a.doc)+'<br><b>Appointment:</b> '+nice(a.date)+' · '+t12(a.time)+'</div><table class="invoice-table"><thead><tr><th>Treatment / Procedure</th><th>Amount (Rs)</th></tr></thead><tbody>'+procs.map(p=>'<tr><td>'+esc(p.name||'Treatment')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="invoice-meta" style="margin-top:10px"><b>Subtotal:</b> '+money(subtotal)+'<br><b>Discount ('+esc(discountType.value==='percentage'?discountValue.value+'%':discountType.value==='fixed'?money(discountValue.value):'None')+'):</b> '+money(disc)+'</div><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val">'+money(prev)+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val">'+money(due)+'</div></div><div class="stat-box"><div class="lbl">Received now</div><div class="val">'+money(paid)+'</div></div></div><h2 style="text-align:right;margin:12px 0">Balance remaining: '+money(left)+'</h2><p class="invoice-meta">Payment method: '+esc($('#visitMethod').value)+'<br>Thank you for choosing Ultimate Esthetics.</p>';};
+ const print=()=>{if(form.dataset.saved!=='1'){toast('Save the visit first to generate the permanent invoice number.');return;}$('#visitInvoicePrint').innerHTML=invoice();$('#visitInvoicePrint').style.display='block';window.print();$('#visitInvoicePrint').style.display='none';};
+ $('#visitModal').dataset.printReady='1'; $('#visitModal')._renderInvoice=()=>{$('#visitInvoicePrint').innerHTML=invoice();}; $('#visitModal')._printInvoice=print;
 }
 function renderNav() {
   const n = pending().length;
@@ -929,6 +937,7 @@ document.addEventListener('click', async e => {
   if(e.target.closest('[data-date-all]')){state.patientShowOverall=false;state.patientDate=null;render();return;}
   const overallPatients=e.target.closest('[data-overall-patients]');if(overallPatients){state.patientShowOverall=!state.patientShowOverall;render();return;} const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientShowOverall=false;state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
   const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
+  const removeProcedure=e.target.closest('.remove-procedure');if(removeProcedure){const box=$('#visitProcedures');removeProcedure.closest('.proc-line').remove();const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));return;}
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = Number(b.dataset.id); b.disabled = true;
   switch (b.dataset.act) {
@@ -958,7 +967,7 @@ document.addEventListener('input', e => {
 });
 
 document.addEventListener('click',e=>{
- if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
+ if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><select class="inp" name="procedure" required>'+procedureSelectOptions('')+'</select><input class="inp" name="fee" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 2999" value="0" required><button class="btn bad sm remove-procedure" type="button" aria-label="Remove treatment">×</button></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='visitForm')return;e.preventDefault();
@@ -967,7 +976,7 @@ document.addEventListener('submit',async e=>{
   const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value),discountType=$('#visitDiscountType').value,discountValue=Number($('#visitDiscountValue').value||0),discountAmount=discountType==='percentage'?Math.round(total*Math.min(discountValue,100)/100):discountType==='fixed'?Math.min(total,discountValue):0,netTotal=total-discountAmount;
  if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+netTotal){err.textContent='Please check the procedure, fee, total, and amount received.';err.hidden=false;return;}
  btn.disabled=true;btn.textContent='Saving…';
- try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}a.invoice_number=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'. Use Print invoice to print or save as PDF.');await loadData();}
+ try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}a.invoice_number=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Permanent invoice number: '+r.data.invoice_number;const modal=$('#visitModal');if(modal&&modal._renderInvoice)modal._renderInvoice();const printBtn=document.querySelector('#visitModal [data-act="printinvoice"]');if(printBtn)printBtn.textContent='Print invoice · '+r.data.invoice_number;toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
  catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
 });
 
