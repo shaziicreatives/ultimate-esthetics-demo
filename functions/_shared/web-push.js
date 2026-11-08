@@ -17,7 +17,8 @@ async function getSession(request,env){
 }
 async function deriveHKDF(ikm,salt,info,length){
   const key=await crypto.subtle.importKey("raw",ikm,"HKDF",false,["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({name:"HKDF",hash:"SHA-256",salt,info:enc.encode(info)},key,length*8));
+  const infoBytes=typeof info==="string"?enc.encode(info):new Uint8Array(info);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"HKDF",hash:"SHA-256",salt,info:infoBytes},key,length*8));
 }
 async function vapidToken(endpoint,env){
   const url=new URL(endpoint), now=Math.floor(Date.now()/1000);
@@ -35,7 +36,7 @@ async function encryptPayload(subscription,payload){
   const shared=new Uint8Array(await crypto.subtle.deriveBits({name:"ECDH",public:receiverKey},ephemeral.privateKey,256));
   const asPublic=new Uint8Array(await crypto.subtle.exportKey("raw",ephemeral.publicKey));
   const keyInfo=new Uint8Array([...enc.encode("WebPush: info\0"),...uaPublic,...asPublic]);
-  const ikm=await deriveHKDF(shared,authSecret,new TextDecoder().decode(keyInfo),32);
+  const ikm=await deriveHKDF(shared,authSecret,keyInfo,32);
   const salt=crypto.getRandomValues(new Uint8Array(16));
   const cek=await deriveHKDF(ikm,salt,"Content-Encoding: aes128gcm\0",16);
   const nonce=await deriveHKDF(ikm,salt,"Content-Encoding: nonce\0",12);
@@ -53,22 +54,32 @@ async function sendOne(subscription,payload,env){
   const body=await encryptPayload(subscription,payload);
   const token=await vapidToken(subscription.endpoint,env);
   return fetch(subscription.endpoint,{method:"POST",headers:{
-    "Authorization":"vapid t="+token+", k="+env.VAPID_PUBLIC_KEY,
+    "Authorization":"vapid t="+token+", k="+VAPID_PUBLIC_KEY,
     "TTL":"86400","Urgency":"high","Content-Type":"application/octet-stream","Content-Encoding":"aes128gcm"
   },body});
 }
 export async function notifyClinicStaff(env,payload){
   if(!env.VAPID_PRIVATE_KEY||!env.DB)return {sent:0,skipped:true};
   const {results=[]}=await env.DB.prepare("SELECT ps.id,ps.endpoint,ps.p256dh,ps.auth FROM push_subscriptions ps JOIN users u ON u.id=ps.user_id WHERE u.is_active=1 AND lower(u.role) IN ('owner','admin','reception','receptionist')").all();
-  let sent=0;
+  let sent=0,failed=0,expired=0;
   await Promise.all(results.map(async sub=>{
     try{
       const response=await sendOne(sub,payload,env);
       if(response.ok)sent++;
-      else if(response.status===404||response.status===410)await env.DB.prepare("DELETE FROM push_subscriptions WHERE id=?").bind(sub.id).run();
-    }catch(e){}
+      else {
+        failed++;
+        if(response.status===404||response.status===410){
+          expired++;
+          await env.DB.prepare("DELETE FROM push_subscriptions WHERE id=?").bind(sub.id).run();
+        }
+        console.error("Clinic Web Push provider response",response.status);
+      }
+    }catch(e){
+      failed++;
+      console.error("Clinic Web Push send failed",String(e?.message||e).slice(0,300));
+    }
   }));
-  return {sent};
+  return {attempted:results.length,sent,failed,expired};
 }
 export async function onRequestGetPush(context){
   const session=await getSession(context.request,context.env);
