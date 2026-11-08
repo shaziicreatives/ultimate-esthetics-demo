@@ -917,6 +917,7 @@ function openInvoiceEditor(id){
  const appointment=state.appts.find(x=>Number(x.id)===Number(v.appointment_id));
  if(!appointment){toast('The original checked-in appointment could not be loaded, so this visit cannot be edited safely.');return;}
  openVisitForm(appointment.id);
+ appointment.invoice_number=v.invoice_number||'';
  const modal=$('#visitModal'),form=$('#visitForm');
  if(!modal||!form)return;
  form.dataset.editVisit=String(v.id);
