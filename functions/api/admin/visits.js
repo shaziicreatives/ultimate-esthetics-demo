@@ -46,3 +46,22 @@ export async function onRequestPost({request,env}) {
   return json({success:true,visit_id:visitId,invoice_number:invoiceNumber,subtotal_amount:subtotal,discount_type:discountType,discount_value:discountValue,discount_amount:discountAmount,total_amount:total,previous_balance:previousBalance,balance:previousBalance+total-received},201);
  } catch(e){return json({error:"Visit save failed: "+String(e.message||"database error")},500);}
 }
+export async function onRequestPatch({request,env}) {
+ const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
+ try {
+  const b=await request.json(),id=Number(b.visit_id),subtotal=Number(b.subtotal_amount),discountType=String(b.discount_type||"none"),discountValue=Number(b.discount_value||0),procedures=Array.isArray(b.procedures)?b.procedures:[];
+  if(!id||!Number.isSafeInteger(subtotal)||subtotal<0||!["none","percentage","fixed"].includes(discountType)||!Number.isFinite(discountValue)||discountValue<0||(discountType==="percentage"&&discountValue>100)||(discountType==="fixed"&&!Number.isSafeInteger(discountValue))||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Invoice details are invalid."},400);
+  if(procedures.reduce((n,p)=>n+Number(p.fee),0)!==subtotal)return json({error:"Subtotal must equal the sum of treatment charges."},400);
+  const visit=await env.DB.prepare("SELECT * FROM visits WHERE id=?").bind(id).first();if(!visit)return json({error:"Invoice not found."},404);
+  const discountAmount=discountType==="percentage"?Math.round(subtotal*discountValue/100):discountType==="fixed"?Math.min(subtotal,discountValue):0,total=subtotal-discountAmount;
+  const paid=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) amount FROM payments WHERE visit_id=?").bind(id).first();
+  if(Number(paid?.amount||0)>total)return json({error:"New invoice total cannot be lower than payments already received."},409);
+  await env.DB.batch([
+   env.DB.prepare("UPDATE visits SET subtotal_amount=?,discount_type=?,discount_value=?,discount_amount=?,total_amount=?,notes=? WHERE id=?").bind(subtotal,discountType,discountValue,discountAmount,total,String(b.notes||"").slice(0,5000),id),
+   env.DB.prepare("DELETE FROM visit_procedures WHERE visit_id=?").bind(id),
+   ...procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(id,String(p.name).trim().slice(0,160),Number(p.fee)))
+  ]);
+  await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total).run();
+  return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:Number(paid?.amount||0),balance:Math.max(0,total-Number(paid?.amount||0))});
+ }catch(e){return json({error:"Invoice update failed: "+String(e.message||"database error")},500);}
+}
