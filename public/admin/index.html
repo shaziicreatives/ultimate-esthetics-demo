@@ -1028,6 +1028,26 @@ function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(
 function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-drive-action]');if(!b)return;
+ const action=b.dataset.driveAction;
+ if(action==='disconnect'&&!confirm('Disconnect Google Drive? Existing clinic records and saved Drive references will be retained.'))return;
+ b.disabled=true;
+ try{
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:{action:'disconnect'};
+  const r=await api('/api/admin/drive',{method:'POST',body});
+  if(!r.ok)throw new Error(r.data.error||'Google Drive action failed.');
+  toast(r.data.message||'Google Drive settings updated.');
+  await loadDriveSettings(true);
+ }catch(x){if(x.message!=='unauthorized')toast(x.message||'Google Drive action failed.');}
+ finally{b.disabled=false;}
+});
+document.addEventListener('change',async e=>{
+ const key=e.target.dataset.driveSetting;if(!key)return;
+ const body={action:'settings',[key]:e.target.checked};
+ try{const r=await api('/api/admin/drive',{method:'POST',body});if(!r.ok)throw new Error(r.data.error||'Could not save setting.');state.driveData={...(state.driveData||{}),[key]:e.target.checked};toast('Saving preference updated.');}
+ catch(x){e.target.checked=!e.target.checked;toast(x.message||'Could not save setting.');}
+});
 document.addEventListener('click', async e => {
  if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
  const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
