@@ -81,7 +81,7 @@ export async function onRequestPostPush(context){
   if(!session)return json({error:"Unauthorized"},401);
   const body=await context.request.json().catch(()=>({}));
   const sub=body.subscription;
-  if(!sub||!/^https:\/\/\//i.test(String(sub.endpoint||""))||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
+  if(!sub||!String(sub.endpoint||"").startsWith("https://")||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
   if(!context.env.VAPID_PUBLIC_KEY||!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
   await context.env.DB.prepare("INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,user_agent,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(endpoint) DO UPDATE SET user_id=excluded.user_id,p256dh=excluded.p256dh,auth=excluded.auth,user_agent=excluded.user_agent,updated_at=CURRENT_TIMESTAMP").bind(session.user_id,sub.endpoint,sub.keys.p256dh,sub.keys.auth,String(context.request.headers.get("User-Agent")||"").slice(0,300)).run();
   return json({success:true});
