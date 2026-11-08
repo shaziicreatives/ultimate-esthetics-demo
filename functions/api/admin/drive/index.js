@@ -38,6 +38,7 @@ export async function onRequestPost({request,env}){
   }
   const tokens=await decryptTokens(c.encrypted_tokens,env);
   if(action==="create_root"){
+   if(c.root_folder_id)return json({error:"A clinic root folder is already selected. Disconnecting or changing accounts does not delete its existing Drive folder."},409);
    const name=String(b.name||"Ultimate Esthetics Clinic").trim().slice(0,100);
    if(!name)return json({error:"Enter a folder name."},400);
    const made=await folderRequest(env,tokens,"POST",{name,mimeType:"application/vnd.google-apps.folder"});
