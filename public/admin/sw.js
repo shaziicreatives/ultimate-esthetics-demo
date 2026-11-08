@@ -3,6 +3,28 @@ const APP_SHELL = ["/admin/index.html", "/admin/manifest.webmanifest", "/admin/i
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
 });
+self.addEventListener("push", event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { body: event.data ? event.data.text() : "" }; }
+  event.waitUntil(self.registration.showNotification(data.title || "Ultimate Esthetics", {
+    body: data.body || "There is an update in Clinic Desk.",
+    icon: data.icon || "/admin/icon.svg",
+    badge: "/admin/icon.svg",
+    tag: data.tag || "clinic-update",
+    renotify: true,
+    vibrate: [70, 45, 120, 55, 190],
+    data: { url: data.url || "/admin/index.html" }
+  }));
+});
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || "/admin/index.html", self.location.origin).href;
+  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    const existing = list.find(client => client.url.startsWith(self.location.origin + "/admin/"));
+    if (existing) return existing.focus();
+    return clients.openWindow(target);
+  }));
+});
 self.addEventListener("message", event => {
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
