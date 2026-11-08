@@ -1,5 +1,5 @@
 import {ownerSession,json} from "../../../_shared/google-drive.js";
-import {syncVisitToDrive} from "../../../_shared/google-drive-sync.js";
+import {syncVisitToDrive,syncPatientToDrive} from "../../../_shared/google-drive-sync.js";
 export async function onRequestGet({request,env}){
  const owner=await ownerSession(request,env);if(!owner)return json({error:"Owner access required"},403);
  try{
@@ -12,11 +12,16 @@ export async function onRequestPost(context){
  try{
   const b=await request.json(),id=Number(b.job_id);
   if(!Number.isSafeInteger(id)||id<1)return json({error:"Choose a valid failed job."},400);
-  const job=await env.DB.prepare("SELECT id,visit_id,status FROM google_drive_sync_jobs WHERE id=?").bind(id).first();
+  const job=await env.DB.prepare("SELECT id,visit_id,patient_id,job_kind,status FROM google_drive_sync_jobs WHERE id=?").bind(id).first();
   if(!job)return json({error:"Sync job not found."},404);
-  if(!job.visit_id)return json({error:"This job has no visit to retry."},400);
-  if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,job.visit_id));
-  else await syncVisitToDrive(env,job.visit_id);
+  if(job.job_kind==="patient"){
+   if(context.waitUntil)context.waitUntil(syncPatientToDrive(env,job.patient_id));
+   else await syncPatientToDrive(env,job.patient_id);
+  }else{
+   if(!job.visit_id)return json({error:"This job has no visit to retry."},400);
+   if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,job.visit_id));
+   else await syncVisitToDrive(env,job.visit_id);
+  }
   return json({success:true,message:"Drive synchronization retry started."});
  }catch(e){return json({error:String(e.message||"Could not retry Drive sync")},500);}
 }
