@@ -10,7 +10,22 @@ export async function onRequestGet({request,env}){
 export async function onRequestPost(context){
  const {request,env}=context,owner=await ownerSession(request,env);if(!owner)return json({error:"Owner access required"},403);
  try{
-  const b=await request.json(),id=Number(b.job_id);
+  const b=await request.json();
+  if(b.action==="backfill"){
+   const connection=await env.DB.prepare("SELECT root_folder_id FROM google_drive_connections WHERE id=1 AND owner_user_id=?").bind(owner.user_id).first();
+   if(!connection?.root_folder_id)return json({error:"Connect Google Drive and select the clinic folder first."},409);
+   const afterVisit=Math.max(0,Number(b.after_visit_id)||0),afterPatient=Math.max(0,Number(b.after_patient_id)||0);
+   const visits=await env.DB.prepare("SELECT id FROM visits WHERE id>? ORDER BY id LIMIT 8").bind(afterVisit).all();
+   const patients=await env.DB.prepare("SELECT p.id FROM patients p WHERE p.id>? AND NOT EXISTS(SELECT 1 FROM visits v WHERE v.patient_id=p.id) ORDER BY p.id LIMIT 8").bind(afterPatient).all();
+   for(const v of visits.results||[]){if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,v.id));else await syncVisitToDrive(env,v.id);}
+   for(const p of patients.results||[]){if(context.waitUntil)context.waitUntil(syncPatientToDrive(env,p.id));else await syncPatientToDrive(env,p.id);}
+   const nextVisit=visits.results?.length?visits.results[visits.results.length-1].id:afterVisit;
+   const nextPatient=patients.results?.length?patients.results[patients.results.length-1].id:afterPatient;
+   const moreV=await env.DB.prepare("SELECT 1 FROM visits WHERE id>? LIMIT 1").bind(nextVisit).first();
+   const moreP=await env.DB.prepare("SELECT 1 FROM patients p WHERE p.id>? AND NOT EXISTS(SELECT 1 FROM visits v WHERE v.patient_id=p.id) LIMIT 1").bind(nextPatient).first();
+   return json({success:true,scheduled_visits:visits.results?.length||0,scheduled_patients:patients.results?.length||0,next_after_visit_id:nextVisit,next_after_patient_id:nextPatient,has_more:!!(moreV||moreP)});
+  }
+  const id=Number(b.job_id);
   if(!Number.isSafeInteger(id)||id<1)return json({error:"Choose a valid failed job."},400);
   const job=await env.DB.prepare("SELECT id,visit_id,patient_id,job_kind,status FROM google_drive_sync_jobs WHERE id=?").bind(id).first();
   if(!job)return json({error:"Sync job not found."},404);
