@@ -39,8 +39,10 @@ async function upload(env,tokens,parent,name,mime,bytes,existingId){
  return r.data;
 }
 async function storeFile(env,tokens,patientId,visitId,kind,parent,name,mime,bytes){
- const old=await env.DB.prepare("SELECT id,drive_file_id FROM google_drive_files WHERE patient_id=? AND visit_id IS ? AND file_kind=?").bind(patientId,visitId,kind).first();
- const saved=await upload(env,tokens,parent,name,mime,bytes,old?.drive_file_id||null);
+ const old=await env.DB.prepare("SELECT id,drive_file_id FROM google_drive_files WHERE patient_id=? AND visit_id IS ? AND file_kind=? ORDER BY id DESC LIMIT 1").bind(patientId,visitId,kind).first();
+ let saved;
+ try{saved=await upload(env,tokens,parent,name,mime,bytes,old?.drive_file_id||null);}
+ catch(error){if(!old?.drive_file_id||!String(error.message||"").includes("404"))throw error;saved=await upload(env,tokens,parent,name,mime,bytes,null);}
  await env.DB.prepare("INSERT INTO google_drive_files(patient_id,visit_id,file_kind,drive_file_id,file_name,mime_type,web_view_link,updated_at) VALUES(?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(drive_file_id) DO UPDATE SET file_name=excluded.file_name,mime_type=excluded.mime_type,web_view_link=excluded.web_view_link,updated_at=CURRENT_TIMESTAMP").bind(patientId,visitId,kind,saved.id,name,mime,saved.webViewLink||null).run();
  return saved;
 }
