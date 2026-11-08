@@ -787,11 +787,12 @@ function viewToday() {
   const scoped=state.patientDate?all.filter(a=>a.date===state.patientDate):all.filter(a=>a.date.startsWith(monthPrefix));
   const fl=[['all','All'],['confirmed','Awaiting check-in'],['in_room','Checked in'],['done','Completed'],['no_show','No-show']];
   const rows=scoped.filter(a=>state.filter==='all'||a.status===state.filter).map(a=>{
-    const act=a.status==='confirmed'?'<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
+    let act=a.status==='confirmed'?'<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
       :a.status==='in_room'?'<button class="btn pri sm" data-act="visit" data-id="'+a.id+'">Open form</button> <button class="btn sm" data-act="done" data-id="'+a.id+'">Mark completed</button>'
       :a.status==='no_show'?'<a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(a.phone,'Hello '+a.name+', we missed you today. Would you like to reschedule? Ultimate Esthetics.')+'">New time</a> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>'
       :'<button class="btn sm" data-act="hist" data-p="'+a.pid+'">History</button> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>';
-    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0);
+    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0),invoice=state.visits.find(v=>Number(v.appointment_id)===Number(a.id));
+    if(invoice)act+=' <button class="btn sm" data-act="editinvoice" data-id="'+invoice.id+'" aria-label="Edit invoice">✎</button>';
     return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+(a.token?'<small class="muted" style="display:block">Token #'+a.token+'</small>':'')+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">No patients scheduled for this date or month.</td></tr>';
   const title=state.patientDate?nice(state.patientDate):monthLabel;
