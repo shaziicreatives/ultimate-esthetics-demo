@@ -1,3 +1,4 @@
+import { notifyClinicStaff } from "../_shared/web-push.js";
 export async function onRequestPost(context) {
     try {
         const { env, request } = context;
@@ -49,9 +50,16 @@ export async function onRequestPost(context) {
         const timeStr = String(hourNum).padStart(2, '0') + ':00';
 
         // Insert appointment with pending status
-        await env.DB.prepare(
+        const inserted = await env.DB.prepare(
             "INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source) VALUES (?, ?, ?, ?, ?, 'pending', 'website')"
         ).bind(doctor_id, patient_id, date, timeStr, treatment || null).run();
+        const notify = notifyClinicStaff(env, {
+            title: "New appointment request",
+            body: "A new website booking is waiting for review in Clinic Desk.",
+            tag: "appointment-request-" + inserted.meta.last_row_id,
+            url: "/admin/index.html"
+        });
+        if (context.waitUntil) context.waitUntil(notify); else await notify;
 
         return new Response(JSON.stringify({ 
             success: true, 
