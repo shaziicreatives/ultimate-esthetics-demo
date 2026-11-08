@@ -85,7 +85,11 @@ export async function onRequestPostPush(context){
   if(!sub||!String(sub.endpoint||"").startsWith("https://")||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
   if(!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
   await context.env.DB.prepare("INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,user_agent,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(endpoint) DO UPDATE SET user_id=excluded.user_id,p256dh=excluded.p256dh,auth=excluded.auth,user_agent=excluded.user_agent,updated_at=CURRENT_TIMESTAMP").bind(session.user_id,sub.endpoint,sub.keys.p256dh,sub.keys.auth,String(context.request.headers.get("User-Agent")||"").slice(0,300)).run();
-  return json({success:true});
+  try {
+    const response=await sendOne({endpoint:sub.endpoint,p256dh:sub.keys.p256dh,auth:sub.keys.auth},{title:"Background alerts connected",body:"This device successfully received a test push from Ultimate Esthetics Clinic Desk.",tag:"clinic-push-test",url:"/admin/index.html"},context.env);
+    if(!response.ok){if(response.status===404||response.status===410)await context.env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint=? AND user_id=?").bind(sub.endpoint,session.user_id).run();return json({error:"Push provider rejected the test notification ("+response.status+"). Please enable notifications again."},502);}
+  } catch(e) { return json({error:"Could not send the test push. Check the VAPID secret and try again."},502); }
+  return json({success:true,test_push_accepted:true});
 }
 export async function onRequestDeletePush(context){
   const session=await getSession(context.request,context.env);
