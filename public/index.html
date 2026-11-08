@@ -445,6 +445,8 @@ function drawBook(){
     <input name="p" placeholder="3000000000" inputmode="tel" autocomplete="tel" required>
   </div>
   <select name="s" aria-label="Treatment"><option value="">Treatment (optional)</option>${SERVICES.map(s=>`<option>${s}</option>`).join('')}</select>
+  <select name="refSource" aria-label="How did you hear about us?"><option value="">How did you hear about us? (optional)</option><option value="Existing patient referral">Existing patient referral</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="Google">Google</option><option value="Friend or family">Friend or family</option><option value="Walk-in">Walk-in</option><option value="Other">Other</option></select>
+  <input name="refName" placeholder="Referred by name (optional)" maxlength="120">
   <div class="err" id="err"></div><button class="btn" style="width:100%;background:var(--sand);color:var(--ink)" id="submit-btn">Confirm Appointment Slot</button></form>`;
   
   fetchBookedSlots();
@@ -462,7 +464,7 @@ document.addEventListener('click',e=>{
 
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='f')return;e.preventDefault();
- const fd=new FormData(e.target),n=fd.get('n').trim(),cc=fd.get('cc'),p=fd.get('p').trim(),s=fd.get('s'),err=document.getElementById('err'),submitBtn=document.getElementById('submit-btn');
+ const fd=new FormData(e.target),n=fd.get('n').trim(),cc=fd.get('cc'),p=fd.get('p').trim(),s=fd.get('s'),refSource=fd.get('refSource'),refName=fd.get('refName').trim(),err=document.getElementById('err'),submitBtn=document.getElementById('submit-btn');
  if(sel.h===null){err.textContent='Choose an available time first.';return}
  if(n.length<2){err.textContent='Enter your name.';return}
  if(p.replace(/\D/g,'').length<7){err.textContent='Enter a valid phone number.';return}
@@ -481,7 +483,9 @@ document.addEventListener('submit',async e=>{
        doctor_id: CFG.doctors[sel.doc].id,
        date: sel.d,
        time: sel.h,
-       treatment: s || null
+       treatment: s || null,
+       referral_source: refSource || null,
+       referred_by_name: refName || null
      })
    });
    const data = await res.json();
