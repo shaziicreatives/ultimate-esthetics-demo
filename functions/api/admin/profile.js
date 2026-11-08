@@ -1,11 +1,13 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 const maskEmail=value=>{const email=String(value||"");const at=email.lastIndexOf("@");if(at<1)return "Hidden";const local=email.slice(0,at),domain=email.slice(at+1);return local.length<=4?local[0]+"**"+local.slice(-1)+"@"+domain:local.slice(0,2)+"****"+local.slice(-2)+"@"+domain;};
 const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("")};
 async function currentUser(request,env){
- const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);if(!m)return null;
- const token=decodeURIComponent(m[1]),h=await hash(token);
- const u=await env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
+ const session=await getAdminSession(request,env);
+ if(!session)return null;
+ const u=await env.DB.prepare("SELECT u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM users u WHERE u.id=? AND u.is_active=1").bind(session.user_id).first();
  if(u&&u.role==="owner"&&u.username.toLowerCase()==="admin")u.role="admin";
+ if(u)u.user_id=session.user_id;
  return u;
 }
 async function verify(u,password){return !!u&&!!password&&(await hash(String(password)+u.password_salt))===u.password_hash;}
