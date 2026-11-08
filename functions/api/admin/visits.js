@@ -1,5 +1,5 @@
 import { notifyClinicStaff } from "../../_shared/web-push.js";
-import { syncVisitToDrive } from "../../_shared/google-drive-sync.js";
+import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive-sync.js";
 async function session(request, env) {
  const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/); if(!m)return null;
  const token=decodeURIComponent(m[1]); const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
@@ -64,6 +64,7 @@ export async function onRequestPatch(context) {
    if(b.patient_id===undefined)return json({error:"Patient or invoice ID is required."},400);
    await env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId).run();
    await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'patient_edited','patient',?,?)").bind(u.user_id,u.username,patientId,"Patient name and phone updated").run();
+   if(context.waitUntil)context.waitUntil(syncPatientToDrive(env,patientId));
    return json({success:true,patient_id:patientId});
   }
   const subtotal=Number(b.subtotal_amount),discountType=String(b.discount_type||"none"),discountValue=Number(b.discount_value||0),procedures=Array.isArray(b.procedures)?b.procedures:[];
