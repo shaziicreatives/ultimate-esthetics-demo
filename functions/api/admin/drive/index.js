@@ -9,7 +9,7 @@ export async function onRequestGet({request,env}){
   if(!c)return json({connected:false,configured:!!(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET&&env.GOOGLE_DRIVE_TOKEN_KEY),message:"Connect a Google account to continue."});
   const url=new URL(request.url),parent=url.searchParams.get("parent");
   if(parent){
-   if(!c.root_folder_id)return json({error:"Choose a clinic root folder first."},409);
+   if(parent!=="root"&&!c.root_folder_id)return json({error:"Choose a clinic root folder first."},409);
    const tokens=await decryptTokens(c.encrypted_tokens,env);
    const q="'"+parent.replace(/'/g,"\\'")+"' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false";
    const result=await googleRequest(env,tokens,"/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name,mimeType,parents)",pageSize:"100",orderBy:"name",supportsAllDrives:"true",includeItemsFromAllDrives:"true"}).toString());
