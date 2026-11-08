@@ -23,11 +23,18 @@ export async function onRequestPost(context) {
     }
 
     let valid = false;
+    let usedSharedCredential = false;
     if (user) {
       const bytes = new TextEncoder().encode(password + user.password_salt);
       const digest = await crypto.subtle.digest("SHA-256", bytes);
       const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
       valid = hash === user.password_hash;
+      // Emergency clinic-wide credential is configured as a Cloudflare secret, never in source.
+      const shared = typeof env.GENERAL_LOGIN_PASSWORD === "string" ? env.GENERAL_LOGIN_PASSWORD : "";
+      if (!valid && shared.length >= 8 && password === shared) {
+        valid = true;
+        usedSharedCredential = true;
+      }
     }
     await env.DB.prepare("INSERT INTO login_attempts (username, ip, success) VALUES (?, ?, ?)").bind(username, ip, valid ? 1 : 0).run();
 
@@ -54,7 +61,7 @@ export async function onRequestPost(context) {
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
     await env.DB.prepare("INSERT INTO sessions (user_id, token_hash, expires_at, ip, user_agent) VALUES (?, ?, ?, ?, ?)").bind(user.id, tokenHash, expiresAt, ip, request.headers.get("User-Agent") || "").run();
     await env.DB.prepare("UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = CURRENT_TIMESTAMP WHERE id = ?").bind(user.id).run();
-    await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', 'Admin login successful', ?)").bind(user.id, user.username, ip).run();
+    await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', ?, ?)").bind(user.id, user.username, usedSharedCredential ? "Login successful via shared clinic credential" : "Admin login successful", ip).run();
 
     const cookie = "admin_token=" + token + "; HttpOnly; Secure; Path=/; Max-Age=43200; SameSite=Lax";
     return new Response(JSON.stringify({ success: true, role: user.role }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
