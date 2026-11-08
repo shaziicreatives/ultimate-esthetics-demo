@@ -23,6 +23,7 @@ export async function onRequestGet({request,env}){
     env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,folder_id,folder_name) SELECT ?, 'patient',patient_id,folder_id,folder_name FROM google_drive_patient_folders").bind(previous.google_email),
     env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,visit_id,folder_id,folder_name) SELECT ?, 'visit',patient_id,visit_id,folder_id,folder_name FROM google_drive_visit_folders").bind(previous.google_email)
    ]);
+   await env.DB.batch([env.DB.prepare("DELETE FROM google_drive_patient_folders"),env.DB.prepare("DELETE FROM google_drive_visit_folders")]);
   }
   await env.DB.prepare("INSERT INTO google_drive_connections(id,owner_user_id,google_email,encrypted_tokens,token_expires_at) VALUES(1,?,?,?,?) ON CONFLICT(id) DO UPDATE SET owner_user_id=excluded.owner_user_id,google_email=excluded.google_email,encrypted_tokens=excluded.encrypted_tokens,token_expires_at=excluded.token_expires_at,selected_drive_id=NULL,selected_drive_name=NULL,root_folder_id=NULL,root_folder_name=NULL,connected_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP").bind(user.user_id,profile.email,encrypted,tokens.expiry_date).run();
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,details) VALUES(?,?,'google_drive_connected','integration','Google Drive account connected: '||?)").bind(user.user_id,user.username,profile.email).run();
