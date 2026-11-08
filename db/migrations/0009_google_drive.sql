@@ -63,3 +63,16 @@ CREATE TABLE IF NOT EXISTS google_drive_sync_jobs (
   UNIQUE(job_kind, visit_id, patient_id)
 );
 CREATE INDEX IF NOT EXISTS idx_drive_sync_pending ON google_drive_sync_jobs(status, created_at);
+
+CREATE TABLE IF NOT EXISTS google_drive_folder_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  google_email TEXT NOT NULL,
+  folder_kind TEXT NOT NULL CHECK(folder_kind IN ('patient','visit')),
+  patient_id INTEGER NOT NULL,
+  visit_id INTEGER,
+  folder_id TEXT NOT NULL,
+  folder_name TEXT NOT NULL,
+  archived_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_drive_folder_history_patient ON google_drive_folder_history(patient_id, archived_at);
+CREATE INDEX IF NOT EXISTS idx_drive_folder_history_visit ON google_drive_folder_history(visit_id, archived_at);
