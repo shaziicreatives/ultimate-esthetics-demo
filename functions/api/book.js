@@ -46,6 +46,13 @@ export async function onRequestPost(context) {
             patient_id = insertPatient.meta.last_row_id;
         }
 
+        const referralSource = String(data.referral_source || "").trim().slice(0,80);
+        const referredByName = String(data.referred_by_name || "").trim().slice(0,120);
+        if (referralSource || referredByName) {
+            const referralNotes = [referralSource ? "Source: " + referralSource : "", referredByName ? "Referred by: " + referredByName : ""].filter(Boolean).join(" · ");
+            await env.DB.prepare("UPDATE patients SET referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralNotes, patient_id).run();
+        }
+
         // Ensure time is formatted correctly as string (e.g., '14:00')
         const timeStr = String(hourNum).padStart(2, '0') + ':00';
 
