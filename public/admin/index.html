@@ -309,6 +309,44 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 #appUpdateNotice .update-actions{display:flex;gap:6px;flex:none}
 @media(max-width:480px){#appUpdateNotice{align-items:flex-start;flex-direction:column}#appUpdateNotice .update-actions{width:100%}#appUpdateNotice .update-actions .btn{flex:1}}
 
+
+/* FINAL mobile navigation and spacing override */
+@media (max-width:900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  #appView{width:100%;padding:0!important;margin:0}
+  #appView .app{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;border:0!important;border-radius:0!important;overflow:visible!important}
+  #appView .side{display:flex!important;position:relative!important;top:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;padding:12px 14px 9px!important;margin:0!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;overflow:visible!important}
+  #appView .brand{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:4px 3px!important;gap:10px!important}
+  #appView .brand>div:last-child{min-width:0!important;flex:1 1 auto!important}
+  #appView .brand b{display:block!important;white-space:normal!important;overflow:visible!important;font-size:17px!important;line-height:1.2!important}
+  #appView .brand span{display:block!important}
+  #appView .nav-label{display:block!important;flex:0 0 auto!important;margin:0!important;padding:0 4px!important}
+  #appView .nav{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;overflow-x:scroll!important;overflow-y:hidden!important;white-space:nowrap!important;scrollbar-width:thin!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x!important;padding:3px 2px 10px!important;box-sizing:border-box!important}
+  #appView .nav button{display:inline-flex!important;flex:0 0 auto!important;width:max-content!important;min-width:max-content!important;max-width:none!important;white-space:nowrap!important;padding:10px 15px!important;min-height:42px!important}
+  #appView .nav::-webkit-scrollbar{display:block!important;height:4px!important}
+  #appView .nav::-webkit-scrollbar-thumb{background:var(--sand)!important;border-radius:8px!important}
+  #appView .side-foot{display:flex!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;gap:7px!important;margin-top:0!important}
+  #appView .user-box{display:flex!important;width:100%!important;min-width:0!important}
+  #appView .main{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:18px 14px calc(32px + env(safe-area-inset-bottom))!important}
+  #appView #view{width:100%;min-width:0}
+  #appView .page-head{margin:0 0 18px!important;padding:0 2px 13px!important;border-bottom:1px solid var(--line)!important}
+  #appView .page-head h1{font-size:clamp(25px,7vw,31px)!important;line-height:1.15!important}
+  #appView .card,#appView .stat-box,#appView .patient-calendar{margin-bottom:14px!important}
+  #appView .dash-layout,#appView .col,#appView .two-col,#appView .security-grid{gap:14px!important}
+  #appView .card{padding:15px!important;border-radius:14px!important}
+  #appView .card-head{padding-bottom:10px!important;margin-bottom:12px!important;border-bottom:1px solid var(--line)!important}
+  #appView .stats-grid{gap:10px!important;margin-bottom:16px!important}
+  #appView .stat-box{min-width:0!important;padding:12px!important}
+  #appView .tbl-wrap{width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+}
+@media(max-width:420px){
+  #appView .side{padding-left:12px!important;padding-right:12px!important}
+  #appView .main{padding-left:12px!important;padding-right:12px!important}
+  #appView .brand b{font-size:16px!important}
+  #appView .nav button{padding:9px 13px!important}
+  #appView .card{padding:13px!important}
+}
+
 </style>
 </head>
 <body>
@@ -771,7 +809,15 @@ function openVisitForm(id) {
 }
 function renderNav() {
   const n = pending().length;
-  $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+  const nav = $('#nav');
+  nav.innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+  const active = nav.querySelector('button.on');
+  if (active && window.matchMedia('(max-width: 900px)').matches) {
+    requestAnimationFrame(() => {
+      const left = active.offsetLeft - nav.clientWidth / 2 + active.clientWidth / 2;
+      nav.scrollTo({left:Math.max(0,left),behavior:'smooth'});
+    });
+  }
 }
 
 async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
