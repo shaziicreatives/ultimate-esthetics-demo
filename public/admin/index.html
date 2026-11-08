@@ -418,6 +418,7 @@ const STATUS = {
   no_show: ['bad', 'No-show'], rejected: ['bad', 'Rejected'], cancelled: ['mute', 'Cancelled']
 };
 const stPill = s => { const x = STATUS[s] || ['mute', s]; return '<span class="pill ' + x[0] + '">' + x[1] + '</span>'; };
+const appointmentIsFuture = a => { const d=new Date(String(a.date||'')+'T'+String(a.time||'00:00').slice(0,5)+':00+05:00'); return Number.isFinite(d.getTime()) && d.getTime()>Date.now(); };
 
 const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
@@ -465,6 +466,21 @@ function playClickTone() {
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+.085);
   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.09);
  } catch(e) {}
+}
+function playInvoiceReminder() {
+ // Mandatory five-second reminder after check-in; independent of the optional UI click sound.
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  for(let i=0;i<17;i++){
+   const t=beepCtx.currentTime+i*.30,o=beepCtx.createOscillator(),g=beepCtx.createGain();
+   o.type='triangle';o.frequency.value=i%2?1320:990;
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.82,t+.02);
+   g.gain.setValueAtTime(.82,t+.13);g.gain.exponentialRampToValueAtTime(.0001,t+.25);
+   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.27);
+  }
+ } catch(e) {}
+ vibrate([500,100,500,100,500,100,500]);
 }
 function playAppointmentAlert() {
  // Appointment alerts are intentionally independent of the optional UI click-sound switch.
@@ -701,7 +717,7 @@ function viewRequests() {
   const body = list.length ? list.map(a => {
     if (state.tab === 'pending') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><button class="btn pri sm" data-act="accept" data-id="' + a.id + '">Accept</button><a class="btn sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', regarding your appointment request for ' + nice(a.date) + ' at ' + t12(a.time) + ', we can offer an alternative time. Would that work for you?') + '">Offer other time</a><button class="btn bad sm" data-act="reject" data-id="' + a.id + '">Reject</button></div></div>';
     if (state.tab === 'accepted') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', your appointment is confirmed for ' + wday(a.date) + ', ' + nice(a.date) + ' at ' + t12(a.time) + ' with ' + a.doc + '. Ultimate Esthetics.') + '">Send on WhatsApp</a><button class="btn bad sm" data-act="cancel" data-id="' + a.id + '">Cancel</button></div></div>';
-    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', unfortunately we cannot accommodate your requested time. Would you like us to offer another time? Ultimate Esthetics.') + '">Offer other time</a><button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button></div></div>';
+    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', unfortunately we cannot accommodate your requested time. Would you like us to offer another time? Ultimate Esthetics.') + '">Offer other time</a>' + (a.status==='rejected'&&!appointmentIsFuture(a)?'<span class="hint">Rejected · time passed</span>':'<button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button>') + '</div></div>';
   }).join('') : '<div class="empty">Nothing to display here.</div>';
   return head('Requests', 'Online appointment requests. Accepted appointments are added to the Patients list.', '') +
     '<div class="tabs">' + tabs.map(t => '<button class="' + (state.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<span class="n num">' + lists[t[0]].length + '</span></button>').join('') + '</div>' +
@@ -916,7 +932,7 @@ document.addEventListener('click', async e => {
   const id = Number(b.dataset.id); b.disabled = true;
   switch (b.dataset.act) {
     case 'visit': b.disabled=false; openVisitForm(id); break;
-    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){toast('Patient checked in. Select Open form to record the visit.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
+    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){playInvoiceReminder();toast('Patient checked in. Invoice is pending — open the form and generate the invoice.');if('serviceWorker' in navigator&&Notification.permission==='granted'){navigator.serviceWorker.ready.then(reg=>reg.showNotification('Invoice pending',{body:'A patient has checked in. Complete the visit form and generate the invoice.',icon:'/admin/icon.svg',tag:'invoice-pending-'+id})).catch(()=>{});}await loadData();}else toast(r.data.error||'Check-in failed');}); break;
     case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in reversed.');await loadData();}else toast(r.data.error||'Update failed');}); break;
     case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
     case 'printinvoice': document.querySelector('#visitModal')?._printInvoice?.(); b.disabled=false; break;
