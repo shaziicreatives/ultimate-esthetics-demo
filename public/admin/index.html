@@ -59,7 +59,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .user-box b{font-size:13px;display:block}
 .user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;color:var(--accent)}
-.foot-btns{display:flex;gap:6px}
+.foot-btns{display:flex;gap:6px;width:100%}.foot-btns .btn{min-width:0;flex:1 1 0;padding-left:4px;padding-right:4px;font-size:11px}
 
 .main{padding:26px 30px;min-width:0}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
@@ -186,7 +186,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
  #visitInvoicePrint .val{font-size:18px;font-weight:bold}
 }
 /* reference dashboard proportions */
-@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:205px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
+@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:250px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
 
 
 @media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
@@ -207,7 +207,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 
 /* Screenshot-matched clinic desk refinement */
 @media(min-width:901px){
- #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:205px minmax(0,1fr)}
+ #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:250px minmax(0,1fr)}
  .side{position:sticky;top:0;height:100vh;border-radius:0;padding:18px 12px}
  .main{padding:26px 28px;max-width:1600px;width:100%;margin:0 auto}
  .page-head{margin-bottom:16px}.page-head h1{font-size:36px}
