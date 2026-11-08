@@ -518,8 +518,11 @@ async function refreshNotificationAccessButton() {
     const response = await fetch('/api/admin/push-subscription', { credentials:'same-origin', cache:'no-store' });
     if (response.ok) {
       const data = await response.json();
-      if (data.subscribed && Notification.permission === 'granted') b.textContent = 'Background Alerts: On';
+      const registration = await navigator.serviceWorker.ready;
+      const localSubscription = await registration.pushManager.getSubscription();
+      if (data.subscribed && localSubscription && Notification.permission === 'granted') b.textContent = 'Background Alerts: On';
       else if (!data.publicKey) b.textContent = 'Push Setup Required';
+      else if (data.subscribed && !localSubscription) b.textContent = 'Reconnect Background Alerts';
     }
   } catch(e) {}
 }
@@ -685,7 +688,7 @@ $('#loginForm').addEventListener('submit', async e => {
   try {
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
+    if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
 boot(); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
@@ -1129,7 +1132,7 @@ document.addEventListener('click', e => {
   }
 });
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
+  (async () => {
     try {
       const reg = await navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"});
       if (reg.waiting && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
@@ -1142,8 +1145,8 @@ if ("serviceWorker" in navigator) {
       });
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
       reg.update().catch(() => {});
-    } catch(e) {}
-  });
+    } catch(e) { console.error('Clinic service worker registration failed',e); }
+  })();
 }
 boot();
 </script>
