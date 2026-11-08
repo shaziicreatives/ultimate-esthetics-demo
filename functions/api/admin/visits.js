@@ -1,14 +1,9 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 import { notifyClinicStaff } from "../../_shared/web-push.js";
 import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive-sync.js";
-async function session(request, env) {
- const m=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/); if(!m)return null;
- const token=decodeURIComponent(m[1]); const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
- const h=Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("");
- return env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.doctor_id FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>datetime('now') AND u.is_active=1").bind(h).first();
-}
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 export async function onRequestGet({request,env}) {
- const u=await session(request,env); if(!u)return json({error:"Unauthorized"},401);
+ const u=await getAdminSession(request,env); if(!u)return json({error:"Unauthorized"},401);
  const doctorFilter=u.role==="doctor"?"WHERE v.doctor_id=?":"";
  const rows=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) received FROM visits v JOIN patients p ON p.id=v.patient_id JOIN doctors d ON d.id=v.doctor_id "+doctorFilter+" ORDER BY v.created_at DESC LIMIT 500").bind(...(u.role==="doctor"?[u.doctor_id]:[])).all();
  const visits=[];
@@ -23,7 +18,7 @@ export async function onRequestGet({request,env}) {
 }
 export async function onRequestPost(context) {
  const {request,env}=context;
- const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
+ const u=await getAdminSession(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
  try {
   const b=await request.json(), appointmentId=Number(b.appointment_id), subtotal=Number(b.subtotal_amount ?? b.total_amount), discountType=String(b.discount_type||"none"), discountValue=Number(b.discount_value||0), procedures=Array.isArray(b.procedures)?b.procedures:[];
   if(!appointmentId||!Number.isSafeInteger(subtotal)||subtotal<0||!["none","percentage","fixed"].includes(discountType)||!Number.isFinite(discountValue)||discountValue<0||(discountType==="percentage"&&discountValue>100)||(discountType==="fixed"&&!Number.isSafeInteger(discountValue))||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Visit details invalid"},400);
@@ -54,7 +49,7 @@ export async function onRequestPost(context) {
 }
 export async function onRequestPatch(context) {
  const {request,env}=context;
- const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
+ const u=await getAdminSession(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
  try {
   const b=await request.json(),patientId=Number(b.patient_id),patientName=String(b.patient_name||"").trim(),patientPhone=String(b.patient_phone||"").trim();
   if(b.patient_id!==undefined&&(!Number.isSafeInteger(patientId)||patientId<1||patientName.length<2||patientName.length>120||patientPhone.replace(/\\D/g,"").length<10||patientPhone.length>24))return json({error:"Enter a valid patient name and phone number."},400);
