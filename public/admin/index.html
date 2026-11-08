@@ -288,7 +288,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="nav-label">Daily work</div>
       <nav class="nav" id="nav" aria-label="Main"></nav>
       <div class="side-foot">
-        <div class="user-box"><div class="avatar">OW</div><div><b>Owner</b><small>Live data</small></div></div>
+        <button class="user-box" type="button" data-go="profile" style="width:100%;text-align:left;cursor:pointer"><div class="avatar">ME</div><div><b>My Profile</b><small>Verify Login ID & password</small></div></button>
         <div class="foot-btns">
           <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
           <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
@@ -334,7 +334,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false };
-const state = { page: 'dashboard', tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, profileCredentials: null, tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security'], ['marketing', 'Marketing & Tracking']];
 
 /* ---------- api ---------- */
@@ -676,8 +676,16 @@ function viewMarketing() {
  '</div>';
 }
 
-/* ---------- render + events ---------- */
-const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity, marketing: viewMarketing };
+/* ---------- render + events ---------- */\nfunction viewProfile() {
+ if(!state.profileUnlocked||!state.profile)return head('My Profile','Verify your account to view and update your own profile.')+
+ '<section class="card" style="max-width:520px"><div class="card-head"><h2>Confirm your identity</h2></div><p class="hint" style="margin-bottom:14px">Enter your current Login ID and password. You can only access your own profile.</p><form id="profileVerifyForm" class="col" style="gap:10px"><div class="field"><label>Login ID</label><input class="inp" id="profileLoginId" autocomplete="username" required></div><div class="field"><label>Password</label><input class="inp" id="profileLoginPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileVerifyErr" hidden></div><button class="btn pri" type="submit" id="profileVerifyBtn">Verify and open profile</button></form></section>';
+ const p=state.profile;
+ return head('My Profile','Your account details. Changes apply only to your signed-in account.')+
+ '<div class="col" style="max-width:680px"><section class="card"><div class="card-head"><h2>Account details</h2><span class="pill info">'+esc(p.role)+'</span></div><div class="two-col" style="margin-bottom:14px"><div class="field"><label>Login ID</label><input class="inp" value="'+esc(p.username)+'" readonly></div><div class="field"><label>Email address</label><input class="inp" value="'+esc(p.email)+'" readonly></div></div><form id="profileNameForm" class="col" style="gap:10px"><div class="two-col"><div class="field"><label>First name</label><input class="inp" id="profileFirstName" maxlength="80" value="'+esc(p.first_name)+'" required></div><div class="field"><label>Last name</label><input class="inp" id="profileLastName" maxlength="80" value="'+esc(p.last_name)+'" required></div></div><div class="err" id="profileNameErr" hidden></div><button class="btn pri" type="submit" id="profileNameSave">Save name</button></form></section><section class="card"><div class="card-head"><h2>Change email address</h2></div><p class="hint">Email changes require a verification link sent to your current email first, followed by confirmation at the new email address.</p><p class="alert-item warn" style="margin-top:10px">Email delivery is not configured yet. Your email address cannot be changed until the secure verification sender is set up.</p><button class="btn" type="button" data-profile-lock style="margin-top:12px">Lock profile</button></section></div>';
+}
+
+
+const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity, marketing: viewMarketing };
 
 function openVisitForm(id) {
  const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
@@ -704,7 +712,7 @@ async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.
 let securityAutoRefresh=null;
 function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
-function go(p) { state.page = p; render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
+function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;state.profileCredentials=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
 document.addEventListener('click', async e => {
