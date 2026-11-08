@@ -36,8 +36,8 @@ async function encryptPayload(subscription,payload){
   const keyInfo=new Uint8Array([...enc.encode("WebPush: info\\0"),...uaPublic,...asPublic]);
   const ikm=await deriveHKDF(shared,authSecret,new TextDecoder().decode(keyInfo),32);
   const salt=crypto.getRandomValues(new Uint8Array(16));
-  const cek=await deriveHKDF(ikm,salt,"Content-Encoding: aes128gcm",16);
-  const nonce=await deriveHKDF(ikm,salt,"Content-Encoding: nonce",12);
+  const cek=await deriveHKDF(ikm,salt,"Content-Encoding: aes128gcm\\0",16);
+  const nonce=await deriveHKDF(ikm,salt,"Content-Encoding: nonce\\0",12);
   const plain=new Uint8Array([...enc.encode(JSON.stringify(payload)),2]);
   const aes=await crypto.subtle.importKey("raw",cek,{name:"AES-GCM"},false,["encrypt"]);
   const cipher=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv:nonce,tagLength:128},aes,plain));
