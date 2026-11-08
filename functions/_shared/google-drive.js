@@ -1,3 +1,4 @@
+import { getAdminSession } from "./admin-session.js";
 export const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 const enc=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes)).map(x=>x.toString(16).padStart(2,"0")).join("");
@@ -5,11 +6,7 @@ const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes)));
 const unb64=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
 export async function sha256(value){return hex(await crypto.subtle.digest("SHA-256",enc.encode(String(value))));}
 export async function ownerSession(request,env){
- const match=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);
- if(!match)return null;
- let token;try{token=decodeURIComponent(match[1]);}catch{return null;}
- const tokenHash=await sha256(token);
- const user=await env.DB.prepare("SELECT s.user_id,s.id session_id,u.username,u.role,u.is_active FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(tokenHash).first();
+ const user=await getAdminSession(request,env);
  if(!user)return null;
  if(user.role!=="owner"||String(user.username).toLowerCase()==="admin")return null;
  return user;
