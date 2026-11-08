@@ -64,6 +64,25 @@ async function visitFolder(env,tokens,patientFolder,visit){
  await env.DB.prepare("INSERT INTO google_drive_visit_folders(visit_id,patient_id,folder_id,folder_name,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(visit_id) DO UPDATE SET folder_id=excluded.folder_id,folder_name=excluded.folder_name,updated_at=CURRENT_TIMESTAMP").bind(visit.id,visit.patient_id,made.id,made.name).run();
  return made;
 }
+export async function syncPatientToDrive(env,patientId){
+ let job=null;
+ try{
+  const connection=await getConnection(env);if(!connection?.root_folder_id)return;
+  const patient=await env.DB.prepare("SELECT p.*,r.name referred_by_name FROM patients p LEFT JOIN patients r ON r.id=p.referred_by_patient_id WHERE p.id=?").bind(patientId).first();
+  if(!patient)return;
+  await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();
+  job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
+  const tokens=await decryptTokens(connection.encrypted_tokens,env);
+  const folder=await patientFolder(env,tokens,connection,patient);
+  const notes=await env.DB.prepare("SELECT note,created_at FROM patient_notes WHERE patient_id=? ORDER BY created_at,id").bind(patientId).all();
+  const record={patient_id:patient.id,name:patient.name,phone:patient.phone,referred_by_patient_id:patient.referred_by_patient_id,referred_by_name:patient.referred_by_name,referral_notes:patient.referral_notes,created_at:patient.created_at,updated_at:patient.updated_at,notes:notes.results||[],clinic:"Ultimate Esthetics"};
+  if(connection.auto_save_patient_record)await storeFile(env,tokens,patient.id,null,"patient_record_json",folder.id,"Patient Record.json","application/json",jsonBytes(record));
+  await env.DB.prepare("UPDATE google_drive_sync_jobs SET status='saved',attempts=attempts+1,last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(job.id).run();
+  await env.DB.prepare("UPDATE google_drive_connections SET last_sync_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=1").run();
+ }catch(error){
+  if(job?.id)await env.DB.prepare("UPDATE google_drive_sync_jobs SET status='failed',attempts=attempts+1,last_error=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(String(error?.message||"Drive sync failed").slice(0,500),job.id).run().catch(()=>{});
+ }
+}
 export async function syncVisitToDrive(env,visitId){
  let job=null;
  try{
