@@ -60,13 +60,22 @@ export async function onRequestPost(context) {
         const inserted = await env.DB.prepare(
             "INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source) VALUES (?, ?, ?, ?, ?, 'pending', 'website')"
         ).bind(doctor_id, patient_id, date, timeStr, treatment || null).run();
-        const notify = notifyClinicStaff(env, {
+        // Await the push attempt before returning success. This makes delivery
+        // diagnostics deterministic instead of relying on a background waitUntil task.
+        const pushResult = await notifyClinicStaff(env, {
             title: "New appointment request",
             body: "A new website booking is waiting for review in Clinic Desk.",
             tag: "appointment-request-" + inserted.meta.last_row_id,
             url: "/admin/index.html"
         });
-        if (context.waitUntil) context.waitUntil(notify); else await notify;
+        console.log("Website booking push result", JSON.stringify({
+            appointmentId: inserted.meta.last_row_id,
+            attempted: pushResult?.attempted ?? 0,
+            sent: pushResult?.sent ?? 0,
+            failed: pushResult?.failed ?? 0,
+            expired: pushResult?.expired ?? 0,
+            skipped: Boolean(pushResult?.skipped)
+        }));
 
         return new Response(JSON.stringify({ 
             success: true, 
