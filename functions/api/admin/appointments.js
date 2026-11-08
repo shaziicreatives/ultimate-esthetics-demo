@@ -39,7 +39,7 @@ export async function onRequestGet(context) {
             bindings.push(session.doctor_id);
         }
 
-        query += " ORDER BY a.date DESC, a.time DESC LIMIT 100";
+        query += " ORDER BY a.date DESC, a.time DESC LIMIT 1000";
 
         const { results } = await env.DB.prepare(query).bind(...bindings).all();
 
