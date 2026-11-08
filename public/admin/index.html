@@ -431,7 +431,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[] };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -870,7 +870,9 @@ function viewDrive(){
  '<label class="switch-row"><span>Automatically save invoice PDF</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Automatically save editable patient record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Automatically save visit record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
- '<p class="hint" style="margin-top:10px">Saving preferences are stored, but automatic document generation and upload are not connected yet. Do not rely on Drive as a backup until sync is completed and verified.</p></section>':'')+
+ '<p class="hint" style="margin-top:10px">Patient folders, visit folders, editable JSON records, invoice PDF uploads and automatic sync are now wired to visit create/edit. Confirm the Preview migration and credentials before relying on Drive.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Synchronization history</h2><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div>'+
+ ((state.driveJobs||[]).length?state.driveJobs.map(j=>'<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(j.invoice_number||('Visit #'+j.visit_id))+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>').join(''):'<div class="empty">No synchronization jobs yet.</div>')+'</section>':'')+
  '</div>';
 }
 function viewSecurity() {
@@ -1017,6 +1019,7 @@ async function loadDriveSettings(redraw=true){
   state.driveAllowed=r.status!==403;
   state.driveData=r.data||{};
   if(!r.ok&&r.status>=500)state.driveData.migration_required=true;
+  if(r.ok&&state.driveData.connected){const q=await api('/api/admin/drive/sync');state.driveJobs=q.ok?(q.data.jobs||[]):[];}else state.driveJobs=[];
  }catch(e){state.driveAllowed=e.message!=='unauthorized';state.driveData={migration_required:true};}
  if(redraw)render();
 }
@@ -1033,8 +1036,10 @@ document.addEventListener('click',async e=>{
  if(action==='disconnect'&&!confirm('Disconnect Google Drive? Existing clinic records and saved Drive references will be retained.'))return;
  b.disabled=true;
  try{
-  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:{action:'disconnect'};
-  const r=await api('/api/admin/drive',{method:'POST',body});
+  if(action==='refresh'){await loadDriveSettings(true);return;}
+  const path=action==='retry'?'/api/admin/drive/sync':'/api/admin/drive';
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='retry'?{job_id:Number(b.dataset.job)}:{action:'disconnect'};
+  const r=await api(path,{method:'POST',body});
   if(!r.ok)throw new Error(r.data.error||'Google Drive action failed.');
   toast(r.data.message||'Google Drive settings updated.');
   await loadDriveSettings(true);
