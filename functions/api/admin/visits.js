@@ -15,7 +15,7 @@ export async function onRequestGet({request,env}) {
   const payments=await env.DB.prepare("SELECT amount,method,reference,created_at FROM payments WHERE visit_id=? ORDER BY created_at").bind(row.id).all();
   visits.push({...row,procedures:procedures.results,payments:payments.results});
  }
- const patientRows=await env.DB.prepare("SELECT p.id,p.name,p.phone,p.referred_by_patient_id,p.referral_notes,(SELECT rp.name FROM patients rp WHERE rp.id=p.referred_by_patient_id) referred_by_name,COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=p.id),0) billed,COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=p.id),0) received,(SELECT COUNT(*) FROM visits WHERE patient_id=p.id) visit_count,(SELECT MAX(follow_up_date) FROM visits WHERE patient_id=p.id AND follow_up_date IS NOT NULL) follow_up_date FROM patients p ORDER BY p.name").all();
+ const patientRows=await env.DB.prepare("SELECT p.id,p.name,p.phone,p.referred_by_patient_id,p.referral_notes,(SELECT rp.name FROM patients rp WHERE rp.id=p.referred_by_patient_id) referred_by_name,COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=p.id),0) billed,COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=p.id),0) received,(SELECT COUNT(*) FROM visits WHERE patient_id=p.id) visit_count,MAX((SELECT MAX(follow_up_date) FROM visits WHERE patient_id=p.id AND follow_up_date IS NOT NULL),(SELECT MAX(follow_up_date) FROM appointments WHERE patient_id=p.id AND follow_up_date IS NOT NULL)) follow_up_date FROM patients p ORDER BY p.name").all();
  const patients=patientRows.results.map(p=>({...p,balance:Math.max(0,p.billed-p.received)}));
  return json({visits,patients});
 }
