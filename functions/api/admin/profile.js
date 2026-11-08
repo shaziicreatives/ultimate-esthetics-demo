@@ -16,6 +16,7 @@ export async function onRequestPost({request,env}) {
  if(!await verify(u,b.password))return json({error:"Login ID or password is incorrect."},403);
  if(String(b.username||"").trim().toLowerCase()!==u.username.toLowerCase())return json({error:"Enter your current Login ID."},403);
  const action=String(b.action||"");
+ if(action==="verify")return json({success:true,profile:{username:u.username,role:u.role,first_name:u.first_name||"",last_name:u.last_name||"",email:u.email||""}});
  if(action==="update_name"){
   const first=String(b.first_name||"").trim(),last=String(b.last_name||"").trim();
   if(!first||!last||first.length>80||last.length>80)return json({error:"Enter a valid first and last name."},400);
