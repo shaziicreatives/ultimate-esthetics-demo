@@ -29,6 +29,12 @@
   --shadow:0 2px 8px rgba(0,0,0,.3); color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+@keyframes clinicMarkIn{0%{opacity:0;transform:translateY(7px) scale(.94)}70%{opacity:1;transform:translateY(-1px) scale(1.015)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.brand-mark{animation:clinicMarkIn .65s cubic-bezier(.2,.75,.25,1) both}
+#appView{animation:clinicViewIn .35s ease-out both}
+@keyframes clinicViewIn{from{opacity:.82;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
 html{background:var(--bg)}
 body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -842,21 +848,31 @@ document.addEventListener('submit', async e => {
 
 let deferredInstallPrompt = null;
 const installAppButton = document.getElementById("installAppBtn");
+const isClinicInstalled = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const syncInstallControl = () => {
+  if (installAppButton && isClinicInstalled()) {
+    installAppButton.hidden = true;
+    deferredInstallPrompt = null;
+  }
+};
+syncInstallControl();
 window.addEventListener("beforeinstallprompt", event => {
+  if (isClinicInstalled()) { event.preventDefault(); syncInstallControl(); return; }
   event.preventDefault();
   deferredInstallPrompt = event;
-  if (installAppButton) installAppButton.textContent = "Install Clinic App";
+  if (installAppButton) { installAppButton.hidden = false; installAppButton.textContent = "Install Clinic App"; }
 });
 window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
-  if (installAppButton) { installAppButton.textContent = "App Installed"; installAppButton.disabled = true; }
+  if (installAppButton) installAppButton.hidden = true;
 });
 if (installAppButton) installAppButton.addEventListener("click", async () => {
+  if (isClinicInstalled()) { syncInstallControl(); return; }
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     const choice = await deferredInstallPrompt.userChoice;
     deferredInstallPrompt = null;
-    if (choice && choice.outcome === "accepted") installAppButton.textContent = "App Installed";
+    if (choice && choice.outcome === "accepted") installAppButton.hidden = true;
   } else {
     toast("To install: open the browser menu and choose Install app or Add to Home screen.");
   }
