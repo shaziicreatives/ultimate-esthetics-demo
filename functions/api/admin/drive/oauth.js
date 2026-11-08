@@ -1,4 +1,4 @@
-import {ownerSession,sha256,encryptTokens,oauthRedirect,json} from "../../../../_shared/google-drive.js";
+import {ownerSession,sha256,encryptTokens,oauthRedirect,json} from "../../../_shared/google-drive.js";
 export async function onRequestGet({request,env}){
  const user=await ownerSession(request,env);if(!user)return json({error:"Owner access required"},403);
  if(!env.GOOGLE_CLIENT_ID||!env.GOOGLE_CLIENT_SECRET||!env.GOOGLE_DRIVE_TOKEN_KEY)return json({error:"Google Drive credentials are not configured in Cloudflare Pages secrets."},503);
