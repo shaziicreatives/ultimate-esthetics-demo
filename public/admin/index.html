@@ -431,7 +431,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[], driveFolders:[] };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -873,7 +873,7 @@ function viewDrive(){
  '<label class="switch-row"><span>Automatically save editable patient record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Automatically save visit record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
  '<p class="hint" style="margin-top:10px">Patient folders, visit folders, editable JSON records, invoice PDF uploads and automatic sync are now wired to visit create/edit. Confirm the Preview migration and credentials before relying on Drive.</p></section>'+
- '<section class="card"><div class="card-head"><h2>Synchronization history</h2><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div>'+
+ '<section class="card"><div class="card-head"><h2>Synchronization history</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
  ((state.driveJobs||[]).length?state.driveJobs.map(j=>'<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(j.invoice_number||('Visit #'+j.visit_id))+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>').join(''):'<div class="empty">No synchronization jobs yet.</div>')+'</section>':'')+
  '</div>';
 }
@@ -1039,11 +1039,12 @@ document.addEventListener('click',async e=>{
  b.disabled=true;
  try{
   if(action==='refresh'){await loadDriveSettings(true);return;}
-  const path=action==='retry'?'/api/admin/drive/sync':'/api/admin/drive';
-  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}:action==='retry'?{job_id:Number(b.dataset.job)}:{action:'disconnect'};
+  const path=(action==='retry'||action==='backfill')?'/api/admin/drive/sync':'/api/admin/drive';
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}:action==='retry'?{job_id:Number(b.dataset.job)}:action==='backfill'?{action:'backfill',after_visit_id:state.driveBackfill.after_visit_id,after_patient_id:state.driveBackfill.after_patient_id}:{action:'disconnect'};
   const r=await api(path,{method:'POST',body});
   if(!r.ok)throw new Error(r.data.error||'Google Drive action failed.');
-  toast(r.data.message||'Google Drive settings updated.');
+  if(action==='backfill'){state.driveBackfill={after_visit_id:r.data.next_after_visit_id,after_patient_id:r.data.next_after_patient_id,has_more:r.data.has_more};toast('Scheduled '+r.data.scheduled_visits+' visits and '+r.data.scheduled_patients+' patients.'+(r.data.has_more?' Click Sync existing records again for the next batch.':' Existing records backfill has been scheduled.'));}
+  else toast(r.data.message||'Google Drive settings updated.');
   await loadDriveSettings(true);
  }catch(x){if(x.message!=='unauthorized')toast(x.message||'Google Drive action failed.');}
  finally{b.disabled=false;}
