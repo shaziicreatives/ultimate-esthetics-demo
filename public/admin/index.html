@@ -964,9 +964,9 @@ function openInvoiceEditor(id){
   $('#visitNetTotal').textContent='Rs '+net.toLocaleString('en-PK');
   $('#visitDiscountDisplay').textContent='-Rs '+discount.toLocaleString('en-PK');
   $('#visitDue').textContent='Rs '+due.toLocaleString('en-PK');
-  $('#visitRemaining').textContent='Rs '+Math.max(0,due-alreadyPaid).toLocaleString('en-PK');
+  $('#visitRemaining').textContent='Rs '+Math.max(0,due-Number($('#visitReceived').value||0)).toLocaleString('en-PK');
  };
- $('#visitTotal').addEventListener('input',recalc);$('#visitDiscountType').addEventListener('change',recalc);$('#visitDiscountValue').addEventListener('input',recalc);
+ $('#visitTotal').addEventListener('input',recalc);$('#visitReceived').addEventListener('input',recalc);$('#visitDiscountType').addEventListener('change',recalc);$('#visitDiscountValue').addEventListener('input',recalc);
  recalc();
  const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Editing '+(v.invoice_number||'saved invoice')+'. Existing payments (Rs '+alreadyPaid.toLocaleString('en-PK')+') are preserved and will not be charged again.';
  const save=$('#visitSave');if(save){save.textContent='Save visit changes';save.disabled=false;}
