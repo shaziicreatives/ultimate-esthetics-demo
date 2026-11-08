@@ -1,9 +1,15 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Production redeploy: restore configured clinic database binding. -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="/admin/manifest.webmanifest">
+<meta name="theme-color" content="#3E3325">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ultimate Clinic">
+<link rel="icon" href="/admin/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/admin/icon.svg">
 <title>Ultimate Esthetics Clinic Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
 <style>
@@ -23,6 +29,12 @@
   --shadow:0 2px 8px rgba(0,0,0,.3); color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+@keyframes clinicMarkIn{0%{opacity:0;transform:translateY(7px) scale(.94)}70%{opacity:1;transform:translateY(-1px) scale(1.015)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.brand-mark{animation:clinicMarkIn .65s cubic-bezier(.2,.75,.25,1) both}
+#appView{animation:clinicViewIn .35s ease-out both}
+@keyframes clinicViewIn{from{opacity:.82;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
 html{background:var(--bg)}
 body{min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -60,7 +72,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .user-box b{font-size:13px;display:block}
 .user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;color:var(--accent)}
-.foot-btns{display:flex;gap:6px}
+.install-app-btn{width:100%;justify-content:center;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.foot-btns{display:flex;gap:6px;width:100%}.foot-btns .btn{min-width:0;flex:1 1 0;padding-left:4px;padding-right:4px;font-size:11px}
 
 .main{padding:26px 30px;min-width:0}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
@@ -156,13 +169,6 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
 .err{color:var(--bad);font-size:12.5px}
-.visit-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.proc-line td{padding:6px!important}
-.stamp-box{border:1px dashed var(--sand);border-radius:12px;min-height:90px;margin-top:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}
-.invoice-footer{text-align:center;color:var(--muted);font-family:var(--font-display);font-style:italic;font-size:18px;padding:8px}
-.invoice-footer small{display:block;font:11px var(--font-body);margin-top:8px}
-@media(max-width:700px){.visit-info-grid{grid-template-columns:1fr}.visit-card{padding:12px!important}}
-/* General invoice print design */.ue-invoice{background:#fff;color:#2f2619;font:12px/1.45 Arial,sans-serif;padding:18px;border:1px solid #e0d4bc}.ue-head{display:grid;grid-template-columns:48px 1fr 155px;gap:12px;align-items:center;border-bottom:2px solid #e0d4bc;padding-bottom:12px}.ue-logo{width:44px;height:44px;border:2px solid #c5a36b;border-radius:50%;display:grid;place-items:center;font:22px Georgia;color:#3e3325}.ue-head h1{font:30px Georgia;margin:0;color:#3e3325}.ue-sub{font:16px Georgia}.ue-head p{font-size:10px;margin-top:5px}.ue-invno{background:#493722;color:#fff;border-radius:10px;padding:10px;text-align:center;display:flex;flex-direction:column;gap:4px}.ue-invno b{font:21px Georgia}.ue-invno small{font-size:9px}.ue-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:10px;margin:12px 0}.ue-grid section,.ue-block{border:1px solid #e0d4bc;border-radius:9px;padding:11px;min-width:0}.ue-invoice h2{font: bold 13px Arial;background:#493722;color:#fff;border-radius:5px;padding:8px 10px;margin:-11px -11px 9px}.ue-grid p,.ue-block p{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.ue-doctor{font-size:17px;font-weight:bold}.ue-block{margin:11px 0}.ue-invoice table{width:100%;border-collapse:collapse}.ue-invoice th,.ue-invoice td{padding:7px;border:1px solid #eadcc6;text-align:left}.ue-invoice th{background:#f5ecde}.ue-invoice td:last-child,.ue-invoice th:last-child{text-align:right}.ue-invoice tfoot td{font-weight:bold;background:#f8f2e8}.ue-invoice tfoot td:last-child{background:#493722;color:#fff}.ue-rx{min-height:100px;border:1px solid #eadcc6;border-radius:7px;padding:12px;position:relative;white-space:normal}.ue-rx strong{position:absolute;right:15px;bottom:0;color:#eadcc6;font:58px Georgia}.ue-muted{color:#9b8c77}.ue-balance{background:#edf3df;padding:7px;border-radius:5px}.ue-balance strong{color:#315c2b;font-size:16px}.ue-notes{min-height:85px;white-space:pre-wrap}.ue-stamp{text-align:right;margin:20px 0 10px;font-weight:bold}.ue-thanks{text-align:center;font:italic 19px Georgia;margin:12px 0}.ue-invoice footer{text-align:center;border-top:1px solid #e0d4bc;padding-top:8px;font-size:9px}
 .visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
 .visit-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
 .proc-line{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;margin:8px 0}
@@ -178,8 +184,23 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .invoice-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .invoice-table td:last-child,.invoice-table th:last-child{text-align:right}
 .invoice-print-area{display:none}
-@media print{@page{size:A4;margin:10mm}html,body{background:#fff!important;margin:0!important}body *{visibility:hidden!important}#visitInvoicePrint,#visitInvoicePrint *{visibility:visible!important}#visitInvoicePrint{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;padding:0!important;background:#fff!important}#visitInvoicePrint .ue-invoice{border:0!important;padding:0!important;width:100%!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}#visitInvoicePrint .ue-grid{grid-template-columns:1.15fr 1fr!important}#visitInvoicePrint .ue-block,#visitInvoicePrint .ue-grid section{break-inside:avoid}#visitInvoicePrint .ue-invoice h2,#visitInvoicePrint .ue-invno,#visitInvoicePrint tfoot td:last-child{print-color-adjust:exact;-webkit-print-color-adjust:exact}}\n/* reference dashboard proportions */
-@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:205px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
+@media print{
+ @page{size:A4;margin:14mm}
+ body{background:#fff!important;color:#2F2619!important}
+ body *{visibility:hidden!important}
+ #visitInvoicePrint,#visitInvoicePrint *{visibility:visible!important}
+ #visitInvoicePrint{display:block!important;position:absolute;inset:0;width:100%;padding:0;background:#fff!important;color:#2F2619!important;font-family:Arial,sans-serif}
+ #visitInvoicePrint .invoice-brand h2,#visitInvoicePrint .invoice-title{color:#2F2619!important}
+ #visitInvoicePrint .invoice-brand p,#visitInvoicePrint .invoice-meta{color:#6c6255!important}
+ #visitInvoicePrint table{width:100%;border-collapse:collapse}
+ #visitInvoicePrint th,#visitInvoicePrint td{padding:9px;border-bottom:1px solid #ddd;text-align:left}
+ #visitInvoicePrint th:last-child,#visitInvoicePrint td:last-child{text-align:right}
+ #visitInvoicePrint .invoice-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+ #visitInvoicePrint .stat-box{border:1px solid #ddd;padding:12px}
+ #visitInvoicePrint .val{font-size:18px;font-weight:bold}
+}
+/* reference dashboard proportions */
+@media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:250px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
 
 
 @media (max-width:1180px){.dash-layout{grid-template-columns:minmax(0,1fr)}}
@@ -200,7 +221,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 
 /* Screenshot-matched clinic desk refinement */
 @media(min-width:901px){
- #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:205px minmax(0,1fr)}
+ #appView{padding:0}.app{min-height:100vh;border:0;border-radius:0;grid-template-columns:250px minmax(0,1fr)}
  .side{position:sticky;top:0;height:100vh;border-radius:0;padding:18px 12px}
  .main{padding:26px 28px;max-width:1600px;width:100%;margin:0 auto}
  .page-head{margin-bottom:16px}.page-head h1{font-size:36px}
@@ -252,7 +273,79 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .switch{accent-color:#43865d;width:18px;height:18px}
 .device-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12px}
 .device-row:last-child{border:0}
+.security-log-collapsed tbody tr:nth-child(n+9){display:none}
+.security-log-toggle{margin-top:10px}
 @media(max-width:700px){.security-grid{grid-template-columns:1fr}}
+
+
+/* Mobile layout: keep the full menu reachable and add safe edge spacing */
+@media(max-width:900px){
+  #appView{padding:0}
+  .app{width:100%;min-width:0;overflow:visible}
+  .side{padding:12px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));gap:10px}
+  .brand{padding:0 4px}
+  .nav{display:flex;flex-direction:row;flex-wrap:nowrap;gap:6px;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:2px 2px 9px}
+  .nav button{flex:0 0 auto;width:auto;min-height:40px;padding:9px 13px;white-space:nowrap}
+  .nav::-webkit-scrollbar{height:4px}
+  .nav::-webkit-scrollbar-thumb{background:var(--sand);border-radius:99px}
+  .nav-label{display:block;margin:0;padding:0 4px;font-size:9px}
+  .side-foot{gap:7px}
+  .user-box{display:flex}
+  .main{padding:18px max(14px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));min-width:0;width:100%}
+  .page-head{gap:10px}
+  .page-head h1{font-size:29px;overflow-wrap:anywhere}
+  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tbl-wrap{max-width:100%}
+}
+@media(max-width:420px){
+  .side{padding-left:12px;padding-right:12px}
+  .main{padding-left:12px;padding-right:12px}
+  .brand b{font-size:16px}
+  .foot-btns .btn{font-size:10px}
+}
+#appUpdateNotice{display:none;position:sticky;top:8px;z-index:500;background:var(--info-bg);color:var(--ink);border:1px solid var(--info);border-radius:12px;padding:11px 12px;margin:0 0 14px;align-items:center;justify-content:space-between;gap:10px;box-shadow:var(--shadow)}
+#appUpdateNotice.show{display:flex}
+#appUpdateNotice .update-copy{min-width:0;font-weight:600;font-size:13px}
+#appUpdateNotice .update-actions{display:flex;gap:6px;flex:none}
+@media(max-width:480px){#appUpdateNotice{align-items:flex-start;flex-direction:column}#appUpdateNotice .update-actions{width:100%}#appUpdateNotice .update-actions .btn{flex:1}}
+
+
+/* FINAL mobile navigation and spacing override */
+@media (max-width:900px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  #appView{width:100%;padding:0!important;margin:0}
+  #appView .app{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;border:0!important;border-radius:0!important;overflow:visible!important}
+  #appView .side{display:flex!important;position:relative!important;top:auto!important;width:100%!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;flex-direction:column!important;align-items:stretch!important;gap:9px!important;padding:12px 14px 9px!important;margin:0!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;overflow:visible!important}
+  #appView .brand{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;max-width:100%!important;padding:4px 3px!important;gap:10px!important}
+  #appView .brand>div:last-child{min-width:0!important;flex:1 1 auto!important}
+  #appView .brand b{display:block!important;white-space:normal!important;overflow:visible!important;font-size:17px!important;line-height:1.2!important}
+  #appView .brand span{display:block!important}
+  #appView .nav-label{display:block!important;flex:0 0 auto!important;margin:0!important;padding:0 4px!important}
+  #appView .nav{display:flex!important;flex:0 0 auto!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:7px!important;width:100%!important;min-width:0!important;max-width:100%!important;height:auto!important;overflow-x:scroll!important;overflow-y:hidden!important;white-space:nowrap!important;scrollbar-width:thin!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-x:contain!important;touch-action:pan-x!important;padding:3px 2px 10px!important;box-sizing:border-box!important}
+  #appView .nav button{display:inline-flex!important;flex:0 0 auto!important;width:max-content!important;min-width:max-content!important;max-width:none!important;white-space:nowrap!important;padding:10px 15px!important;min-height:42px!important}
+  #appView .nav::-webkit-scrollbar{display:block!important;height:4px!important}
+  #appView .nav::-webkit-scrollbar-thumb{background:var(--sand)!important;border-radius:8px!important}
+  #appView .side-foot{display:flex!important;flex:0 0 auto!important;width:100%!important;min-width:0!important;gap:7px!important;margin-top:0!important}
+  #appView .user-box{display:flex!important;width:100%!important;min-width:0!important}
+  #appView .main{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;padding:18px 14px calc(32px + env(safe-area-inset-bottom))!important}
+  #appView #view{width:100%;min-width:0}
+  #appView .page-head{margin:0 0 18px!important;padding:0 2px 13px!important;border-bottom:1px solid var(--line)!important}
+  #appView .page-head h1{font-size:clamp(25px,7vw,31px)!important;line-height:1.15!important}
+  #appView .card,#appView .stat-box,#appView .patient-calendar{margin-bottom:14px!important}
+  #appView .dash-layout,#appView .col,#appView .two-col,#appView .security-grid{gap:14px!important}
+  #appView .card{padding:15px!important;border-radius:14px!important}
+  #appView .card-head{padding-bottom:10px!important;margin-bottom:12px!important;border-bottom:1px solid var(--line)!important}
+  #appView .stats-grid{gap:10px!important;margin-bottom:16px!important}
+  #appView .stat-box{min-width:0!important;padding:12px!important}
+  #appView .tbl-wrap{width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+}
+@media(max-width:420px){
+  #appView .side{padding-left:12px!important;padding-right:12px!important}
+  #appView .main{padding-left:12px!important;padding-right:12px!important}
+  #appView .brand b{font-size:16px!important}
+  #appView .nav button{padding:9px 13px!important}
+  #appView .card{padding:13px!important}
+}
 
 </style>
 </head>
@@ -279,7 +372,9 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="nav-label">Daily work</div>
       <nav class="nav" id="nav" aria-label="Main"></nav>
       <div class="side-foot">
-        <div class="user-box"><div class="avatar">OW</div><div><b>Owner</b><small>Live data</small></div></div>
+        <button class="btn install-app-btn" id="installAppBtn" type="button">Install Clinic App</button>
+        <button class="btn" id="notificationAccessBtn" type="button" style="width:100%;justify-content:center">Enable Notifications</button>
+        <button class="user-box" type="button" data-go="profile" style="width:100%;text-align:left;cursor:pointer"><div class="avatar">ME</div><div><b>My Profile</b><small>Verify Login ID & password</small></div></button>
         <div class="foot-btns">
           <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
           <button class="btn sm" id="themeBtn" type="button" style="flex:1">Theme</button>
@@ -287,7 +382,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
         </div>
       </div>
     </aside>
-    <main class="main"><div id="view"></div></main>
+    <main class="main"><div id="appUpdateNotice" role="status" aria-live="polite"><div class="update-copy">A new Clinic Desk update is ready.</div><div class="update-actions"><button class="btn pri sm" id="applyAppUpdate" type="button">Update app</button><button class="btn sm" id="dismissAppUpdate" type="button">Later</button></div></div><div id="view"></div></main>
   </div>
 </div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -324,7 +419,8 @@ const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
 
 /* ---------- state ---------- */
-const state = { page: 'dashboard', tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
+const securityShowAll = { logins:false, activity:false };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -348,12 +444,66 @@ function beep() {
       const o = beepCtx.createOscillator(), g = beepCtx.createGain();
       const start = beepCtx.currentTime + delay;
       o.type = 'sine'; o.frequency.value = [880, 1046, 1318][i];
-      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.22, start + .025);
+      g.gain.setValueAtTime(.0001, start); g.gain.exponentialRampToValueAtTime(.48, start + .025);
       g.gain.exponentialRampToValueAtTime(.0001, start + .22);
       o.connect(g); g.connect(beepCtx.destination); o.start(start); o.stop(start + .24);
     });
   } catch (e) { }
 }
+function vibrate(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern || [35,25,45]); } catch(e) {} }
+function playClickTone() {
+ if (!soundEnabled) return;
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime;
+  o.type='sine';o.frequency.setValueAtTime(1150,t);o.frequency.exponentialRampToValueAtTime(780,t+.055);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+.085);
+  o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.09);
+ } catch(e) {}
+}
+function playAppointmentAlert() {
+ // Appointment alerts are intentionally independent of the optional UI click-sound switch.
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  [0,.28,.56,.84,1.12].forEach((delay,i)=>{
+   const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;
+   o.type='sine';o.frequency.value=[880,1175,1480,1175,1480][i];
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.72,t+.025);g.gain.setValueAtTime(.72,t+.16);g.gain.exponentialRampToValueAtTime(.0001,t+.30);
+   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.32);
+  });
+ } catch(e) {}
+ vibrate([350,120,350,120,500]);
+}
+async function refreshNotificationAccessButton() {
+  const b = $('#notificationAccessBtn');
+  if (!b) return;
+  if (!('Notification' in window)) { b.textContent = 'Notifications Unsupported'; b.disabled = true; return; }
+  const granted = Notification.permission === 'granted';
+  b.textContent = granted ? 'Notifications: Enabled' : (Notification.permission === 'denied' ? 'Notifications Blocked in Browser' : 'Enable Notifications');
+  b.disabled = Notification.permission === 'denied';
+}
+async function enableClinicNotifications() {
+  if (!('Notification' in window)) { toast('This browser does not support notifications.'); return; }
+  if (!('serviceWorker' in navigator)) { toast('Service workers are not supported in this browser.'); return; }
+  try {
+    const permission = await Notification.requestPermission();
+    await refreshNotificationAccessButton();
+    if (permission !== 'granted') { toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Ultimate Esthetics Clinic Desk', {
+      body: 'Notifications are enabled on this device. Keep this device signed in to receive in-app alerts.',
+      icon: '/admin/icon.svg',
+      tag: 'clinic-notification-enabled'
+    });
+    toast('Browser notification access enabled on this device.');
+  } catch (e) { toast('Could not enable notifications on this device.'); }
+}
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'notificationAccessBtn') enableClinicNotifications();
+});
+refreshNotificationAccessButton();
 function updateSoundButton() {
   const b = $('#soundBtn');
   if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
@@ -372,7 +522,7 @@ async function loadData(first) {
   }));
   const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
   if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
-    beep(); toast('New website booking request!');
+    playAppointmentAlert(); toast('New website booking request!');
     if ('Notification' in window && Notification.permission === 'granted') {
       try { new Notification('Ultimate Esthetics', { body: 'A new appointment request has arrived.' }); } catch (e) { }
     }
@@ -466,6 +616,11 @@ $('#logoutBtn').addEventListener('click', async () => {
 });
 $('#themeBtn').addEventListener('click', () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; });
 $('#soundBtn').addEventListener('click', () => { soundEnabled = !soundEnabled; localStorage.setItem('ue_admin_sound', soundEnabled ? 'on' : 'off'); updateSoundButton(); if (soundEnabled) beep(); });
+document.addEventListener('click',e=>{
+ const target=e.target;
+ if(target.closest('#soundBtn'))return;
+ if(target.closest('button,a,[role="button"],[data-act],[data-go],[data-tab],[data-filter],[data-patient-date]')){playClickTone();vibrate([22]);}
+},true);
 
 /* ---------- views ---------- */
 const head = (t, s, a) => '<div class="page-head"><div><h1>' + t + '</h1><p>' + s + '</p></div><div class="actions">' + (a || '') + '</div></div>';
@@ -603,13 +758,18 @@ function histDetail() {
 
 function viewSecurity() {
  const live=state.security||{};
+ const ownerMode=live.currentUser&&live.currentUser.role==='owner';
  const rows=(items,fn,empty)=>items&&items.length?items.map(fn).join(''):'<tr><td colspan="5" class="empty">'+empty+'</td></tr>';
+ const logRows=(key,items,fn,empty)=>'<div class="tbl-wrap '+(securityShowAll[key]?'':'security-log-collapsed')+'"><table class="tbl"><thead><tr>'+(key==='logins'?'<th>When</th><th>User</th><th>IP address</th><th>Result</th>':'<th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th>')+'</tr></thead><tbody>'+rows((securityShowAll[key]?items:(items||[]).slice(0,8)),fn,empty)+'</tbody></table></div>'+((items||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="'+key+'">'+(securityShowAll[key]?'Show less':'View all ('+items.length+')')+'</button>':'');
+ const accounts=(live.users||[]).map(x=>'<div class="device-row"><span><b>'+(x.role==='owner'?'Owner':esc(x.username))+'</b><small>'+esc(x.role)+' · '+(x.is_active?'Active':'Inactive')+'</small></span></div>').join('');
+ const ownerTools=live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Staff accounts</h2><span class="pill info">Owner only</span></div><p class="hint" style="margin-bottom:10px">Enter the Owner password to change the Admin or Reception password. Their active sessions will be signed out.</p>'+accounts+'<form id="staffPwForm" class="col" style="gap:9px;margin-top:12px"><div class="field"><label>Account</label><select class="inp" id="staffTarget"><option value="Admin">Admin</option><option value="Reception">Reception</option></select></div><div class="field"><label>Owner password</label><input class="inp" id="staffOwnerPw" type="password" autocomplete="current-password" required></div><div class="field"><label>New staff password</label><input class="inp" id="staffNewPw" type="password" autocomplete="new-password" required></div><div class="field"><label>Repeat new password</label><input class="inp" id="staffAgainPw" type="password" autocomplete="new-password" required></div><div class="err" id="staffPwErr" hidden></div><button class="btn pri" type="submit" id="staffPwSave">Update staff password</button></form></section>':'';
  return head('Security','Account protection, login records and clinic data backups.','<span class="hint">Updates automatically every 5 seconds · Pakistan Standard Time</span>')+
  '<div class="security-grid">'+
- '<section class="card"><div class="card-head"><h2>Change password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use a strong password. No fixed character limit.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>'+
- '<section class="card"><div class="card-head"><h2>Login history</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>When</th><th>User</th><th>IP address</th><th>Result</th></tr></thead><tbody>'+rows(live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+ (x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'</tbody></table></div><small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
+ (live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Change my password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use at least 10 characters and include a number.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>':'')+
+ ownerTools+
+ '<section class="card"><div class="card-head"><h2>Login history</h2></div>'+logRows('logins',live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+(x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'<small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||'IP unavailable')+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join('')||'<div class="empty">No active sessions.</div>')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
- '<section class="card"><div class="card-head"><h2>Activity log</h2></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th></tr></thead><tbody>'+rows(live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'</tbody></table></div><small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Activity log</h2></div>'+logRows('activity',live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'<small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
  '<section class="card wide"><div class="card-head"><h2>Database backup</h2><span class="pill warn">Not configured</span></div><b>Automatic backup is not active.</b><p class="hint" style="margin-top:6px">No backup is claimed until a separate private storage bucket, scheduled export, retention policy and restore test are configured. Your clinic records remain securely stored.</p></section>'+
  '</div>';
 }
@@ -618,42 +778,96 @@ function viewHistory() {
     '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
 }
 
+
 /* ---------- render + events ---------- */
-const VIEWS = { dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
+function viewProfile() {
+ if(!state.profileUnlocked||!state.profile)return head('My Profile','Verify your account to view and update your own profile.')+
+ '<section class="card" style="max-width:520px"><div class="card-head"><h2>Confirm your identity</h2></div><p class="hint" style="margin-bottom:14px">Enter your current Login ID and password. You can only access your own profile.</p><form id="profileVerifyForm" class="col" style="gap:10px"><div class="field"><label>Login ID</label><input class="inp" id="profileLoginId" autocomplete="username" required></div><div class="field"><label>Password</label><input class="inp" id="profileLoginPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileVerifyErr" hidden></div><button class="btn pri" type="submit" id="profileVerifyBtn">Verify and open profile</button></form></section>';
+ const p=state.profile;
+ return head('My Profile','Your account details. Changes apply only to your signed-in account.')+
+ '<div class="col" style="max-width:680px"><section class="card"><div class="card-head"><h2>Account details</h2><span class="pill info">'+esc(p.role)+'</span></div><div class="two-col" style="margin-bottom:14px"><div class="field"><label>Login ID</label><input class="inp" value="'+esc(p.username)+'" readonly></div><div class="field"><label>Email address</label><input class="inp" value="'+esc(p.email)+'" readonly></div></div><form id="profileNameForm" class="col" style="gap:10px"><div class="two-col"><div class="field"><label>First name</label><input class="inp" id="profileFirstName" maxlength="80" value="'+esc(p.first_name)+'" required></div><div class="field"><label>Last name</label><input class="inp" id="profileLastName" maxlength="80" value="'+esc(p.last_name)+'" required></div></div><div class="field"><label>Confirm your current password</label><input class="inp" id="profileSavePassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileNameErr" hidden></div><button class="btn pri" type="submit" id="profileNameSave">Save name</button></form></section><section class="card"><div class="card-head"><h2>Change email address</h2></div><p class="hint">Email changes require a verification link sent to your current email first, followed by confirmation at the new email address.</p><form id="profileEmailForm" class="col" style="gap:10px;margin-top:12px"><div class="field"><label>New email address</label><input class="inp" id="profileNewEmail" type="email" autocomplete="email" required></div><div class="field"><label>Confirm your current password</label><input class="inp" id="profileEmailPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileEmailErr" hidden></div><button class="btn" type="submit" id="profileEmailSave">Request email change</button></form><p class="hint" style="margin-top:10px">The secure sender must be connected before verification links can be delivered. Your email will not change until both verification steps are completed.</p><button class="btn" type="button" data-profile-lock style="margin-top:12px">Lock profile</button></section></div>';
+}
+
+
+const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
 
 function openVisitForm(id) {
- const a=state.appts.find(x=>Number(x.id)===Number(id));if(!a){toast('Appointment details could not be loaded.');return;}
- const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),prev=Number(fp?.balance||0);
- const doctorOptions=state.doctors.map(d=>'<option value="'+d.id+'" '+(Number(d.id)===Number(a.did)?'selected':'')+'>'+esc(d.name)+'</option>').join('');
- const invoiceNo='UE-'+new Date().getFullYear()+'-'+String(a.id).padStart(5,'0');
- const html='<div class="visit-modal" id="visitModal"><section class="visit-card" style="width:min(1050px,100%);padding:18px"><div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>'+invoiceNo+'<br>'+esc(pkDateTime(new Date().toISOString()))+'</div></div><div class="card-head"><div><h2 style="font:26px var(--font-display)">Patient Visit &amp; Invoice</h2><small class="muted">Appointment information is pre-filled. Complete the treatment, prescription and payment below.</small></div><button class="btn sm" type="button" data-act="closevisit">Close</button></div><form id="visitForm" data-id="'+a.id+'" data-pid="'+a.pid+'" class="col" style="gap:12px"><div class="visit-info-grid"><div class="card"><div class="card-head"><h2>Patient Details</h2><span class="pill info">From booking</span></div><div class="field"><label>Patient name</label><input class="inp" value="'+esc(a.name)+'" readonly></div><div class="field" style="margin-top:8px"><label>Phone number</label><input class="inp" value="'+esc(prettyPhone(a.phone))+'" readonly></div><div class="field" style="margin-top:8px"><label>Patient ID</label><input class="inp" value="#'+a.pid+'" readonly></div></div><div class="card"><div class="card-head"><h2>Doctor</h2><span class="pill info">Editable</span></div><div class="field"><label>Assigned doctor</label><select class="inp" id="visitDoctor" required>'+doctorOptions+'</select></div><div class="field" style="margin-top:8px"><label>Appointment date &amp; time</label><input class="inp" value="'+nice(a.date)+' · '+t12(a.time)+'" readonly></div></div></div><div class="card"><div class="card-head"><h2>Treatment / Procedures</h2><button class="btn sm" type="button" id="addProcedure">+ Add procedure</button></div><div class="tbl-wrap"><table class="tbl" style="min-width:620px"><thead><tr><th>#</th><th>Procedure</th><th>Quantity</th><th>Unit price (Rs)</th><th>Total (Rs)</th><th></th></tr></thead><tbody id="visitProcedures"><tr class="proc-line"><td>1</td><td><input class="inp" name="procedure" value="'+esc(a.proc)+'" placeholder="Procedure name"></td><td><input class="inp" name="qty" type="number" min="1" step="1" value="1"></td><td><input class="inp" name="unit_price" type="number" min="0" step="1" value="0"></td><td class="num line-total">0</td><td><button class="btn bad sm" type="button" data-remove-procedure aria-label="Remove procedure">×</button></td></tr></tbody></table></div><div class="right" style="margin-top:12px;font-weight:700">Total Treatment Amount: <span class="chip" style="font-size:16px" id="visitTotalLabel">Rs 0</span></div></div><div class="card"><div class="card-head"><h2>℞ Prescription</h2><span class="muted">Doctor's instructions</span></div><textarea class="inp" id="visitRx" rows="5" placeholder="Type prescription, medicines, dosage, duration and instructions here..."></textarea></div><div class="visit-info-grid"><div class="card"><div class="card-head"><h2>Payment Details</h2><span class="chip">PKR · Rs</span></div><div class="row"><span>Previous balance</span><b id="visitPrev">Rs '+prev.toLocaleString('en-PK')+'</b></div><div class="row"><span>Total amount</span><b id="visitAmount">Rs 0</b></div><div class="field" style="margin-top:10px"><label>Amount received</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0"></div><div class="field" style="margin-top:8px"><label>Payment method</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="row" style="margin-top:10px;background:var(--ok-bg);padding:10px;border-radius:10px"><b>Remaining balance</b><b id="visitRemaining">Rs '+prev.toLocaleString('en-PK')+'</b></div><div class="field" style="margin-top:8px"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="card"><div class="card-head"><h2>Notes</h2></div><textarea class="inp" id="visitNotes" rows="8" placeholder="Add observations or additional notes..."></textarea><div class="stamp-box"><span>Doctor Stamp</span><small>Optional</small></div></div></div><div class="invoice-footer">Thank you for choosing Ultimate Esthetics.<small>Al-ain Arcade, Old Airport Road, Rawalpindi 46000 · 0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</small></div><div class="err" id="visitErr" hidden></div><div class="actions" style="justify-content:flex-end"><button class="btn" type="button" data-act="printinvoice">Print Invoice</button><button class="btn pri" type="submit" id="visitSave">Save Visit &amp; Payment</button></div></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>';
+ const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
+ const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
+ const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><div><h2>Patient visit & invoice</h2><small class="muted">Complete treatment details and record payment</small></div><button class="btn sm" type="button" data-act="closevisit">Close</button></div><div class="card tint" style="margin-bottom:12px"><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small>Patient #'+a.pid+' · '+esc(prettyPhone(a.phone))+'</small><small>'+esc(a.doc)+' · '+nice(a.date)+' · '+t12(a.time)+'</small></div></div><div class="req-meta"><span class="chip">Booked treatment: '+esc(a.proc||'Not specified')+'</span><span class="chip">Previous balance: Rs '+prev.toLocaleString('en-PK')+'</span></div></div><form id="visitForm" data-id="'+a.id+'" data-pid="'+a.pid+'" class="col" style="gap:10px"><div class="card"><div class="card-head"><h2>Treatment & charges</h2><button class="btn sm" type="button" id="addProcedure">+ Add treatment</button></div><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div></div><div class="field" style="margin-top:10px"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="2" placeholder="Optional notes"></textarea></div></div><div class="card"><div class="card-head"><h2>Invoice & payment</h2><span class="chip">PKR · Rs</span></div><div class="alert-item info">Previous outstanding balance: <b>Rs <span id="visitPrevValue">'+prev.toLocaleString('en-PK')+'</span></b></div><div class="two-col"><div class="field"><label>Total amount (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" step="1" value="0" required></div><div class="field"><label>Received amount now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0" required></div></div><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val num" id="visitPrevCard">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val num" id="visitDue">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box hero"><div class="lbl">Remaining balance</div><div class="val num" id="visitRemaining">Rs '+prev.toLocaleString('en-PK')+'</div></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><div class="actions"><button class="btn" type="button" data-act="printinvoice">Print invoice</button><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></div></div></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>';
  document.body.insertAdjacentHTML('beforeend',html);
- const modal=$('#visitModal'),tbody=$('#visitProcedures');
+ const form=$('#visitForm'),total=$('#visitTotal'),received=$('#visitReceived'),procBox=$('#visitProcedures');
  const money=n=>'Rs '+Math.max(0,Number(n)||0).toLocaleString('en-PK');
- const calc=()=>{let total=0;[...tbody.querySelectorAll('.proc-line')].forEach((row,i)=>{row.children[0].textContent=i+1;const q=Math.max(1,Number(row.querySelector('[name=qty]').value||1)),p=Math.max(0,Number(row.querySelector('[name=unit_price]').value||0)),line=q*p;row.querySelector('.line-total').textContent=line.toLocaleString('en-PK');total+=line;});$('#visitTotalLabel').textContent=money(total);$('#visitAmount').textContent=money(total);$('#visitRemaining').textContent=money(Math.max(0,prev+total-Number($('#visitReceived').value||0)));return total;};
- tbody.addEventListener('input',calc);$('#visitReceived').addEventListener('input',calc);calc();
- const procedures=()=>[...tbody.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=qty]').value||1)*Number(row.querySelector('[name=unit_price]').value||0)}));
- const invoice=()=>{const rows=[...tbody.querySelectorAll('.proc-line')].map((row,i)=>{const qty=Math.max(1,Number(row.querySelector('[name=qty]')?.value||1)),unit=Math.max(0,Number(row.querySelector('[name=unit_price]')?.value||0));return {i:i+1,name:row.querySelector('[name=procedure]')?.value.trim()||'—',qty,unit,total:qty*unit};}),total=rows.reduce((n,p)=>n+p.total,0),paid=Math.max(0,Number($('#visitReceived').value||0)),remaining=Math.max(0,prev+total-paid),doctor=state.doctors.find(d=>Number(d.id)===Number($('#visitDoctor').value)),cash=n=>'Rs '+Number(n||0).toLocaleString('en-PK');return '<div class="ue-invoice"><header class="ue-head"><div class="ue-logo">UE</div><div><h1>Ultimate Esthetics</h1><div class="ue-sub">Skin, Hair &amp; Body Clinic</div><p>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>0334 0005909 · Mon to Sat, 11:00 AM – 08:00 PM</p></div><div class="ue-invno"><b>INVOICE</b><strong>'+invoiceNo+'</strong><small>'+esc(pkDateTime(new Date().toISOString()))+'</small></div></header><div class="ue-grid"><section><h2>Patient Details</h2><p><b>Name</b>'+esc(a.name)+'</p><p><b>Phone</b>'+esc(prettyPhone(a.phone))+'</p><p><b>Patient ID</b>#'+esc(a.pid)+'</p></section><section><h2>Doctor &amp; Appointment</h2><p class="ue-doctor">'+esc(doctor?.name||a.doc||'—')+'</p><p><b>Date &amp; Time</b>'+nice(a.date)+' · '+t12(a.time)+'</p></section></div><section class="ue-block"><h2>Treatment / Procedures</h2><table><thead><tr><th>#</th><th>Procedure</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>'+rows.map(p=>'<tr><td>'+p.i+'</td><td>'+esc(p.name)+'</td><td>'+p.qty+'</td><td>'+cash(p.unit)+'</td><td>'+cash(p.total)+'</td></tr>').join('')+'</tbody><tfoot><tr><td colspan="4">Total Treatment Amount</td><td>'+cash(total)+'</td></tr></tfoot></table></section><section class="ue-block"><h2>℞ &nbsp; Prescription</h2><div class="ue-rx"><div>'+((esc($('#visitRx').value||'').replace(/\n/g,'<br>'))||'<span class="ue-muted">No prescription entered.</span>')+'</div><strong>Rx</strong></div></section><div class="ue-grid"><section class="ue-block"><h2>Payment Details</h2><p><b>Previous Balance</b>'+cash(prev)+'</p><p><b>Amount Received</b>'+cash(paid)+'</p><p class="ue-balance"><b>Remaining Balance</b><strong>'+cash(remaining)+'</strong></p><p><b>Payment Method</b>'+esc($('#visitMethod').value)+'</p></section><section class="ue-block"><h2>Notes</h2><div class="ue-notes">'+(esc($('#visitNotes').value||'')||'—')+'</div></section></div><div class="ue-stamp">Doctor Stamp: __________________</div><div class="ue-thanks">Thank you for choosing Ultimate Esthetics.</div><footer>Al-ain Arcade, Old Airport Road, Rawalpindi 46000 &nbsp; | &nbsp; 0334 0005909 &nbsp; | &nbsp; Mon to Sat, 11:00 AM – 08:00 PM</footer></div>';};
- modal._printInvoice=()=>{const box=$('#visitInvoicePrint');box.innerHTML=invoice();box.style.display='block';window.print();box.style.display='none';};
+ const getProcedures=()=>[...procBox.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value||0)}));
+ const calc=()=>{const due=prev+Number(total.value||0),paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
+ const autoTotal=()=>{total.value=getProcedures().reduce((n,p)=>n+(Number.isFinite(p.fee)?p.fee:0),0);calc();};
+ procBox.addEventListener('input',e=>{if(e.target.name==='fee')autoTotal();});
+ total.addEventListener('input',calc);received.addEventListener('input',calc);calc();
+ const invoice=()=>{const procs=getProcedures(),bill=Number(total.value||0),paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString());return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>Phone: 0334 0005909<br>Mon to Sat · 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>Invoice #: UE-'+a.id+'<br>Date: '+esc(today)+'</div></div><div class="invoice-title">Patient Invoice</div><div class="invoice-meta"><b>Patient:</b> '+esc(a.name)+'<br><b>Patient ID:</b> #'+a.pid+'<br><b>Phone:</b> '+esc(prettyPhone(a.phone))+'<br><b>Doctor:</b> '+esc(a.doc)+'<br><b>Appointment:</b> '+nice(a.date)+' · '+t12(a.time)+'</div><table class="invoice-table"><thead><tr><th>Treatment / Procedure</th><th>Amount (Rs)</th></tr></thead><tbody>'+procs.map(p=>'<tr><td>'+esc(p.name||'Treatment')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val">'+money(prev)+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val">'+money(due)+'</div></div><div class="stat-box"><div class="lbl">Received now</div><div class="val">'+money(paid)+'</div></div></div><h2 style="text-align:right;margin:12px 0">Balance remaining: '+money(left)+'</h2><p class="invoice-meta">Payment method: '+esc($('#visitMethod').value)+'<br>Thank you for choosing Ultimate Esthetics.</p>';};
+ const print=()=>{$('#visitInvoicePrint').innerHTML=invoice();$('#visitInvoicePrint').style.display='block';window.print();$('#visitInvoicePrint').style.display='none';};
+ $('#visitModal').dataset.printReady='1'; $('#visitModal')._printInvoice=print;
 }
 function renderNav() {
   const n = pending().length;
-  $('#nav').innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+  const nav = $('#nav');
+  nav.innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+  const active = nav.querySelector('button.on');
+  if (active && window.matchMedia('(max-width: 900px)').matches) {
+    requestAnimationFrame(() => {
+      const left = active.offsetLeft - nav.clientWidth / 2 + active.clientWidth / 2;
+      nav.scrollTo({left:Math.max(0,left),behavior:'smooth'});
+    });
+  }
 }
 
-async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
+async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
 function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
-function go(p) { state.page = p; render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
+function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
 document.addEventListener('click', async e => {
  if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
  const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
- try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request'}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('If owner account exists, reset link email has been sent.'); }
+ try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request',username:$('#uName').value.trim()}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('If owner account exists, reset link email has been sent.'); }
  catch(x){ if(x.message!=='unauthorized') toast('Reset email request failed.'); }
  b.disabled=false; b.textContent=old;
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id==='profileVerifyForm'){
+  e.preventDefault();const btn=$('#profileVerifyBtn'),err=$('#profileVerifyErr');err.hidden=true;btn.disabled=true;btn.textContent='Verifying…';
+  try{const r=await api('/api/admin/profile',{method:'POST',body:{action:'verify',username:$('#profileLoginId').value.trim(),password:$('#profileLoginPassword').value}});
+   if(!r.ok){err.textContent=r.data.error||'Verification failed.';err.hidden=false;btn.disabled=false;btn.textContent='Verify and open profile';return;}
+   state.profile=r.data.profile;state.profileUnlocked=true;render();
+  }catch(x){if(x.message!=='unauthorized'){err.textContent='Unable to verify your account.';err.hidden=false;}btn.disabled=false;btn.textContent='Verify and open profile';}return;
+ }
+ if(e.target.id==='profileEmailForm'){
+  e.preventDefault();const btn=$('#profileEmailSave'),err=$('#profileEmailErr');err.hidden=true;btn.disabled=true;btn.textContent='Requesting…';
+  try{const r=await api('/api/admin/profile',{method:'POST',body:{action:'request_email_change',username:state.profile.username,password:$('#profileEmailPassword').value,new_email:$('#profileNewEmail').value}});
+   if(!r.ok){err.textContent=r.data.error||'Email change could not be requested.';err.hidden=false;}else toast(r.data.message||'Check your current email for a verification link.');
+  }catch(x){if(x.message!=='unauthorized'){err.textContent='Unable to request email change.';err.hidden=false;}}
+  btn.disabled=false;btn.textContent='Request email change';return;
+ }
+ if(e.target.id==='profileNameForm'){
+  e.preventDefault();const btn=$('#profileNameSave'),err=$('#profileNameErr');err.hidden=true;btn.disabled=true;btn.textContent='Saving…';
+  try{const r=await api('/api/admin/profile',{method:'POST',body:{action:'update_name',username:state.profile.username,password:$('#profileSavePassword').value,first_name:$('#profileFirstName').value,last_name:$('#profileLastName').value}});
+   if(!r.ok){err.textContent=r.data.error||'Name update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save name';return;}
+   state.profile.first_name=r.data.first_name;state.profile.last_name=r.data.last_name;render();toast('Profile name updated.');
+  }catch(x){if(x.message!=='unauthorized'){err.textContent='Unable to save your name.';err.hidden=false;}btn.disabled=false;btn.textContent='Save name';}return;
+ }
+});
+document.addEventListener('click',e=>{if(e.target.closest('[data-profile-lock]')){state.profileUnlocked=false;state.profile=null;render();}});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='staffPwForm')return;e.preventDefault();
+ const err=$('#staffPwErr'),btn=$('#staffPwSave'),owner=$('#staffOwnerPw').value,n=$('#staffNewPw').value,n2=$('#staffAgainPw').value;
+ if(n!==n2){err.textContent='New passwords do not match.';err.hidden=false;return;}
+ if(!n){err.textContent='Enter a new password.';err.hidden=false;return;}
+ err.hidden=true;btn.disabled=true;btn.textContent='Updating…';
+ try{const r=await api('/api/admin/password',{method:'POST',body:{target_username:$('#staffTarget').value,owner_password:owner,new_password:n}});
+ if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Update staff password';return;}
+ toast(r.data.message||'Staff password updated.');await loadSecurity();
+ }catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Update staff password';}
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='pwForm') return; e.preventDefault();
@@ -666,7 +880,7 @@ document.addEventListener('submit',async e=>{
 });
 
 document.addEventListener('click', async e => {
-  const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
   const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
@@ -739,6 +953,72 @@ document.addEventListener('submit', async e => {
   btn.disabled = false; btn.textContent = 'Add & confirm';
 });
 
+let deferredInstallPrompt = null;
+const installAppButton = document.getElementById("installAppBtn");
+const INSTALL_FLAG = "ultimateClinicInstalled";
+const isClinicInstalled = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true || localStorage.getItem(INSTALL_FLAG) === "yes";
+const syncInstallControl = () => {
+  if (installAppButton && isClinicInstalled()) {
+    installAppButton.hidden = true;
+    deferredInstallPrompt = null;
+  }
+};
+syncInstallControl();
+window.addEventListener("beforeinstallprompt", event => {
+  if (isClinicInstalled()) { event.preventDefault(); syncInstallControl(); return; }
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installAppButton) { installAppButton.hidden = false; installAppButton.textContent = "Install Clinic App"; }
+});
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  if (installAppButton) installAppButton.hidden = true;
+});
+if (installAppButton) installAppButton.addEventListener("click", async () => {
+  if (isClinicInstalled()) { syncInstallControl(); return; }
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice && choice.outcome === "accepted") { localStorage.setItem(INSTALL_FLAG, "yes"); installAppButton.hidden = true; }
+  } else {
+    toast("To install: open the browser menu and choose Install app or Add to Home screen.");
+  }
+});
+let waitingClinicWorker = null;
+function showClinicUpdateNotice(reg) {
+  if (!reg || !reg.waiting || !navigator.serviceWorker.controller) return;
+  waitingClinicWorker = reg.waiting;
+  const notice = $('#appUpdateNotice');
+  if (notice) notice.classList.add('show');
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('Ultimate Esthetics update ready', { body:'A new Clinic Desk version is ready. Tap Update app when convenient.', icon:'/admin/icon.svg', tag:'clinic-app-update' }); } catch(e) {}
+  }
+}
+document.addEventListener('click', e => {
+  if (e.target.closest('#dismissAppUpdate')) { $('#appUpdateNotice')?.classList.remove('show'); return; }
+  if (e.target.closest('#applyAppUpdate')) {
+    if (waitingClinicWorker) waitingClinicWorker.postMessage({type:'SKIP_WAITING'});
+    else location.reload();
+  }
+});
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"});
+      if (reg.waiting && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
+      reg.addEventListener('updatefound', () => {
+        const worker = reg.installing;
+        if (!worker) return;
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+      reg.update().catch(() => {});
+    } catch(e) {}
+  });
+}
 boot();
 </script>
 </body>

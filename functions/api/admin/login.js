@@ -7,32 +7,16 @@ export async function onRequestPost(context) {
     const password = String(body.password || "");
     if (!username || !password) return new Response(JSON.stringify({ error: "Username and password are required" }), { status: 400, headers: { "Content-Type": "application/json" } });
 
-    // Temporary owner credentials explicitly requested for the current development stage.
-    // Ensure the account exists so a fresh D1 database can still sign in.
-    if (username.toLowerCase() === "admin" && password === "admin") {
-      let admin = await env.DB.prepare("SELECT id FROM users WHERE username = 'admin' COLLATE NOCASE").first();
-      const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
-      const salt = Array.from(saltBytes).map(b => b.toString(16).padStart(2, "0")).join("");
-      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("admin" + salt));
-      const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-      if (admin) {
-        await env.DB.prepare("UPDATE users SET password_hash = ?, password_salt = ?, role = 'owner', is_active = 1, failed_attempts = 0, locked_until = NULL WHERE id = ?")
-          .bind(hash, salt, admin.id).run();
-      } else {
-        await env.DB.prepare("INSERT INTO users (username, email, password_hash, password_salt, role, is_active) VALUES ('admin', 'admin@ultimate-esthetics.local', ?, ?, 'owner', 1)")
-          .bind(hash, salt).run();
-      }
-    }
-
     const ip = request.headers.get("CF-Connecting-IP") || "";
     const recent = await env.DB.prepare(
       "SELECT COUNT(*) AS n FROM login_attempts WHERE (username = ? OR ip = ?) AND success = 0 AND created_at >= datetime('now', '-15 minutes')"
     ).bind(username, ip).first();
-    if ((recent?.n || 0) >= 10) return new Response(JSON.stringify({ error: "Too many login attempts. 15 minutes baad dobara try karein." }), { status: 429, headers: { "Content-Type": "application/json" } });
+    if ((recent?.n || 0) >= 10) return new Response(JSON.stringify({ error: "Too many login attempts. Please try again in 15 minutes." }), { status: 429, headers: { "Content-Type": "application/json" } });
 
-    const user = await env.DB.prepare("SELECT * FROM users WHERE username = ? COLLATE NOCASE AND is_active = 1").bind(username).first();
+    const user = await env.DB.prepare("SELECT * FROM users WHERE (username = ? COLLATE NOCASE OR (role = 'owner' AND username = 'admin' AND ? = 'Owner')) AND is_active = 1").bind(username,username).first();
+    if (user?.role === "owner" && username.toLowerCase() === "owner") user.username = "Owner";
     if (user?.locked_until && new Date(user.locked_until.replace(" ", "T") + (user.locked_until.includes("Z") ? "" : "Z")).getTime() > Date.now()) {
-      return new Response(JSON.stringify({ error: "Account temporarily locked. Thori dair baad try karein." }), { status: 423, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Account temporarily locked. Please try again later." }), { status: 423, headers: { "Content-Type": "application/json" } });
     }
 
     let valid = false;
@@ -51,6 +35,10 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Invalid username or password" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
 
+    if (user.role === "owner") {
+      await env.DB.prepare("UPDATE users SET username='Owner', updated_at=CURRENT_TIMESTAMP WHERE id=? AND role='owner' AND username='admin' COLLATE NOCASE").bind(user.id).run();
+      user.username = "Owner";
+    }
     const tokenBytes = new Uint8Array(32); crypto.getRandomValues(tokenBytes);
     const token = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, "0")).join("");
     const tokenDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
@@ -63,6 +51,6 @@ export async function onRequestPost(context) {
     const cookie = "admin_token=" + token + "; HttpOnly; Secure; Path=/; Max-Age=43200; SameSite=Lax";
     return new Response(JSON.stringify({ success: true, role: user.role }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Login failed. Server configuration check karein." }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Login failed. Please check the server configuration." }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 }
