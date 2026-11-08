@@ -436,7 +436,7 @@ const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', '
 
 /* ---------- api ---------- */
 async function api(path, opts) {
-  const o = Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {});
+  const o = Object.assign({ credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' } }, opts || {});
   if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
   const res = await fetch(path, o);
   if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
@@ -582,7 +582,7 @@ function updateSoundButton() {
 let seenPendingIds = null, timer = null;
 async function loadData(first) {
   let r;
-  try { r = await api('/api/admin/appointments'); } catch (e) { return; }
+  try { r = await api('/api/admin/appointments'); } catch (e) { if (e && e.message === 'unauthorized') throw e; return; }
   if (!r.ok) { if (first) toast('Unable to load data (' + r.status + ')'); return; }
   const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
   const appts = raw.map(a => ({
@@ -647,14 +647,24 @@ function showLogin() {
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
-async function boot() {
+async function boot(afterLogin = false) {
   try {
     const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
-    if (res.status === 401) { showLogin(); return; }
+    if (res.status === 401) {
+      showLogin();
+      if (afterLogin) {
+        const err = $('#loginErr');
+        err.textContent = 'The password was accepted, but the server did not receive a valid session cookie. Open the latest Preview link (not an older deployment URL), then sign in again.';
+        err.hidden = false;
+      }
+      return false;
+    }
     if (!res.ok) {
       showLogin();
-      const err = $('#loginErr'); err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.'; err.hidden = false;
-      return;
+      const err = $('#loginErr');
+      err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.';
+      err.hidden = false;
+      return false;
     }
     showApp();
     await loadData(true);
@@ -663,9 +673,15 @@ async function boot() {
     render();
     updateSoundButton();
     if (!timer) timer = setInterval(() => loadData(false), 8000);
+    return true;
   } catch (e) {
     showLogin();
-    const err = $('#loginErr'); err.textContent = 'Unable to connect to the server. The admin API is unavailable.'; err.hidden = false;
+    const err = $('#loginErr');
+    err.textContent = e && e.message === 'unauthorized'
+      ? 'The admin session was rejected by the API. Please sign in again using the latest Preview URL.'
+      : 'Unable to connect to the server. The admin API is unavailable.';
+    err.hidden = false;
+    return false;
   }
 }
 function showLoginLocked() {
@@ -688,7 +704,7 @@ $('#loginForm').addEventListener('submit', async e => {
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
     if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
-    await boot(); }
+    await boot(true); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
   } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
