@@ -1005,6 +1005,7 @@ document.addEventListener('click', async e => {
   if(e.target.closest('[data-cal-today]')){state.patientDate=todayStr();state.calendarMonth=todayStr().slice(0,7);render();return;}
   if(e.target.closest('[data-date-all]')){state.patientShowOverall=false;state.patientDate=null;render();return;}
   const overallPatients=e.target.closest('[data-overall-patients]');if(overallPatients){state.patientShowOverall=!state.patientShowOverall;render();return;} const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientShowOverall=false;state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
+  const editPatientBtn=e.target.closest('[data-act="editpatient"]');if(editPatientBtn){openPatientEditor(Number(editPatientBtn.dataset.p));return;}
   const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
   const removeProcedure=e.target.closest('.remove-procedure');if(removeProcedure){const box=$('#visitProcedures');removeProcedure.closest('.proc-line').remove();const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));return;}
   if(e.target.closest('[data-close-patient-edit]')){document.getElementById('patientEditModal')?.remove();return;}
