@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="/admin/manifest.webmanifest">
+<meta name="theme-color" content="#3E3325">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ultimate Clinic">
+<link rel="icon" href="/admin/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/admin/icon.svg">
 <title>Ultimate Esthetics Clinic Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif&display=swap">
 <style>
@@ -59,6 +66,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .user-box b{font-size:13px;display:block}
 .user-box small{display:block;color:var(--muted);font-size:11.5px;line-height:1.2;overflow:hidden;text-overflow:ellipsis}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--sand-soft);border:1px solid var(--sand);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;color:var(--accent)}
+.install-app-btn{width:100%;justify-content:center;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .foot-btns{display:flex;gap:6px;width:100%}.foot-btns .btn{min-width:0;flex:1 1 0;padding-left:4px;padding-right:4px;font-size:11px}
 
 .main{padding:26px 30px;min-width:0}
@@ -288,6 +296,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="nav-label">Daily work</div>
       <nav class="nav" id="nav" aria-label="Main"></nav>
       <div class="side-foot">
+        <button class="btn install-app-btn" id="installAppBtn" type="button">Install Clinic App</button>
         <button class="user-box" type="button" data-go="profile" style="width:100%;text-align:left;cursor:pointer"><div class="avatar">ME</div><div><b>My Profile</b><small>Verify Login ID & password</small></div></button>
         <div class="foot-btns">
           <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
@@ -842,6 +851,30 @@ document.addEventListener('submit', async e => {
   btn.disabled = false; btn.textContent = 'Add & confirm';
 });
 
+let deferredInstallPrompt = null;
+const installAppButton = document.getElementById("installAppBtn");
+window.addEventListener("beforeinstallprompt", event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installAppButton) installAppButton.textContent = "Install Clinic App";
+});
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  if (installAppButton) { installAppButton.textContent = "App Installed"; installAppButton.disabled = true; }
+});
+if (installAppButton) installAppButton.addEventListener("click", async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    if (choice && choice.outcome === "accepted") installAppButton.textContent = "App Installed";
+  } else {
+    toast("To install: open the browser menu and choose Install app or Add to Home screen.");
+  }
+});
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"}).catch(() => {}));
+}
 boot();
 </script>
 </body>
