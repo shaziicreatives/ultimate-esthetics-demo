@@ -25,10 +25,12 @@ export async function onRequestGet(context) {
         }
 
         let query = `
-            SELECT a.*, p.name as patient_name, p.phone as patient_phone, d.name as doctor_name 
+            SELECT a.*, p.name as patient_name, p.phone as patient_phone, d.name as doctor_name,
+                   dt.token AS daily_token, dt.clinic_date AS token_date
             FROM appointments a
             JOIN patients p ON a.patient_id = p.id
             JOIN doctors d ON a.doctor_id = d.id
+            LEFT JOIN appointment_daily_tokens dt ON dt.appointment_id = a.id
         `;
 
         let bindings = [];
@@ -62,6 +64,14 @@ export async function onRequestPatch(context) {
             const beforeCheck = await env.DB.prepare("SELECT id,status FROM appointments WHERE id=?").bind(id).first();
             if (!beforeCheck) return new Response(JSON.stringify({error:"Appointment not found"}),{status:404,headers:{"Content-Type":"application/json"}});
             if (beforeCheck.status !== 'confirmed') return new Response(JSON.stringify({error:"Only confirmed appointments can be checked in."}),{status:409,headers:{"Content-Type":"application/json"}});
+            if (check_in) {
+                const existingToken = await env.DB.prepare("SELECT token FROM appointment_daily_tokens WHERE appointment_id=?").bind(id).first();
+                if (!existingToken) {
+                    const clinicDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Karachi", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+                    const counter = await env.DB.prepare("INSERT INTO daily_token_counters(clinic_date,last_number) VALUES(?,1) ON CONFLICT(clinic_date) DO UPDATE SET last_number=last_number+1 RETURNING last_number").bind(clinicDate).first();
+                    await env.DB.prepare("INSERT INTO appointment_daily_tokens(appointment_id,clinic_date,token) VALUES(?,?,?)").bind(id, clinicDate, Number(counter.last_number)).run();
+                }
+            }
             await env.DB.prepare("UPDATE appointments SET checked_in_at = " + (check_in ? "CURRENT_TIMESTAMP" : "NULL") + ", updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
             await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details,ip) VALUES(?,?,'patient_checkin','appointment',?,?,?)").bind(session.user_id,session.username,id,check_in?'Checked in':'Check-in undone',request.headers.get('CF-Connecting-IP')||'').run();
             return new Response(JSON.stringify({success:true,checked_in:check_in}),{headers:{"Content-Type":"application/json"}});
@@ -71,9 +81,15 @@ export async function onRequestPatch(context) {
             return new Response(JSON.stringify({ error: "Invalid parameters" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        const before = await env.DB.prepare("SELECT status, patient_id FROM appointments WHERE id = ?").bind(id).first();
+        const before = await env.DB.prepare("SELECT status, patient_id, date, time FROM appointments WHERE id = ?").bind(id).first();
         if (!before) return new Response(JSON.stringify({ error: "Appointment not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
 
+        if (status === "pending" && before.status === "rejected") {
+            const scheduled = new Date(before.date + "T" + String(before.time).slice(0,5) + ":00+05:00");
+            if (!Number.isFinite(scheduled.getTime()) || scheduled.getTime() <= Date.now()) {
+                return new Response(JSON.stringify({ error: "This appointment time has passed. Rejected appointments can only be moved back before their scheduled time." }), { status: 409, headers: { "Content-Type": "application/json" } });
+            }
+        }
         const updated = await env.DB.prepare(
             "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         ).bind(status, id).run();
