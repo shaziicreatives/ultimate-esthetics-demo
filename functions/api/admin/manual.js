@@ -1,5 +1,5 @@
 import { notifyClinicStaff } from "../../_shared/web-push.js";
-import { syncVisitToDrive } from "../../_shared/google-drive-sync.js";
+import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive-sync.js";
 async function getSession(request, env) {
   const cookie = request.headers.get("Cookie") || "";
   const match = cookie.match(/(?:^|;\s*)admin_token=([^;]+)/);
@@ -71,6 +71,7 @@ export async function onRequestPost(context) {
         paymentLeft -= allocation;
       }
       if (paymentBatch.length) await env.DB.batch(paymentBatch);
+      for(const invoice of outstandingInvoices.results){if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,invoice.id));}
       await env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id).run();
       manualInvoice = { payment_only: true, received, previous_balance: previousBalance, balance: previousBalance-received };
     }
@@ -96,6 +97,7 @@ export async function onRequestPost(context) {
       if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));
       manualInvoice = { visit_id: visitId, invoice_number: invoiceNumber, total_amount: netTotal, received, previous_balance: previousBalance, balance: previousBalance + netTotal - received };
     }
+    if(manualSubtotal===null&&context.waitUntil)context.waitUntil(syncPatientToDrive(env,patient.id));
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
     const notify = notifyClinicStaff(env, {
       title: manualInvoice?.payment_only ? "Patient payment received" : "Appointment added",
