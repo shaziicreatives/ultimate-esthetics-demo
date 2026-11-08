@@ -31,6 +31,7 @@ export async function onRequestPost({request,env}) {
   ]);
   return json({success:true,message:staff.username+" password updated; their existing sessions were signed out."});
  }
+ if(u.role!=="owner")return json({error:"Only the Owner can change passwords. Please contact the Owner."},403);
  const current=String(b.current_password||"");
  const row=await env.DB.prepare("SELECT id,password_hash,password_salt FROM users WHERE id=?").bind(u.user_id).first();
  if(!row||await hash(current+row.password_salt)!==row.password_hash)return json({error:"Current password is incorrect."},400);
