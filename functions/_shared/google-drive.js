@@ -1,4 +1,4 @@
-const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
+export const json=(value,status=200)=>new Response(JSON.stringify(value),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 const enc=new TextEncoder();
 const hex=bytes=>Array.from(new Uint8Array(bytes)).map(x=>x.toString(16).padStart(2,"0")).join("");
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes)));
