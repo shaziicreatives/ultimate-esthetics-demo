@@ -1,28 +1,11 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 import { notifyClinicStaff } from "../../_shared/web-push.js";
-async function verifySession(request, env) {
-    const cookieHeader = request.headers.get('Cookie') || '';
-    const match = cookieHeader.match(/admin_token=([^;]+)/);
-    if (!match) return null;
-    const token = decodeURIComponent(match[1]);
-
-    const tokenBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
-    const tokenHash = Array.from(new Uint8Array(tokenBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-    const session = await env.DB.prepare(
-        `SELECT s.*, u.role, u.doctor_id, u.username FROM sessions s 
-         JOIN users u ON s.user_id = u.id 
-         WHERE s.token_hash = ? AND s.expires_at > DATETIME('now') AND u.is_active = 1`
-    ).bind(tokenHash).first();
-
-    return session;
-}
-
 export async function onRequestGet(context) {
     try {
         const { env, request } = context;
-        const session = await verifySession(request, env);
+        const session = await getAdminSession(request, env);
         if (!session) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
 
         let query = `
@@ -45,19 +28,19 @@ export async function onRequestGet(context) {
         const { results } = await env.DB.prepare(query).bind(...bindings).all();
 
         return new Response(JSON.stringify({ appointments: results }), {
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
         });
     } catch (err) {
-        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
     }
 }
 
 export async function onRequestPatch(context) {
     try {
         const { env, request } = context;
-        const session = await verifySession(request, env);
+        const session = await getAdminSession(request, env);
         if (!session || session.role === 'doctor') {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json" } });
+            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
 
         const { id, status, check_in } = await request.json();
@@ -83,16 +66,16 @@ export async function onRequestPatch(context) {
         }
         const validStatuses = ['pending', 'confirmed', 'done', 'cancelled', 'rejected', 'no_show'];
         if (!id || !validStatuses.includes(status)) {
-            return new Response(JSON.stringify({ error: "Invalid parameters" }), { status: 400, headers: { "Content-Type": "application/json" } });
+            return new Response(JSON.stringify({ error: "Invalid parameters" }), { status: 400, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
 
         const before = await env.DB.prepare("SELECT status, patient_id, date, time FROM appointments WHERE id = ?").bind(id).first();
-        if (!before) return new Response(JSON.stringify({ error: "Appointment not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+        if (!before) return new Response(JSON.stringify({ error: "Appointment not found" }), { status: 404, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 
         if (status === "pending" && before.status === "rejected") {
             const scheduled = new Date(before.date + "T" + String(before.time).slice(0,5) + ":00+05:00");
             if (!Number.isFinite(scheduled.getTime()) || scheduled.getTime() <= Date.now()) {
-                return new Response(JSON.stringify({ error: "This appointment time has passed. Rejected appointments can only be moved back before their scheduled time." }), { status: 409, headers: { "Content-Type": "application/json" } });
+                return new Response(JSON.stringify({ error: "This appointment time has passed. Rejected appointments can only be moved back before their scheduled time." }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
             }
         }
         const updated = await env.DB.prepare(
@@ -109,7 +92,7 @@ export async function onRequestPatch(context) {
         }
 
         return new Response(JSON.stringify({ success: true, changes: updated.meta?.changes || 0 }), {
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
         });
     } catch (err) {
         const message = String(err?.message || "");
@@ -119,6 +102,6 @@ export async function onRequestPatch(context) {
                 code: "SLOT_TAKEN"
             }), { status: 409, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
-        return new Response(JSON.stringify({ error: "Unable to update the appointment. Please try again." }), { status: 500, headers: { "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: "Unable to update the appointment. Please try again." }), { status: 500, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
     }
 }
