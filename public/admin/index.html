@@ -596,7 +596,7 @@ async function loadData(first) {
   }
   seenPendingIds = new Set(pendingIds);
 
-  try { const vr = await api('/api/admin/visits'); if (vr.ok) { state.visits = vr.data.visits || []; state.financialPatients = vr.data.patients || []; } } catch(e) { }
+  try { const vr = await api('/api/admin/visits'); if (vr.ok) { state.visits = vr.data.visits || []; state.financialPatients = vr.data.patients || []; } } catch(e) { if (e && e.message === 'unauthorized') throw e; }
   const sig = JSON.stringify(appts) + JSON.stringify(state.visits);
   const changed = sig !== state.sig;
   state.sig = sig; state.appts = appts;
