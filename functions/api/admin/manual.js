@@ -1,3 +1,4 @@
+import { notifyClinicStaff } from "../../_shared/web-push.js";
 async function getSession(request, env) {
   const cookie = request.headers.get("Cookie") || "";
   const match = cookie.match(/(?:^|;\s*)admin_token=([^;]+)/);
@@ -8,7 +9,8 @@ async function getSession(request, env) {
   return env.DB.prepare("SELECT s.user_id, u.username, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND u.is_active = 1").bind(hash).first();
 }
 const json = (data, status=200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
   try {
     if (!env.DB) return json({ error: "Database binding DB missing" }, 503);
     const session = await getSession(request, env);
@@ -37,6 +39,13 @@ export async function onRequestPost({ request, env }) {
     }
     const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id).run();
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
+    const notify = notifyClinicStaff(env, {
+      title: "Appointment added",
+      body: "A new appointment was added to Clinic Desk.",
+      tag: "appointment-added-" + inserted.meta.last_row_id,
+      url: "/admin/index.html"
+    });
+    if (context.waitUntil) context.waitUntil(notify); else await notify;
     return json({ success: true, appointment_id: inserted.meta.last_row_id, patient_id: patient.id });
   } catch (error) {
     if (String(error.message || "").includes("uq_active_slot") || String(error.message || "").includes("UNIQUE constraint failed")) return json({ error: "This time slot is already booked. Please select another time." }, 409);
