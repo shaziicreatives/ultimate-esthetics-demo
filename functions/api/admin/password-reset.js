@@ -12,16 +12,15 @@ export async function onRequestPost({request,env}) {
  const action=String(b.action||"request");
  if(action==="request"){
   const username=String(b.username||"").trim();
-  const user=username?await env.DB.prepare("SELECT id,username FROM users WHERE username=? COLLATE NOCASE AND is_active=1").bind(username).first():null;
-  const recovery=await env.DB.prepare("SELECT email FROM users WHERE role='owner' AND is_active=1 ORDER BY id LIMIT 1").first();
-  const recoveryEmail=recovery?.email||"";
+  const user=username?await env.DB.prepare("SELECT id,username,email FROM users WHERE username=? COLLATE NOCASE AND is_active=1").bind(username).first():null;
+  const recoveryEmail=user?.email||"";
   // Keep the response generic so the endpoint does not disclose whether an account exists.
   if(user && recoveryEmail && env.RESEND_API_KEY && env.MAIL_FROM){
    const raw=Array.from(crypto.getRandomValues(new Uint8Array(32))).map(x=>x.toString(16).padStart(2,"0")).join(""),tokenHash=await hash(raw),expires=new Date(Date.now()+3600000).toISOString().replace('T',' ').slice(0,19);
    await env.DB.prepare("UPDATE password_resets SET used_at=CURRENT_TIMESTAMP WHERE user_id=? AND used_at IS NULL").bind(user.id).run();
    await env.DB.prepare("INSERT INTO password_resets(user_id,token_hash,expires_at) VALUES(?,?,?)").bind(user.id,tokenHash,expires).run();
    const link=new URL("/admin/reset-password.html?token="+encodeURIComponent(raw),new URL(request.url).origin).toString();
-   const mail=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:env.MAIL_FROM,to:[recoveryEmail],subject:"Ultimate Esthetics account password reset",html:"<p>Password reset requested for the "+user.username+" account.</p><p><a href='"+link+"'>Reset password</a></p><p>This secure link expires in one hour and can be used once. If you did not request this, you can ignore this email.</p>"})});
+   const mail=await fetch("https://api.resend.com/emails",{method:"POST",headers:{"Authorization":"Bearer "+env.RESEND_API_KEY,"Content-Type":"application/json"},body:JSON.stringify({from:env.MAIL_FROM,to:[recoveryEmail],subject:"Ultimate Esthetics account password reset",html:"<p>Password reset requested for your "+user.username+" account.</p><p><a href='"+link+"'>Reset password</a></p><p>This secure link expires in one hour and can be used once. If you did not request this, you can ignore this email.</p>"})});
    if(!mail.ok){await env.DB.prepare("UPDATE password_resets SET used_at=CURRENT_TIMESTAMP WHERE token_hash=?").bind(tokenHash).run();return json({error:"Email provider rejected the reset email. Check the Resend API key and verified sender address."},502);}
   } else if(user && (!recoveryEmail || !env.RESEND_API_KEY || !env.MAIL_FROM)){
    return json({error:"Password reset email is not configured yet. The secure email sender must be connected before reset links can be delivered."},503);
