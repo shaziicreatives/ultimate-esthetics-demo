@@ -38,6 +38,31 @@ export async function onRequestPost(context) {
       patient = { id: insertedPatient.meta.last_row_id };
     }
     const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id).run();
+    const referralId = body.referred_by_patient_id ? Number(body.referred_by_patient_id) : null;
+    const referralNotes = String(body.referral_notes || "").trim().slice(0,500);
+    if (referralId && (!Number.isSafeInteger(referralId) || referralId === Number(patient.id) || !await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(referralId).first())) return json({ error: "Select a valid referring patient." }, 400);
+    if (referralId || referralNotes) await env.DB.prepare("UPDATE patients SET referred_by_patient_id=?, referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralId, referralNotes || null, patient.id).run();
+    const manualSubtotal = body.manual_subtotal === undefined || body.manual_subtotal === null || body.manual_subtotal === "" ? null : Number(body.manual_subtotal);
+    let manualInvoice = null;
+    if (manualSubtotal !== null) {
+      const discountType = String(body.discount_type || "none"), discountValue = Number(body.discount_value || 0), received = Number(body.received_now || 0);
+      if (!Number.isSafeInteger(manualSubtotal) || manualSubtotal < 0 || !["none","percentage","fixed"].includes(discountType) || !Number.isFinite(discountValue) || discountValue < 0 || (discountType === "percentage" && discountValue > 100) || (discountType === "fixed" && !Number.isSafeInteger(discountValue))) return json({ error: "Manual invoice amount or discount is invalid." }, 400);
+      const discountAmount = discountType === "percentage" ? Math.round(manualSubtotal * discountValue / 100) : discountType === "fixed" ? Math.min(manualSubtotal, discountValue) : 0;
+      const netTotal = manualSubtotal - discountAmount;
+      if (!Number.isSafeInteger(received) || received < 0 || received > netTotal) return json({ error: "Received amount must be between zero and the discounted invoice total." }, 400);
+      const seq = await env.DB.prepare("UPDATE invoice_sequence SET last_number=last_number+1 WHERE id=1 RETURNING last_number").first();
+      if (!seq) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
+      const invoiceNumber = "UE-INV-" + String(seq.last_number);
+      const visit = await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,invoice_number,subtotal_amount,discount_type,discount_value,discount_amount) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(inserted.meta.last_row_id,patient.id,doctorId,session.user_id,String(body.notes||"").slice(0,5000),netTotal,invoiceNumber,manualSubtotal,discountType,discountValue,discountAmount).run();
+      const visitId = visit.meta.last_row_id;
+      const paymentStatements = [];
+      if (treatment) paymentStatements.push(env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,treatment.slice(0,160),manualSubtotal));
+      else paymentStatements.push(env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,"Manual visit",manualSubtotal));
+      if (received > 0) paymentStatements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,patient.id,received,String(body.payment_method||"cash").slice(0,30),String(body.payment_reference||"").slice(0,120)||null,session.user_id));
+      paymentStatements.push(env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id));
+      await env.DB.batch(paymentStatements);
+      manualInvoice = { visit_id: visitId, invoice_number: invoiceNumber, total_amount: netTotal, received, balance: netTotal - received };
+    }
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
     const notify = notifyClinicStaff(env, {
       title: "Appointment added",
@@ -46,7 +71,7 @@ export async function onRequestPost(context) {
       url: "/admin/index.html"
     });
     if (context.waitUntil) context.waitUntil(notify); else await notify;
-    return json({ success: true, appointment_id: inserted.meta.last_row_id, patient_id: patient.id });
+    return json({ success: true, appointment_id: inserted.meta.last_row_id, patient_id: patient.id, invoice: manualInvoice });
   } catch (error) {
     if (String(error.message || "").includes("uq_active_slot") || String(error.message || "").includes("UNIQUE constraint failed")) return json({ error: "This time slot is already booked. Please select another time." }, 409);
     return json({ error: "Unable to save the manual appointment." }, 500);
