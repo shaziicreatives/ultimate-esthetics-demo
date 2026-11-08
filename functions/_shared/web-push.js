@@ -1,4 +1,5 @@
 const enc = new TextEncoder();
+const VAPID_PUBLIC_KEY = "BFhZkz2mE856noP-pvjj9MIuTG4YWp7iPO_LvYQhePmX4zwU7uHbMpQDh1BX7KYQXk4OlVMXJgUcVPfw9y83cqo";
 const b64u = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const fromB64u = value => {
   const s=String(value||"").replace(/-/g,"+").replace(/_/g,"/");
@@ -57,7 +58,7 @@ async function sendOne(subscription,payload,env){
   },body});
 }
 export async function notifyClinicStaff(env,payload){
-  if(!env.VAPID_PUBLIC_KEY||!env.VAPID_PRIVATE_KEY||!env.DB)return {sent:0,skipped:true};
+  if(!env.VAPID_PRIVATE_KEY||!env.DB)return {sent:0,skipped:true};
   const {results=[]}=await env.DB.prepare("SELECT ps.id,ps.endpoint,ps.p256dh,ps.auth FROM push_subscriptions ps JOIN users u ON u.id=ps.user_id WHERE u.is_active=1 AND lower(u.role) IN ('owner','admin','reception','receptionist')").all();
   let sent=0;
   await Promise.all(results.map(async sub=>{
@@ -72,9 +73,9 @@ export async function notifyClinicStaff(env,payload){
 export async function onRequestGetPush(context){
   const session=await getSession(context.request,context.env);
   if(!session)return json({error:"Unauthorized"},401);
-  if(!context.env.VAPID_PUBLIC_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
+  if(!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
   const existing=await context.env.DB.prepare("SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id=?").bind(session.user_id).first();
-  return json({publicKey:context.env.VAPID_PUBLIC_KEY,subscribed:Number(existing?.n||0)>0});
+  return json({publicKey:VAPID_PUBLIC_KEY,subscribed:Number(existing?.n||0)>0});
 }
 export async function onRequestPostPush(context){
   const session=await getSession(context.request,context.env);
@@ -82,7 +83,7 @@ export async function onRequestPostPush(context){
   const body=await context.request.json().catch(()=>({}));
   const sub=body.subscription;
   if(!sub||!String(sub.endpoint||"").startsWith("https://")||!sub.keys?.p256dh||!sub.keys?.auth)return json({error:"Invalid push subscription."},400);
-  if(!context.env.VAPID_PUBLIC_KEY||!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
+  if(!context.env.VAPID_PRIVATE_KEY)return json({error:"Push notifications are not configured on this Preview yet."},503);
   await context.env.DB.prepare("INSERT INTO push_subscriptions(user_id,endpoint,p256dh,auth,user_agent,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(endpoint) DO UPDATE SET user_id=excluded.user_id,p256dh=excluded.p256dh,auth=excluded.auth,user_agent=excluded.user_agent,updated_at=CURRENT_TIMESTAMP").bind(session.user_id,sub.endpoint,sub.keys.p256dh,sub.keys.auth,String(context.request.headers.get("User-Agent")||"").slice(0,300)).run();
   return json({success:true});
 }
