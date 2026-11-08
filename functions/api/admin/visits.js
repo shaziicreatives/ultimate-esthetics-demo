@@ -72,11 +72,12 @@ export async function onRequestPatch({request,env}) {
   const paid=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) amount FROM payments WHERE visit_id=?").bind(id).first();
   if(Number(paid?.amount||0)>total)return json({error:"New invoice total cannot be lower than payments already received."},409);
   const statements=[
-   env.DB.prepare("UPDATE visits SET subtotal_amount=?,discount_type=?,discount_value=?,discount_amount=?,total_amount=?,notes=? WHERE id=?").bind(subtotal,discountType,discountValue,discountAmount,total,String(b.notes||"").slice(0,5000),id),
+   env.DB.prepare("UPDATE visits SET subtotal_amount=?,discount_type=?,discount_value=?,discount_amount=?,total_amount=?,notes=?,follow_up_date=? WHERE id=?").bind(subtotal,discountType,discountValue,discountAmount,total,String(b.notes||"").slice(0,5000),b.follow_up_date||null,id),
    env.DB.prepare("DELETE FROM visit_procedures WHERE visit_id=?").bind(id),
    ...procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(id,String(p.name).trim().slice(0,160),Number(p.fee)))
   ];
   if(b.patient_id!==undefined)statements.push(env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId));
+  if(visit.appointment_id)statements.push(env.DB.prepare("UPDATE appointments SET follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,visit.appointment_id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total+(b.patient_id!==undefined?"; patient profile and booking history updated":"")).run();
   return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:Number(paid?.amount||0),balance:Math.max(0,total-Number(paid?.amount||0))});
