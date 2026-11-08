@@ -59,9 +59,20 @@ async function sendOne(subscription,payload,env){
   },body});
 }
 export async function notifyClinicStaff(env,payload){
-  if(!env.VAPID_PRIVATE_KEY||!env.DB)return {sent:0,skipped:true};
-  const {results=[]}=await env.DB.prepare("SELECT ps.id,ps.endpoint,ps.p256dh,ps.auth FROM push_subscriptions ps JOIN users u ON u.id=ps.user_id WHERE u.is_active=1 AND lower(u.role) IN ('owner','admin','reception','receptionist')").all();
+  if(!env.VAPID_PRIVATE_KEY||!env.DB){
+    console.error("Clinic Web Push skipped: missing", !env.DB ? "DB binding" : "VAPID_PRIVATE_KEY");
+    return {attempted:0,sent:0,failed:0,expired:0,skipped:true};
+  }
+  let results=[];
+  try {
+    const query=await env.DB.prepare("SELECT ps.id,ps.endpoint,ps.p256dh,ps.auth FROM push_subscriptions ps JOIN users u ON u.id=ps.user_id WHERE u.is_active=1 AND lower(u.role) IN ('owner','admin','reception','receptionist')").all();
+    results=query.results||[];
+  } catch(e) {
+    console.error("Clinic Web Push subscription lookup failed",String(e?.message||e).slice(0,300));
+    return {attempted:0,sent:0,failed:1,expired:0,skipped:false};
+  }
   let sent=0,failed=0,expired=0;
+  if(!results.length) console.warn("Clinic Web Push: no active staff subscriptions found");
   await Promise.all(results.map(async sub=>{
     try{
       const response=await sendOne(sub,payload,env);
@@ -72,7 +83,8 @@ export async function notifyClinicStaff(env,payload){
           expired++;
           await env.DB.prepare("DELETE FROM push_subscriptions WHERE id=?").bind(sub.id).run();
         }
-        console.error("Clinic Web Push provider response",response.status);
+        const providerMessage=(await response.text().catch(()=> "" )).slice(0,300);
+        console.error("Clinic Web Push provider response",response.status,providerMessage);
       }
     }catch(e){
       failed++;
