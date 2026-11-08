@@ -22,7 +22,7 @@ async function deriveHKDF(ikm,salt,info,length){
 async function vapidToken(endpoint,env){
   const url=new URL(endpoint), now=Math.floor(Date.now()/1000);
   const header=b64u(enc.encode(JSON.stringify({typ:"JWT",alg:"ES256"})));
-  const claims=b64u(enc.encode(JSON.stringify({aud:url.origin,exp:now+12*60*60,sub:env.VAPID_SUBJECT||"mailto:admin@ultimate-esthetics.com"})));
+  const claims=b64u(enc.encode(JSON.stringify({aud:url.origin,exp:now+12*60*60,sub:env.VAPID_SUBJECT||"https://ultimate-esthetics-demo.pages.dev/"})));
   const unsigned=header+"."+claims;
   const privateKey=await crypto.subtle.importKey("pkcs8",fromB64u(env.VAPID_PRIVATE_KEY),{name:"ECDSA",namedCurve:"P-256"},false,["sign"]);
   const signature=await crypto.subtle.sign({name:"ECDSA",hash:"SHA-256"},privateKey,enc.encode(unsigned));
