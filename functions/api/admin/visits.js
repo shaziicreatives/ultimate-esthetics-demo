@@ -1,3 +1,4 @@
+import { notifyClinicStaff } from "../../_shared/web-push.js";
 async function session(request, env) {
  const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/); if(!m)return null;
  const token=decodeURIComponent(m[1]); const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token));
@@ -19,7 +20,8 @@ export async function onRequestGet({request,env}) {
  const patients=patientRows.results.map(p=>({...p,balance:Math.max(0,p.billed-p.received)}));
  return json({visits,patients});
 }
-export async function onRequestPost({request,env}) {
+export async function onRequestPost(context) {
+ const {request,env}=context;
  const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
  try {
   const b=await request.json(), appointmentId=Number(b.appointment_id), subtotal=Number(b.subtotal_amount ?? b.total_amount), discountType=String(b.discount_type||"none"), discountValue=Number(b.discount_value||0), procedures=Array.isArray(b.procedures)?b.procedures:[];
@@ -43,6 +45,8 @@ export async function onRequestPost({request,env}) {
   statements.push(env.DB.prepare("UPDATE appointments SET status='done',follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,a.id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'visit_saved','visit',?,?)").bind(u.user_id,u.username,visitId,"Previous "+previousBalance+", bill "+total+", received "+received).run();
+  const push=notifyClinicStaff(env,{title:"Invoice saved",body:"A clinic visit invoice "+invoiceNumber+" has been saved.",tag:"invoice-saved-"+visitId,url:"/admin/index.html"});
+  if(context.waitUntil)context.waitUntil(push);else await push;
   return json({success:true,visit_id:visitId,invoice_number:invoiceNumber,subtotal_amount:subtotal,discount_type:discountType,discount_value:discountValue,discount_amount:discountAmount,total_amount:total,previous_balance:previousBalance,balance:previousBalance+total-received},201);
  } catch(e){return json({error:"Visit save failed: "+String(e.message||"database error")},500);}
 }
