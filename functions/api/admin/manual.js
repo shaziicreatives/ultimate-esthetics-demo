@@ -1,13 +1,8 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 import { notifyClinicStaff } from "../../_shared/web-push.js";
 import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive-sync.js";
 async function getSession(request, env) {
-  const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(/(?:^|;\s*)admin_token=([^;]+)/);
-  if (!match) return null;
-  const token = decodeURIComponent(match[1]);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-  const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-  return env.DB.prepare("SELECT s.user_id, u.username, u.role FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND u.is_active = 1").bind(hash).first();
+  return getAdminSession(request, env);
 }
 const json = (data, status=200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
 export async function onRequestPost(context) {
