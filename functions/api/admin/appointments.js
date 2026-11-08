@@ -1,3 +1,4 @@
+import { notifyClinicStaff } from "../../_shared/web-push.js";
 async function verifySession(request, env) {
     const cookieHeader = request.headers.get('Cookie') || '';
     const match = cookieHeader.match(/admin_token=([^;]+)/);
@@ -74,6 +75,10 @@ export async function onRequestPatch(context) {
             }
             await env.DB.prepare("UPDATE appointments SET checked_in_at = " + (check_in ? "CURRENT_TIMESTAMP" : "NULL") + ", updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
             await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details,ip) VALUES(?,?,'patient_checkin','appointment',?,?,?)").bind(session.user_id,session.username,id,check_in?'Checked in':'Check-in undone',request.headers.get('CF-Connecting-IP')||'').run();
+            if(check_in){
+                const push=notifyClinicStaff(env,{title:"Patient checked in",body:"A patient has arrived. Open Clinic Desk to prepare the visit and invoice.",tag:"patient-checkin-"+id,url:"/admin/index.html"});
+                if(context.waitUntil)context.waitUntil(push);else await push;
+            }
             return new Response(JSON.stringify({success:true,checked_in:check_in}),{headers:{"Content-Type":"application/json"}});
         }
         const validStatuses = ['pending', 'confirmed', 'done', 'cancelled', 'rejected', 'no_show'];
@@ -96,6 +101,12 @@ export async function onRequestPatch(context) {
         await env.DB.prepare(
             "INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, ?, 'appointment', ?, ?, ?)"
         ).bind(session.user_id, session.username, "appointment_status", id, before.status + " -> " + status, request.headers.get("CF-Connecting-IP") || "").run();
+        if(before.status!==status){
+            const messages={confirmed:["Appointment confirmed","An appointment has been confirmed in Clinic Desk."],cancelled:["Appointment cancelled","An appointment was cancelled."],rejected:["Appointment declined","An appointment request was declined."],no_show:["Patient marked no-show","An appointment was marked as no-show."],pending:["Appointment needs review","An appointment is waiting for review."],done:["Appointment completed","An appointment was marked complete."]};
+            const [title,body]=messages[status]||["Appointment updated","An appointment status was updated."];
+            const push=notifyClinicStaff(env,{title,body,tag:"appointment-status-"+id+"-"+status,url:"/admin/index.html"});
+            if(context.waitUntil)context.waitUntil(push);else await push;
+        }
 
         return new Response(JSON.stringify({ success: true, changes: updated.meta?.changes || 0 }), {
             headers: { "Content-Type": "application/json" }
