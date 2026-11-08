@@ -3,7 +3,9 @@ const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncode
 async function currentUser(request,env){
  const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);if(!m)return null;
  const token=decodeURIComponent(m[1]),h=await hash(token);
- return env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
+ const u=await env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
+ if(u&&u.role==="owner"&&u.username.toLowerCase()==="admin")u.role="admin";
+ return u;
 }
 async function verify(u,password){return !!u&&!!password&&(await hash(String(password)+u.password_salt))===u.password_hash;}
 export async function onRequestGet({request,env}) {
