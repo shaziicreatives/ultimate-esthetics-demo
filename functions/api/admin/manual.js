@@ -71,7 +71,6 @@ export async function onRequestPost(context) {
         paymentLeft -= allocation;
       }
       if (paymentBatch.length) await env.DB.batch(paymentBatch);
-      for(const invoice of outstandingInvoices.results){if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,invoice.id));}
       await env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id).run();
       manualInvoice = { payment_only: true, received, previous_balance: previousBalance, balance: previousBalance-received };
     }
@@ -97,7 +96,11 @@ export async function onRequestPost(context) {
       if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));
       manualInvoice = { visit_id: visitId, invoice_number: invoiceNumber, total_amount: netTotal, received, previous_balance: previousBalance, balance: previousBalance + netTotal - received };
     }
-    if(manualSubtotal===null&&context.waitUntil)context.waitUntil(syncPatientToDrive(env,patient.id));
+    if(manualSubtotal===null&&context.waitUntil){
+      context.waitUntil(syncPatientToDrive(env,patient.id));
+      const priorVisits=await env.DB.prepare("SELECT id FROM visits WHERE patient_id=? ORDER BY id").bind(patient.id).all();
+      for(const prior of priorVisits.results||[])context.waitUntil(syncVisitToDrive(env,prior.id));
+    }
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
     const notify = notifyClinicStaff(env, {
       title: manualInvoice?.payment_only ? "Patient payment received" : "Appointment added",
