@@ -360,7 +360,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <div class="field"><label for="uName">Username</label><input class="inp" id="uName" type="text" required placeholder="Enter username" autocomplete="username"></div>
       <div class="field"><label for="uPass">Password</label><input class="inp" id="uPass" type="password" required placeholder="Enter password" autocomplete="current-password"></div>
       <div id="loginErr" class="err" hidden></div>
-      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button><button class="btn" type="button" id="forgotBtn" style="width:100%">Forgot password? Email reset link</button>
+      <button class="btn pri" type="submit" id="loginBtn" style="width:100%;margin-top:4px">Sign In</button><button class="btn" type="button" id="forgotBtn" style="width:100%">Forgot password? Email reset link</button><a class="btn wa" id="contactDeveloperBtn" href="https://wa.me/923485138835?text=Hello%2C%20I%20am%20locked%20out%20of%20the%20Ultimate%20Esthetics%20admin%20panel.%20Please%20help%20me%20regain%20access." target="_blank" rel="noopener noreferrer" hidden style="width:100%">Contact Developer on WhatsApp</a>
     </form>
   </div>
 </div>
@@ -598,17 +598,31 @@ async function boot() {
     const err = $('#loginErr'); err.textContent = 'Unable to connect to the server. The admin API is unavailable.'; err.hidden = false;
   }
 }
+function showLoginLocked() {
+  $('#loginBtn').hidden = true;
+  $('#forgotBtn').hidden = true;
+  $('#contactDeveloperBtn').hidden = false;
+  $('#uPass').disabled = true;
+  $('#uName').disabled = true;
+  const err=$('#loginErr'); err.textContent='5 unsuccessful attempts. Please contact the developer on WhatsApp for assistance.'; err.hidden=false;
+  try { localStorage.setItem('ue_login_locked_until', String(Date.now()+15*60*1000)); } catch(e) {}
+}
+function restoreLoginLockState() {
+  try { if (Number(localStorage.getItem('ue_login_locked_until')||0)>Date.now()) showLoginLocked(); else localStorage.removeItem('ue_login_locked_until'); } catch(e) {}
+}
+restoreLoginLockState();
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const err = $('#loginErr'), btn = $('#loginBtn'); err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
+  const err = $('#loginErr'), btn = $('#loginBtn'); if(btn.hidden)return; err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
   try {
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success !== false) { $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
+    if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
 boot(); }
+    else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
   } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
-  btn.disabled = false; btn.textContent = 'Sign In';
+  if(!btn.hidden){btn.disabled = false; btn.textContent = 'Sign In';}
 });
 $('#logoutBtn').addEventListener('click', async () => {
   try { await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { }
@@ -830,7 +844,7 @@ function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;s
 document.addEventListener('click', async e => {
  if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
  const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
- try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request',username:$('#uName').value.trim()}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('If owner account exists, reset link email has been sent.'); }
+ try { const r=await api('/api/admin/password-reset',{method:'POST',body:{action:'request',username:$('#uName').value.trim()}}); if(!r.ok) toast(r.data.error||'Reset email could not be sent.'); else toast('The reset link has been sent to Owner Email.'); }
  catch(x){ if(x.message!=='unauthorized') toast('Reset email request failed.'); }
  b.disabled=false; b.textContent=old;
 });
