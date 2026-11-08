@@ -29,6 +29,17 @@ export async function onRequestPost(context) {
     if (!name || !validPhone || digits.length !== 10 || !Number.isSafeInteger(doctorId) || doctorId < 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ error: "A valid Pakistani mobile number, patient name, doctor, date, and time are required." }, 400);
     const doctor = await env.DB.prepare("SELECT id FROM doctors WHERE id = ? AND is_active = 1").bind(doctorId).first();
     if (!doctor) return json({ error: "Selected doctor is unavailable." }, 400);
+    const referralId = body.referred_by_patient_id ? Number(body.referred_by_patient_id) : null;
+    const referralNotes = String(body.referral_notes || "").trim().slice(0,500);
+    const manualSubtotal = body.manual_subtotal === undefined || body.manual_subtotal === null || body.manual_subtotal === "" ? null : Number(body.manual_subtotal);
+    const discountType = String(body.discount_type || "none"), discountValue = Number(body.discount_value || 0), received = Number(body.received_now || 0);
+    if (manualSubtotal !== null && (!Number.isSafeInteger(manualSubtotal) || manualSubtotal < 0 || !["none","percentage","fixed"].includes(discountType) || !Number.isFinite(discountValue) || discountValue < 0 || (discountType === "percentage" && discountValue > 100) || (discountType === "fixed" && !Number.isSafeInteger(discountValue)))) return json({ error: "Manual invoice amount or discount is invalid." }, 400);
+    if (manualSubtotal === null && received > 0) return json({ error: "Enter a treatment total before recording a manual payment." }, 400);
+    const discountAmount = manualSubtotal === null ? 0 : discountType === "percentage" ? Math.round(manualSubtotal * discountValue / 100) : discountType === "fixed" ? Math.min(manualSubtotal, discountValue) : 0;
+    const netTotal = manualSubtotal === null ? 0 : manualSubtotal - discountAmount;
+    if (!Number.isSafeInteger(received) || received < 0 || (manualSubtotal !== null && received > netTotal)) return json({ error: "Received amount must be between zero and the discounted invoice total." }, 400);
+    if (referralId && (!Number.isSafeInteger(referralId) || !await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(referralId).first())) return json({ error: "Select a valid referring patient." }, 400);
+    if (manualSubtotal !== null && !await env.DB.prepare("SELECT id FROM invoice_sequence WHERE id=1").first()) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
     const phone = "+92" + digits;
     let patient = await env.DB.prepare("SELECT id FROM patients WHERE phone = ?").bind(phone).first();
     if (patient) {
@@ -38,18 +49,10 @@ export async function onRequestPost(context) {
       patient = { id: insertedPatient.meta.last_row_id };
     }
     const inserted = await env.DB.prepare("INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source, created_by) VALUES (?, ?, ?, ?, ?, 'confirmed', 'manual', ?)").bind(doctorId, patient.id, date, time, treatment || null, session.user_id).run();
-    const referralId = body.referred_by_patient_id ? Number(body.referred_by_patient_id) : null;
-    const referralNotes = String(body.referral_notes || "").trim().slice(0,500);
-    if (referralId && (!Number.isSafeInteger(referralId) || referralId === Number(patient.id) || !await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(referralId).first())) return json({ error: "Select a valid referring patient." }, 400);
+    if (referralId === Number(patient.id)) return json({ error: "A patient cannot refer themselves." }, 400);
     if (referralId || referralNotes) await env.DB.prepare("UPDATE patients SET referred_by_patient_id=?, referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralId, referralNotes || null, patient.id).run();
-    const manualSubtotal = body.manual_subtotal === undefined || body.manual_subtotal === null || body.manual_subtotal === "" ? null : Number(body.manual_subtotal);
     let manualInvoice = null;
     if (manualSubtotal !== null) {
-      const discountType = String(body.discount_type || "none"), discountValue = Number(body.discount_value || 0), received = Number(body.received_now || 0);
-      if (!Number.isSafeInteger(manualSubtotal) || manualSubtotal < 0 || !["none","percentage","fixed"].includes(discountType) || !Number.isFinite(discountValue) || discountValue < 0 || (discountType === "percentage" && discountValue > 100) || (discountType === "fixed" && !Number.isSafeInteger(discountValue))) return json({ error: "Manual invoice amount or discount is invalid." }, 400);
-      const discountAmount = discountType === "percentage" ? Math.round(manualSubtotal * discountValue / 100) : discountType === "fixed" ? Math.min(manualSubtotal, discountValue) : 0;
-      const netTotal = manualSubtotal - discountAmount;
-      if (!Number.isSafeInteger(received) || received < 0 || received > netTotal) return json({ error: "Received amount must be between zero and the discounted invoice total." }, 400);
       const seq = await env.DB.prepare("UPDATE invoice_sequence SET last_number=last_number+1 WHERE id=1 RETURNING last_number").first();
       if (!seq) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
       const invoiceNumber = "UE-INV-" + String(seq.last_number);
