@@ -31,6 +31,10 @@ export async function onRequestPost(context) {
     if (!valid) {
       if (user) {
         await env.DB.prepare("UPDATE users SET failed_attempts = failed_attempts + 1, locked_until = CASE WHEN failed_attempts + 1 >= 5 THEN datetime('now', '+15 minutes') ELSE locked_until END WHERE id = ?").bind(user.id).run();
+        const lockState = await env.DB.prepare("SELECT failed_attempts, locked_until FROM users WHERE id = ?").bind(user.id).first();
+        if ((lockState?.failed_attempts || 0) >= 5 && lockState?.locked_until) {
+          return new Response(JSON.stringify({ error: "5 unsuccessful attempts reached. Please contact the developer for assistance.", locked: true, retry_after_minutes: 15 }), { status: 423, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+        }
       }
       return new Response(JSON.stringify({ error: "Invalid username or password" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
