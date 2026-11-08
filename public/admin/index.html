@@ -809,9 +809,11 @@ function viewManual() {
   const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
   const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
   const referralOptions = '<option value="">No referral / Other source</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+'</option>').join('');
+  const existingPatientOptions = '<option value="">New patient / Search by phone</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+' · '+esc(prettyPhone(p.phone))+'</option>').join('');
   return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
     '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
     '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
+    '<div class="field"><label for="mExistingPatient">Select existing patient (optional)</label><select class="inp" id="mExistingPatient">'+existingPatientOptions+'</select><small class="hint">Choose an old patient to reuse the same patient ID and payment history.</small></div>' +
     '<div class="two-col"><div class="field"><label for="mName">Full name</label><input class="inp" id="mName" required></div>' +
     '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" autocomplete="tel" placeholder="+923001234567 or 03001234567"><span class="hint" id="mDup">Enter a Pakistani mobile number: +92 followed by 10 digits, or 11 digits starting with 03.</span></div></div>' +
     '<div class="two-col"><div class="field"><label for="mDoc">Doctor</label><select class="inp" id="mDoc">' + docs + '</select></div>' +
@@ -1015,6 +1017,11 @@ document.addEventListener('click', async e => {
     case 'undo': setStatus(id, 'confirmed', 'Moved back to awaiting check-in.'); break;
     case 'hist': state.histSel = Number(b.dataset.p); b.disabled = false; go('history'); break;
   }
+});
+document.addEventListener('change',e=>{
+ if(e.target.id==='mExistingPatient'){
+  const p=state.patients.find(x=>Number(x.id)===Number(e.target.value));if(p){$('#mName').value=p.name;$('#mPhone').value=p.phone;$('#mDup').textContent='Selected existing patient #'+p.id+'. New appointment and payment will be attached to this record.';$('#mDup').className='hint ok';}
+ }
 });
 document.addEventListener('input', e => {
   const t = e.target;
