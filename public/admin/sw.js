@@ -1,4 +1,4 @@
-const CACHE_NAME = "ultimate-clinic-shell-v3";
+const CACHE_NAME = "ultimate-clinic-shell-v4";
 const APP_SHELL = ["/admin/index.html", "/admin/manifest.webmanifest", "/admin/icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
