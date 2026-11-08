@@ -676,7 +676,8 @@ function viewMarketing() {
  '</div>';
 }
 
-/* ---------- render + events ---------- */\nfunction viewProfile() {
+/* ---------- render + events ---------- */
+function viewProfile() {
  if(!state.profileUnlocked||!state.profile)return head('My Profile','Verify your account to view and update your own profile.')+
  '<section class="card" style="max-width:520px"><div class="card-head"><h2>Confirm your identity</h2></div><p class="hint" style="margin-bottom:14px">Enter your current Login ID and password. You can only access your own profile.</p><form id="profileVerifyForm" class="col" style="gap:10px"><div class="field"><label>Login ID</label><input class="inp" id="profileLoginId" autocomplete="username" required></div><div class="field"><label>Password</label><input class="inp" id="profileLoginPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileVerifyErr" hidden></div><button class="btn pri" type="submit" id="profileVerifyBtn">Verify and open profile</button></form></section>';
  const p=state.profile;
