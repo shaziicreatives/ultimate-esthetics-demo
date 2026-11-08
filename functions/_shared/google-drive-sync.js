@@ -70,8 +70,9 @@ export async function syncPatientToDrive(env,patientId){
   const connection=await getConnection(env);if(!connection?.root_folder_id)return;
   const patient=await env.DB.prepare("SELECT p.*,r.name referred_by_name FROM patients p LEFT JOIN patients r ON r.id=p.referred_by_patient_id WHERE p.id=?").bind(patientId).first();
   if(!patient)return;
-  await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();
   job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
+  if(job)await env.DB.prepare("UPDATE google_drive_sync_jobs SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(job.id).run();
+  else{await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();}
   const tokens=await decryptTokens(connection.encrypted_tokens,env);
   const folder=await patientFolder(env,tokens,connection,patient);
   const notes=await env.DB.prepare("SELECT note,created_at FROM patient_notes WHERE patient_id=? ORDER BY created_at,id").bind(patientId).all();
