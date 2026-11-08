@@ -861,7 +861,7 @@ function viewDrive(){
  (d.migration_required?'<section class="card"><div class="alert-item warn">The Google Drive database migration has not been applied yet. Drive settings are not active until the migration is applied to the Preview database.</div></section>':'')+
  '<section class="card"><div class="card-head"><h2>Google account</h2><span class="pill '+(connected?'ok':'warn')+'">'+(connected?'Connected':'Not connected')+'</span></div>'+
  (connected?'<p style="margin-bottom:8px">Connected account: <b>'+esc(d.email||'')+'</b></p><p class="hint">Last successful sync: '+esc(d.last_sync_at||'Not yet synced')+'</p>':'<p class="hint" style="margin-bottom:12px">Connect the Google account where clinic records should be stored.</p>')+
- '<div class="actions" style="margin-top:14px"><a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Change Google account':'Connect Google account')+'</a>'+
+ '<div class="actions" style="margin-top:14px">'+(d.migration_required?'': '<a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Change Google account':'Connect Google account')+'</a>')+'+
  (connected?'<button class="btn bad" type="button" data-drive-action="disconnect">Disconnect</button>':'')+'</div></section>'+
  (connected?'<section class="card"><div class="card-head"><h2>Clinic storage folder</h2></div><p style="margin-bottom:12px">Selected folder: <b>'+root+'</b></p>'+
  '<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="Ultimate Esthetics Clinic"></div>'+
