@@ -687,8 +687,8 @@ $('#loginForm').addEventListener('submit', async e => {
   try {
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
-boot(); }
+    if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
+    await boot(); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
   } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
