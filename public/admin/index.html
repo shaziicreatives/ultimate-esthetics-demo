@@ -303,6 +303,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
       <nav class="nav" id="nav" aria-label="Main"></nav>
       <div class="side-foot">
         <button class="btn install-app-btn" id="installAppBtn" type="button">Install Clinic App</button>
+        <button class="btn" id="notificationAccessBtn" type="button" style="width:100%;justify-content:center">Enable Notifications</button>
         <button class="user-box" type="button" data-go="profile" style="width:100%;text-align:left;cursor:pointer"><div class="avatar">ME</div><div><b>My Profile</b><small>Verify Login ID & password</small></div></button>
         <div class="foot-btns">
           <button class="btn sm" id="soundBtn" type="button" style="flex:1">Sound: ON</button>
@@ -405,6 +406,34 @@ function playAppointmentAlert() {
  } catch(e) {}
  vibrate([350,120,350,120,500]);
 }
+async function refreshNotificationAccessButton() {
+  const b = $('#notificationAccessBtn');
+  if (!b) return;
+  if (!('Notification' in window)) { b.textContent = 'Notifications Unsupported'; b.disabled = true; return; }
+  const granted = Notification.permission === 'granted';
+  b.textContent = granted ? 'Notifications: Enabled' : (Notification.permission === 'denied' ? 'Notifications Blocked in Browser' : 'Enable Notifications');
+  b.disabled = Notification.permission === 'denied';
+}
+async function enableClinicNotifications() {
+  if (!('Notification' in window)) { toast('This browser does not support notifications.'); return; }
+  if (!('serviceWorker' in navigator)) { toast('Service workers are not supported in this browser.'); return; }
+  try {
+    const permission = await Notification.requestPermission();
+    await refreshNotificationAccessButton();
+    if (permission !== 'granted') { toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('Ultimate Esthetics Clinic Desk', {
+      body: 'Notifications are enabled on this device. Keep this device signed in to receive in-app alerts.',
+      icon: '/admin/icon.svg',
+      tag: 'clinic-notification-enabled'
+    });
+    toast('Browser notification access enabled on this device.');
+  } catch (e) { toast('Could not enable notifications on this device.'); }
+}
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'notificationAccessBtn') enableClinicNotifications();
+});
+refreshNotificationAccessButton();
 function updateSoundButton() {
   const b = $('#soundBtn');
   if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
