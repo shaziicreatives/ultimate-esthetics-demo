@@ -914,15 +914,63 @@ function openPatientEditor(patientId){
 }
 function openInvoiceEditor(id){
  const v=state.visits.find(x=>Number(x.id)===Number(id));if(!v){toast('Invoice could not be found.');return;}
- const procedures=(v.procedures||[]).map(p=>'<div class="proc-line"><input class="inp" name="editProcedure" value="'+esc(p.procedure_name)+'" required><input class="inp" name="editFee" type="number" min="0" step="1" value="'+Number(p.fee||0)+'" required><button class="btn bad sm" type="button" data-remove-edit-procedure>×</button></div>').join('');
- const modal='<div class="visit-modal" id="invoiceEditModal"><section class="visit-card"><div class="card-head"><div><h2>Edit invoice</h2><small class="muted">'+esc(v.invoice_number||'Invoice')+' · '+esc(v.patient_name||'Patient')+'</small></div><button class="btn sm" type="button" data-close-invoice-edit>Close</button></div><form id="invoiceEditForm" data-id="'+v.id+'" data-pid="'+v.patient_id+'" class="col" style="gap:10px"><div class="card"><h2>Patient details</h2><div class="two-col"><div class="field"><label>Patient name</label><input class="inp" id="editPatientName" value="'+esc(v.patient_name||'')+'" required></div><div class="field"><label>Phone number</label><input class="inp" id="editPatientPhone" type="tel" value="'+esc(v.phone||'')+'" required></div></div></div><div class="card"><div class="card-head"><h2>Treatment charges</h2><button class="btn sm" type="button" id="addEditProcedure">+ Add treatment</button></div><div id="editInvoiceProcedures">'+procedures+'</div><div class="field"><label>Subtotal (Rs)</label><input class="inp" id="editInvoiceSubtotal" type="number" min="0" step="1" value="'+Number(v.subtotal_amount||v.total_amount||0)+'" required></div><div class="two-col"><div class="field"><label>Discount type</label><select class="inp" id="editInvoiceDiscountType"><option value="none" '+(v.discount_type==='none'?'selected':'')+'>No discount</option><option value="percentage" '+(v.discount_type==='percentage'?'selected':'')+'>Percentage (%)</option><option value="fixed" '+(v.discount_type==='fixed'?'selected':'')+'>Fixed amount (Rs)</option></select></div><div class="field"><label>Discount value</label><input class="inp" id="editInvoiceDiscountValue" type="number" min="0" step="1" value="'+Number(v.discount_value||0)+'"></div></div><div class="field"><label>Visit notes</label><textarea class="inp" id="editInvoiceNotes" rows="3">'+esc(v.notes||'')+'</textarea></div><div class="alert-item info">Already received: <b>Rs '+Number(v.received||0).toLocaleString('en-PK')+'</b>. Existing payments will not be changed.</div><div class="err" id="editInvoiceErr" hidden></div><div class="actions"><button class="btn pri" id="saveInvoiceEdit" type="submit">Save invoice changes</button></div></div></form></section></div>';
- document.body.insertAdjacentHTML('beforeend',modal);
- const box=document.getElementById('editInvoiceProcedures'),subtotal=document.getElementById('editInvoiceSubtotal');
- const recalc=()=>{subtotal.value=[...box.querySelectorAll('[name=editFee]')].reduce((n,x)=>n+Number(x.value||0),0);};
- box.addEventListener('input',e=>{if(e.target.name==='editFee')recalc();});
- document.getElementById('addEditProcedure').addEventListener('click',()=>{box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="editProcedure" placeholder="Treatment" required><input class="inp" name="editFee" type="number" min="0" step="1" value="0" required><button class="btn bad sm" type="button" data-remove-edit-procedure>×</button></div>');recalc();});
- document.getElementById('invoiceEditModal').addEventListener('click',e=>{if(e.target.closest('[data-close-invoice-edit]'))document.getElementById('invoiceEditModal').remove();const rm=e.target.closest('[data-remove-edit-procedure]');if(rm){rm.closest('.proc-line').remove();recalc();}});
+ const appointment=state.appts.find(x=>Number(x.id)===Number(v.appointment_id));
+ if(!appointment){toast('The original checked-in appointment could not be loaded, so this visit cannot be edited safely.');return;}
+ openVisitForm(appointment.id);
+ const modal=$('#visitModal'),form=$('#visitForm');
+ if(!modal||!form)return;
+ form.dataset.editVisit=String(v.id);
+ form.dataset.saved='1';
+ form.dataset.invoiceNumber=v.invoice_number||'';
+ form.dataset.patientId=String(v.patient_id);
+ const title=modal.querySelector('.card-head h2');
+ if(title)title.textContent='Edit patient visit & invoice';
+ const subtitle=modal.querySelector('.card-head small');
+ if(subtitle)subtitle.textContent=(v.invoice_number||'Existing invoice')+' · Update saved visit details';
+ const patientName=modal.querySelector('.who b');
+ if(patientName)patientName.textContent=v.patient_name||appointment.name;
+ const patientMeta=modal.querySelector('.who small');
+ if(patientMeta)patientMeta.textContent='Patient #'+v.patient_id+' · '+prettyPhone(v.phone||appointment.phone);
+ const procBox=$('#visitProcedures');
+ procBox.innerHTML='';
+ (v.procedures&&v.procedures.length?v.procedures:[{procedure_name:appointment.proc||'Treatment',fee:0}]).forEach((p,index)=>{
+  const name=String(p.procedure_name||p.name||'Treatment'),fee=Number(p.fee||0);
+  const row=document.createElement('div');row.className='proc-line';
+  row.innerHTML='<select class="inp" name="procedure" required></select><input class="inp" name="fee" type="number" min="0" step="1" inputmode="numeric" required><button class="btn bad sm remove-procedure" type="button" aria-label="Remove treatment">×</button>';
+  const select=row.querySelector('[name=procedure]');
+  select.innerHTML=procedureSelectOptions(name);
+  if(![...select.options].some(o=>o.value===name)){const opt=document.createElement('option');opt.value=name;opt.textContent=name;select.add(opt);}
+  select.value=name;row.querySelector('[name=fee]').value=String(fee);procBox.appendChild(row);
+ });
+ $('#visitTotal').value=String(Number(v.subtotal_amount??v.total_amount??0));
+ $('#visitDiscountType').value=v.discount_type||'none';
+ $('#visitDiscountValue').value=String(Number(v.discount_value||0));
+ $('#visitNotes').value=v.notes||'';
+ $('#visitFollow').value=v.follow_up_date||'';
+ const alreadyPaid=Number(v.received||0);
+ $('#visitReceived').value='0';$('#visitReceived').disabled=true;
+ $('#visitMethod').disabled=true;
+ const fp=state.financialPatients.find(p=>Number(p.id)===Number(v.patient_id));
+ const outstanding=Math.max(0,Number(v.total_amount||0)-alreadyPaid);
+ const previous=Math.max(0,Number(fp?.balance||0)-outstanding);
+ $('#visitPrevValue').textContent=previous.toLocaleString('en-PK');
+ $('#visitPrevCard').textContent='Rs '+previous.toLocaleString('en-PK');
+ const recalc=()=>{
+  const subtotal=Number($('#visitTotal').value||0),type=$('#visitDiscountType').value,value=Number($('#visitDiscountValue').value||0);
+  const discount=type==='percentage'?Math.round(subtotal*Math.min(value,100)/100):type==='fixed'?Math.min(subtotal,value):0;
+  const net=subtotal-discount,due=previous+net;
+  $('#visitNetTotal').textContent='Rs '+net.toLocaleString('en-PK');
+  $('#visitDiscountDisplay').textContent='-Rs '+discount.toLocaleString('en-PK');
+  $('#visitDue').textContent='Rs '+due.toLocaleString('en-PK');
+  $('#visitRemaining').textContent='Rs '+Math.max(0,due-alreadyPaid).toLocaleString('en-PK');
+ };
+ $('#visitTotal').addEventListener('input',recalc);$('#visitDiscountType').addEventListener('change',recalc);$('#visitDiscountValue').addEventListener('input',recalc);
+ recalc();
+ const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Editing '+(v.invoice_number||'saved invoice')+'. Existing payments (Rs '+alreadyPaid.toLocaleString('en-PK')+') are preserved and will not be charged again.';
+ const save=$('#visitSave');if(save){save.textContent='Save visit changes';save.disabled=false;}
+ modal._renderInvoice?.();
 }
+
 
 function renderNav() {
   const n = pending().length;
@@ -1066,11 +1114,23 @@ document.addEventListener('submit',async e=>{
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='visitForm')return;e.preventDefault();
  const form=e.target,err=$('#visitErr'),btn=$('#visitSave'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value)}));
- if(form.dataset.saved==='1'){err.textContent='This visit has already been saved. The invoice number is '+(form.dataset.invoiceNumber||'assigned')+'.';err.hidden=false;return;}
+ if(form.dataset.editVisit){/* Existing visit is updated through PATCH below; payments are never re-created. */}else if(form.dataset.saved==='1'){err.textContent='This visit has already been saved. The invoice number is '+(form.dataset.invoiceNumber||'assigned')+'.';err.hidden=false;return;}
   const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value),discountType=$('#visitDiscountType').value,discountValue=Number($('#visitDiscountValue').value||0),discountAmount=discountType==='percentage'?Math.round(total*Math.min(discountValue,100)/100):discountType==='fixed'?Math.min(total,discountValue):0,netTotal=total-discountAmount;
  if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+netTotal){err.textContent='Please check the procedure, fee, total, and amount received.';err.hidden=false;return;}
  btn.disabled=true;btn.textContent='Saving…';
- try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}a.invoice_number=r.data.invoice_number;form.dataset.invoiceNumber=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Permanent invoice number: '+r.data.invoice_number;const modal=$('#visitModal');if(modal&&modal._renderInvoice)modal._renderInvoice();const printBtn=document.querySelector('#visitModal [data-act="printinvoice"]');if(printBtn)printBtn.textContent='Print invoice · '+r.data.invoice_number;toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
+ try{
+ let r;
+ if(form.dataset.editVisit){
+  r=await api('/api/admin/visits',{method:'PATCH',body:{visit_id:Number(form.dataset.editVisit),patient_id:Number(form.dataset.patientId||form.dataset.pid),patient_name:state.patients.find(p=>Number(p.id)===Number(form.dataset.patientId||form.dataset.pid))?.name||a.name,patient_phone:state.patients.find(p=>Number(p.id)===Number(form.dataset.patientId||form.dataset.pid))?.phone||a.phone,procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});
+  if(!r.ok){err.textContent=r.data.error||'Unable to update the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit changes';return;}
+  form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+(r.data.invoice_number||form.dataset.invoiceNumber);
+  toast('Invoice '+(r.data.invoice_number||form.dataset.invoiceNumber)+' updated. Existing payments preserved.');$('#visitModal').remove();await loadData();if(state.page==='history')render();return;
+ }else{
+  r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});
+  if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}
+  a.invoice_number=r.data.invoice_number;form.dataset.invoiceNumber=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Permanent invoice number: '+r.data.invoice_number;const modal=$('#visitModal');if(modal&&modal._renderInvoice)modal._renderInvoice();const printBtn=document.querySelector('#visitModal [data-act="printinvoice"]');if(printBtn)printBtn.textContent='Print invoice · '+r.data.invoice_number;toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'.');await loadData();
+ }
+}
  catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
 });
 
