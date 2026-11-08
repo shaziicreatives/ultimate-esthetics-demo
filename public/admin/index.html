@@ -658,7 +658,9 @@ async function boot() {
     }
     showApp();
     await loadData(true);
+    await loadDriveSettings(false);
     await refreshNotificationAccessButton();
+    render();
     updateSoundButton();
     if (!timer) timer = setInterval(() => loadData(false), 8000);
   } catch (e) {
@@ -999,7 +1001,8 @@ function openInvoiceEditor(id){
 function renderNav() {
   const n = pending().length;
   const nav = $('#nav');
-  nav.innerHTML = PAGES.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
+  const pages=state.driveAllowed?[...PAGES,['drive','Google Drive']]:PAGES;
+  nav.innerHTML = pages.map(p => '<button type="button" data-go="' + p[0] + '" class="' + (state.page === p[0] ? 'on' : '') + '">' + p[1] + (p[0] === 'requests' && n ? '<span class="badge num">' + n + '</span>' : '') + '</button>').join('');
   const active = nav.querySelector('button.on');
   if (active && window.matchMedia('(max-width: 900px)').matches) {
     requestAnimationFrame(() => {
