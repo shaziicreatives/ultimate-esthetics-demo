@@ -53,19 +53,32 @@ export async function onRequestPost(context) {
 export async function onRequestPatch({request,env}) {
  const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
  try {
-  const b=await request.json(),id=Number(b.visit_id),subtotal=Number(b.subtotal_amount),discountType=String(b.discount_type||"none"),discountValue=Number(b.discount_value||0),procedures=Array.isArray(b.procedures)?b.procedures:[];
-  if(!id||!Number.isSafeInteger(subtotal)||subtotal<0||!["none","percentage","fixed"].includes(discountType)||!Number.isFinite(discountValue)||discountValue<0||(discountType==="percentage"&&discountValue>100)||(discountType==="fixed"&&!Number.isSafeInteger(discountValue))||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Invoice details are invalid."},400);
+  const b=await request.json(),patientId=Number(b.patient_id),patientName=String(b.patient_name||"").trim(),patientPhone=String(b.patient_phone||"").trim();
+  if(b.patient_id!==undefined&&(!Number.isSafeInteger(patientId)||patientId<1||patientName.length<2||patientName.length>120||patientPhone.replace(/\\D/g,"").length<10||patientPhone.length>24))return json({error:"Enter a valid patient name and phone number."},400);
+  if(b.patient_id!==undefined&&!await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(patientId).first())return json({error:"Patient not found."},404);
+  const id=Number(b.visit_id);
+  if(!id){
+   if(b.patient_id===undefined)return json({error:"Patient or invoice ID is required."},400);
+   await env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId).run();
+   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'patient_edited','patient',?,?)").bind(u.user_id,u.username,patientId,"Patient name and phone updated").run();
+   return json({success:true,patient_id:patientId});
+  }
+  const subtotal=Number(b.subtotal_amount),discountType=String(b.discount_type||"none"),discountValue=Number(b.discount_value||0),procedures=Array.isArray(b.procedures)?b.procedures:[];
+  if(!Number.isSafeInteger(subtotal)||subtotal<0||!["none","percentage","fixed"].includes(discountType)||!Number.isFinite(discountValue)||discountValue<0||(discountType==="percentage"&&discountValue>100)||(discountType==="fixed"&&!Number.isSafeInteger(discountValue))||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Invoice details are invalid."},400);
   if(procedures.reduce((n,p)=>n+Number(p.fee),0)!==subtotal)return json({error:"Subtotal must equal the sum of treatment charges."},400);
   const visit=await env.DB.prepare("SELECT * FROM visits WHERE id=?").bind(id).first();if(!visit)return json({error:"Invoice not found."},404);
+  if(b.patient_id!==undefined&&Number(visit.patient_id)!==patientId)return json({error:"Patient does not match this invoice."},409);
   const discountAmount=discountType==="percentage"?Math.round(subtotal*discountValue/100):discountType==="fixed"?Math.min(subtotal,discountValue):0,total=subtotal-discountAmount;
   const paid=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) amount FROM payments WHERE visit_id=?").bind(id).first();
   if(Number(paid?.amount||0)>total)return json({error:"New invoice total cannot be lower than payments already received."},409);
-  await env.DB.batch([
+  const statements=[
    env.DB.prepare("UPDATE visits SET subtotal_amount=?,discount_type=?,discount_value=?,discount_amount=?,total_amount=?,notes=? WHERE id=?").bind(subtotal,discountType,discountValue,discountAmount,total,String(b.notes||"").slice(0,5000),id),
    env.DB.prepare("DELETE FROM visit_procedures WHERE visit_id=?").bind(id),
    ...procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(id,String(p.name).trim().slice(0,160),Number(p.fee)))
-  ]);
-  await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total).run();
+  ];
+  if(b.patient_id!==undefined)statements.push(env.DB.prepare("UPDATE patients SET name=?,phone=? WHERE id=?").bind(patientName,patientPhone,patientId));
+  await env.DB.batch(statements);
+  await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total+(b.patient_id!==undefined?"; patient profile and booking history updated":"")).run();
   return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:Number(paid?.amount||0),balance:Math.max(0,total-Number(paid?.amount||0))});
  }catch(e){return json({error:"Invoice update failed: "+String(e.message||"database error")},500);}
 }
