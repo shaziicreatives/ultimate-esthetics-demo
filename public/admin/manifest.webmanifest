@@ -1,0 +1,15 @@
+{
+  "id": "/admin/",
+  "name": "Ultimate Esthetics Clinic Desk",
+  "short_name": "Ultimate Clinic",
+  "description": "Clinic management for Ultimate Esthetics",
+  "start_url": "/admin/index.html",
+  "scope": "/admin/",
+  "display": "standalone",
+  "background_color": "#FAF6EE",
+  "theme_color": "#3E3325",
+  "orientation": "any",
+  "icons": [
+    { "src": "/admin/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
