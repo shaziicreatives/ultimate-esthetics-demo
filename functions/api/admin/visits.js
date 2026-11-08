@@ -88,6 +88,6 @@ export async function onRequestPatch({request,env}) {
   if(visit.appointment_id)statements.push(env.DB.prepare("UPDATE appointments SET follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,visit.appointment_id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total+(b.patient_id!==undefined?"; patient profile and booking history updated":"")).run();
-  return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:Number(paid?.amount||0),balance:Math.max(0,total-Number(paid?.amount||0))});
+  return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:receivedAmount,balance:Math.max(0,total-receivedAmount)});
  }catch(e){return json({error:"Invoice update failed: "+String(e.message||"database error")},500);}
 }
