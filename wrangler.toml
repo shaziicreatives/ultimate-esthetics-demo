@@ -12,5 +12,5 @@ database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
 [env.preview]
 [[env.preview.d1_databases]]
 binding = "DB"
-database_name = "ultimate-esthetics-db"
-database_id = "be467d91-4908-40bf-b34b-132466e6d343"
+database_name = "ultimate-esthetics-db-preview"
+database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
