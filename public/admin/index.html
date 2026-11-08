@@ -593,9 +593,6 @@ async function loadData(first) {
   const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
   if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
     playAppointmentAlert(); toast('New website booking request!');
-    if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(reg=>reg.showNotification('New appointment request',{body:'A new patient appointment is waiting in Requests.',icon:'/admin/icon.svg',badge:'/admin/icon.svg',tag:'new-appointment-request',renotify:true,vibrate:[70,45,120,55,190],data:{url:'/admin/index.html'}})).catch(()=>{});
-    }
   }
   seenPendingIds = new Set(pendingIds);
 
@@ -1008,7 +1005,7 @@ document.addEventListener('click', async e => {
   switch (b.dataset.act) {
     case 'visit': b.disabled=false; openVisitForm(id); break;
     case 'editinvoice': b.disabled=false; openInvoiceEditor(id); break;
-    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){playInvoiceReminder();toast('Patient checked in. Invoice is pending — open the form and generate the invoice.');if('serviceWorker' in navigator&&Notification.permission==='granted'){navigator.serviceWorker.ready.then(reg=>reg.showNotification('Invoice pending',{body:'A patient has checked in. Complete the visit form and generate the invoice.',icon:'/admin/icon.svg',tag:'invoice-pending-'+id})).catch(()=>{});}await loadData();}else toast(r.data.error||'Check-in failed');}); break;
+    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){playInvoiceReminder();toast('Patient checked in. Invoice is pending — open the form and generate the invoice.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
     case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in reversed.');await loadData();}else toast(r.data.error||'Update failed');}); break;
     case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
     case 'printinvoice': document.querySelector('#visitModal')?._printInvoice?.(); b.disabled=false; break;
