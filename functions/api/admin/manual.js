@@ -96,9 +96,9 @@ export async function onRequestPost(context) {
     }
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
     const notify = notifyClinicStaff(env, {
-      title: "Appointment added",
-      body: "A new appointment was added to Clinic Desk.",
-      tag: "appointment-added-" + inserted.meta.last_row_id,
+      title: manualInvoice?.payment_only ? "Patient payment received" : "Appointment added",
+      body: manualInvoice?.payment_only ? "A payment was recorded against the patient's existing outstanding invoice." : "A new manual appointment was added to Clinic Desk.",
+      tag: (manualInvoice?.payment_only ? "patient-payment-" : "appointment-added-") + inserted.meta.last_row_id,
       url: "/admin/index.html"
     });
     if (context.waitUntil) context.waitUntil(notify); else await notify;
