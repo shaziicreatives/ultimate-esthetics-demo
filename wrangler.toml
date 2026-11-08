@@ -2,8 +2,15 @@ name = "ultimate-esthetics-demo"
 compatibility_date = "2026-03-01"
 pages_build_output_dir = "public"
 
-[env.preview]
-[[env.preview.d1_databases]]
+# Production database binding
+[[d1_databases]]
 binding = "DB"
 database_name = "ultimate-esthetics-db-preview"
 database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
+
+# Preview deployments use the previous production database
+[env.preview]
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "ultimate-esthetics-db"
+database_id = "be467d91-4908-40bf-b34b-132466e6d343"
