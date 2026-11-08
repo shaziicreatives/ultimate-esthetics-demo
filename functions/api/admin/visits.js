@@ -22,20 +22,27 @@ export async function onRequestGet({request,env}) {
 export async function onRequestPost({request,env}) {
  const u=await session(request,env);if(!u||u.role==="doctor")return json({error:"Unauthorized"},401);
  try {
-  const b=await request.json(), appointmentId=Number(b.appointment_id), total=Number(b.total_amount), procedures=Array.isArray(b.procedures)?b.procedures:[];
-  if(!appointmentId||!Number.isSafeInteger(total)||total<0||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Visit details invalid"},400);
+  const b=await request.json(), appointmentId=Number(b.appointment_id), subtotal=Number(b.subtotal_amount ?? b.total_amount), discountType=String(b.discount_type||"none"), discountValue=Number(b.discount_value||0), procedures=Array.isArray(b.procedures)?b.procedures:[];
+  if(!appointmentId||!Number.isSafeInteger(subtotal)||subtotal<0||!["none","percentage","fixed"].includes(discountType)||!Number.isFinite(discountValue)||discountValue<0||(discountType==="percentage"&&discountValue>100)||(discountType==="fixed"&&!Number.isSafeInteger(discountValue))||!procedures.length||procedures.some(p=>!String(p.name||"").trim()||!Number.isSafeInteger(Number(p.fee))||Number(p.fee)<0))return json({error:"Visit details invalid"},400);
+  const discountAmount=discountType==="percentage"?Math.round(subtotal*discountValue/100):discountType==="fixed"?Math.min(subtotal,discountValue):0;
+  const total=subtotal-discountAmount;
   const a=await env.DB.prepare("SELECT * FROM appointments WHERE id=?").bind(appointmentId).first();if(!a)return json({error:"Appointment not found"},404);
   if(a.status!=='confirmed'||!a.checked_in_at)return json({error:"Please check in the patient from the Patients page before saving the visit."},409);
+  const existingVisit=await env.DB.prepare("SELECT id,invoice_number FROM visits WHERE appointment_id=?").bind(appointmentId).first();
+  if(existingVisit)return json({error:"An invoice already exists for this visit.",visit_id:existingVisit.id,invoice_number:existingVisit.invoice_number},409);
   const old=await env.DB.prepare("SELECT COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=?),0)-COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=?),0) balance").bind(a.patient_id,a.patient_id).first();
   const previousBalance=Math.max(0,Number(old?.balance||0)), received=Number(b.received_now||0);
   if(!Number.isSafeInteger(received)||received<0||received>total+previousBalance)return json({error:"Received amount cannot exceed the previous balance plus this visit bill."},400);
-  const inserted=await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,follow_up_date) VALUES(?,?,?,?,?,?,?)").bind(a.id,a.patient_id,a.doctor_id,u.user_id,String(b.notes||"").slice(0,5000),total,b.follow_up_date||null).run();
+  const seq=await env.DB.prepare("UPDATE invoice_sequence SET last_number=last_number+1 WHERE id=1 RETURNING last_number").first();
+  if(!seq)return json({error:"Invoice sequence is not configured. Apply database migration 0007 first."},503);
+  const invoiceNumber="UE-INV-"+String(seq.last_number);
+  const inserted=await env.DB.prepare("INSERT INTO visits(appointment_id,patient_id,doctor_id,user_id,notes,total_amount,follow_up_date,invoice_number,subtotal_amount,discount_type,discount_value,discount_amount) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)").bind(a.id,a.patient_id,a.doctor_id,u.user_id,String(b.notes||"").slice(0,5000),total,b.follow_up_date||null,invoiceNumber,subtotal,discountType,discountValue,discountAmount).run();
   const visitId=inserted.meta.last_row_id;
   const statements=procedures.map(p=>env.DB.prepare("INSERT INTO visit_procedures(visit_id,procedure_name,fee) VALUES(?,?,?)").bind(visitId,String(p.name).trim().slice(0,160),Number(p.fee)));
   if(received)statements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,a.patient_id,received,String(b.payment_method||"cash").slice(0,30),String(b.payment_reference||"").slice(0,120)||null,u.user_id));
   statements.push(env.DB.prepare("UPDATE appointments SET status='done',follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,a.id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'visit_saved','visit',?,?)").bind(u.user_id,u.username,visitId,"Previous "+previousBalance+", bill "+total+", received "+received).run();
-  return json({success:true,visit_id:visitId,previous_balance:previousBalance,balance:previousBalance+total-received},201);
+  return json({success:true,visit_id:visitId,invoice_number:invoiceNumber,subtotal_amount:subtotal,discount_type:discountType,discount_value:discountValue,discount_amount:discountAmount,total_amount:total,previous_balance:previousBalance,balance:previousBalance+total-received},201);
  } catch(e){return json({error:"Visit save failed: "+String(e.message||"database error")},500);}
 }
