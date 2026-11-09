@@ -4,8 +4,8 @@ import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 export async function onRequestGet({request,env}) {
  const u=await getAdminSession(request,env); if(!u)return json({error:"Unauthorized"},401);
- const doctorFilter=u.role==="doctor"?"WHERE v.doctor_id=?":"";
- const rows=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) received FROM visits v JOIN patients p ON p.id=v.patient_id JOIN doctors d ON d.id=v.doctor_id "+doctorFilter+" ORDER BY v.created_at DESC LIMIT 500").bind(...(u.role==="doctor"?[u.doctor_id]:[])).all();
+ // Doctors may review prior invoices for continuity of care; all write operations remain restricted to authorized staff.
+ const rows=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) received FROM visits v JOIN patients p ON p.id=v.patient_id JOIN doctors d ON d.id=v.doctor_id ORDER BY v.created_at DESC LIMIT 500").all();
  const visits=[];
  for(const row of rows.results){
   const procedures=await env.DB.prepare("SELECT procedure_name,fee FROM visit_procedures WHERE visit_id=?").bind(row.id).all();
