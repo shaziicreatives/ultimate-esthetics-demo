@@ -9,6 +9,7 @@ export async function onRequestGet({request,env}){
   const missing_config=["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_DRIVE_TOKEN_KEY"].filter(key=>!env[key]);
   const picker_missing=["GOOGLE_API_KEY","GOOGLE_APP_ID"].filter(key=>!env[key]);
   if(!c)return json({connected:false,configured:missing_config.length===0,missing_config,picker_configured:picker_missing.length===0,picker_missing,message:"Connect a Google account to continue."});
+  if(c.owner_user_id!==user.user_id)return json({error:"This Drive connection belongs to another Owner account."},403);
   const url=new URL(request.url),parent=url.searchParams.get("parent");
   if(parent){
    if(parent!=="root"&&!c.root_folder_id)return json({error:"Choose a clinic root folder first."},409);
@@ -32,6 +33,7 @@ export async function onRequestPost({request,env}){
   if(!c)return json({error:"Connect Google Drive first."},409);
   if(c.owner_user_id!==user.user_id)return json({error:"This Drive connection belongs to another Owner account."},403);
   if(action==="test_connection"){
+   const tokens=await decryptTokens(c.encrypted_tokens,env);
    const check=await googleRequest(env,tokens,"/drive/v3/about?"+new URLSearchParams({fields:"user"}).toString());
    return json({success:true,email:check.data.user?.emailAddress||c.google_email});
   }
@@ -54,10 +56,16 @@ export async function onRequestPost({request,env}){
   }
   if(action==="select_root"){
    const id=String(b.folder_id||"").trim();if(!id)return json({error:"Select a folder."},400);
-   const found=await googleRequest(env,tokens,"/drive/v3/files/"+encodeURIComponent(id)+"?"+new URLSearchParams({fields:"id,name,mimeType,trashed",supportsAllDrives:"true"}).toString());
+   const found=await googleRequest(env,tokens,"/drive/v3/files/"+encodeURIComponent(id)+"?"+new URLSearchParams({fields:"id,name,mimeType,trashed,driveId",supportsAllDrives:"true"}).toString());
    if(found.data.mimeType!=="application/vnd.google-apps.folder"||found.data.trashed)return json({error:"Choose an accessible Google Drive folder."},400);
-   await env.DB.prepare("UPDATE google_drive_connections SET root_folder_id=?,root_folder_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=1").bind(found.data.id,found.data.name).run();
-   return json({success:true,folder:{id:found.data.id,name:found.data.name}});
+   let selectedDriveId=found.data.driveId||null,selectedDriveName=null;
+   if(selectedDriveId){
+    const drive=await googleRequest(env,tokens,"/drive/v3/drives/"+encodeURIComponent(selectedDriveId)+"?"+new URLSearchParams({fields:"id,name"}).toString());
+    selectedDriveName=drive.data.name||null;
+   }
+   await env.DB.prepare("UPDATE google_drive_connections SET root_folder_id=?,root_folder_name=?,selected_drive_id=?,selected_drive_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=1")
+    .bind(found.data.id,found.data.name,selectedDriveId,selectedDriveName).run();
+   return json({success:true,folder:{id:found.data.id,name:found.data.name,drive_id:selectedDriveId,drive_name:selectedDriveName}});
   }
   if(action==="create_folder"){
    if(!c.root_folder_id)return json({error:"Create or select the clinic root folder first."},409);
