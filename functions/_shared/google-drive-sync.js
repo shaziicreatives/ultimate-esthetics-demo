@@ -150,21 +150,33 @@ export async function syncVisitToDrive(env,visitId){
   const tokens=await loadTokens(env,connection);
   const patient={id:visit.patient_id,name:visit.patient_name,phone:visit.patient_phone};
   const folder=await invoiceCollection(env,tokens,connection);
-  const [procedures,payments]=await Promise.all([
+  const [procedures,payments,previous]=await Promise.all([
    env.DB.prepare("SELECT procedure_name,fee FROM visit_procedures WHERE visit_id=? ORDER BY id").bind(visit.id).all(),
-   env.DB.prepare("SELECT amount,method,reference,created_at FROM payments WHERE visit_id=? ORDER BY created_at,id").bind(visit.id).all()
+   env.DB.prepare("SELECT py.amount,py.method,py.reference,py.created_at,u.username received_by FROM payments py LEFT JOIN users u ON u.id=py.received_by WHERE py.visit_id=? ORDER BY py.created_at,py.id").bind(visit.id).all(),
+   env.DB.prepare("SELECT COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=? AND id<>?),0)-COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=? AND (visit_id IS NULL OR visit_id<>?)),0) balance").bind(visit.patient_id,visit.id,visit.patient_id,visit.id).first()
   ]);
   {
-   const lines=["ULTIMATE ESTHETICS CLINIC","PATIENT INVOICE","Invoice: "+(visit.invoice_number||"—"),"Patient: "+patient.name+"  Patient ID: "+patient.id,"Phone: "+patient.phone,"Visit date: "+(visit.visit_date||visit.created_at||"—"),"Doctor: "+(visit.doctor_name||"—"),"","Treatment / Services:"];
-   (procedures.results||[]).forEach(p=>lines.push(p.procedure_name+" - Rs "+Number(p.fee||0).toLocaleString("en-PK")));
-   lines.push("","Subtotal: Rs "+Number(visit.subtotal_amount??visit.total_amount??0).toLocaleString("en-PK"),
-    "Discount: Rs "+Number(visit.discount_amount||0).toLocaleString("en-PK"),
-    "Total: Rs "+Number(visit.total_amount||0).toLocaleString("en-PK"));
-   (payments.results||[]).forEach(p=>lines.push("Payment: Rs "+Number(p.amount||0).toLocaleString("en-PK")+" ("+p.method+")"));
-   lines.push("","Notes: "+(visit.notes||"—"),"Follow-up: "+(visit.follow_up_date||"—"));
-   const invoiceLabel=clean(visit.invoice_number||("Visit-"+visit.id)).replace(/[^A-Za-z0-9_-]+/g,"_");
+   const paymentRows=payments.results||[];
+   const paidAmount=paymentRows.reduce((sum,p)=>sum+Number(p.amount||0),0);
+   const previousBalance=Math.max(0,Number(previous?.balance||0));
+   const invoiceTotal=Number(visit.total_amount||0);
+   const data={
+    invoice_number:visit.invoice_number||("Visit-"+visit.id),
+    patient_name:patient.name,patient_id:patient.id,patient_phone:patient.phone,
+    doctor_name:visit.doctor_name||"—",
+    date:visit.visit_date||String(visit.created_at||"").slice(0,10),
+    time:visit.visit_time||String(visit.created_at||"").slice(11,16),
+    procedures:procedures.results||[],
+    subtotal_amount:Number(visit.subtotal_amount??invoiceTotal),
+    total_amount:invoiceTotal,previous_balance:previousBalance,
+    paid_amount:paidAmount,remaining_balance:Math.max(0,previousBalance+invoiceTotal-paidAmount),
+    payment_methods:[...new Set(paymentRows.map(p=>p.method).filter(Boolean))].join(", ")||"—",
+    payment_entries:paymentRows,
+    notes:visit.notes||"",follow_up_date:visit.follow_up_date||""
+   };
+   const invoiceLabel=clean(data.invoice_number).replace(/[^A-Za-z0-9_-]+/g,"_");
    const phoneLabel=String(patient.phone||"").replace(/\D/g,"")||("Patient-"+patient.id);
-   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,phoneLabel+"_"+invoiceLabel+".pdf","application/pdf",makePdf(lines));
+   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,phoneLabel+"_"+invoiceLabel+".pdf","application/pdf",makeInvoicePdf(data));
   }
   await markJob(env,job.id,"saved");
   await env.DB.prepare("UPDATE google_drive_connections SET last_sync_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=1").run();
