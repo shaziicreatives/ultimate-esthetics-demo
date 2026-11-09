@@ -53,7 +53,7 @@ export async function onRequestPost({request,env}){
   }
   if(action==="select_root"){
    const id=String(b.folder_id||"").trim();if(!id)return json({error:"Select a folder."},400);
-   const found=await googleRequest(env,tokens,"/drive/v3/files/"+encodeURIComponent(id)+"?"+new URLSearchParams({fields:"id,name,mimeType,trashed"}).toString());
+   const found=await googleRequest(env,tokens,"/drive/v3/files/"+encodeURIComponent(id)+"?"+new URLSearchParams({fields:"id,name,mimeType,trashed",supportsAllDrives:"true"}).toString());
    if(found.data.mimeType!=="application/vnd.google-apps.folder"||found.data.trashed)return json({error:"Choose an accessible Google Drive folder."},400);
    await env.DB.prepare("UPDATE google_drive_connections SET root_folder_id=?,root_folder_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=1").bind(found.data.id,found.data.name).run();
    return json({success:true,folder:{id:found.data.id,name:found.data.name}});
@@ -66,7 +66,7 @@ export async function onRequestPost({request,env}){
     const exists=await env.DB.prepare("SELECT folder_id FROM google_drive_patient_folders WHERE folder_id=? UNION SELECT folder_id FROM google_drive_visit_folders WHERE folder_id=?").bind(parent,parent).first();
     if(!exists)return json({error:"Parent folder is not a clinic-managed folder."},403);
    }
-   const made=await folderRequest(env,tokens,"POST",{name,mimeType:"application/vnd.google-apps.folder",parents:[parent]});
+   const made=await googleRequest(env,tokens,"/drive/v3/files?supportsAllDrives=true",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/vnd.google-apps.folder",parents:[parent]})});
    return json({success:true,folder:{id:made.data.id,name:made.data.name}});
   }
   return json({error:"Unsupported Google Drive action."},400);
