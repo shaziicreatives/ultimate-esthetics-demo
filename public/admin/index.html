@@ -647,6 +647,15 @@ function showLogin() {
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
+function showDriveOAuthResult(){
+ const params=new URLSearchParams(location.search),status=params.get('drive');
+ if(!status)return;
+ if(status==='connected')toast('Google Drive connected. Select the clinic folder to begin syncing.');
+ else if(status==='oauth_error')toast(params.get('message')||'Google authorization did not finish. Please try connecting again.');
+ params.delete('drive');params.delete('message');
+ const query=params.toString();
+ history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
+}
 let previewSeedPromise = null;
 async function ensurePreviewSeed() {
   const host = location.hostname;
@@ -693,6 +702,7 @@ async function boot(afterLogin = false) {
     await loadDriveSettings(false);
     await refreshNotificationAccessButton();
     render();
+    showDriveOAuthResult();
     updateSoundButton();
     if (!timer) timer = setInterval(() => loadData(false), 8000);
     return true;
