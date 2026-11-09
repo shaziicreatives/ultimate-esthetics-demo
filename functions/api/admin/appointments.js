@@ -1,5 +1,6 @@
 import { getAdminSession } from "../../_shared/admin-session.js";
 import { notifyClinicStaff } from "../../_shared/web-push.js";
+import { syncPatientToDrive } from "../../_shared/google-drive-sync.js";
 export async function onRequestGet(context) {
     try {
         const { env, request } = context;
@@ -81,6 +82,9 @@ export async function onRequestPatch(context) {
         const updated = await env.DB.prepare(
             "UPDATE appointments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
         ).bind(status, id).run();
+        // Appointment status is part of the patient's Drive record.
+        const driveSync = syncPatientToDrive(env, before.patient_id);
+        if (context.waitUntil) context.waitUntil(driveSync); else await driveSync;
         await env.DB.prepare(
             "INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, ?, 'appointment', ?, ?, ?)"
         ).bind(session.user_id, session.username, "appointment_status", id, before.status + " -> " + status, request.headers.get("CF-Connecting-IP") || "").run();
