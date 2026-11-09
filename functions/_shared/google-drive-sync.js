@@ -180,8 +180,8 @@ export async function syncVisitToDrive(env,visitId){
     paid_amount:paidAmount,remaining_balance:Math.max(0,previousBalance+invoiceTotal-paidAmount),
     payment_methods:[...new Set(paymentRows.map(p=>p.method).filter(Boolean))].join(", ")||"—",
     payment_entries:paymentRows,
-    notes:String(visit.notes||"").split("\\n\\nAdditional notes:\\n")[0],
-    extra_notes:String(visit.notes||"").includes("\\n\\nAdditional notes:\\n")?String(visit.notes).split("\\n\\nAdditional notes:\\n").slice(1).join("\\n\\nAdditional notes:\\n"):"",
+    notes:String(visit.notes||"").split("\n\nAdditional notes:\n")[0],
+    extra_notes:String(visit.notes||"").includes("\n\nAdditional notes:\n")?String(visit.notes).split("\n\nAdditional notes:\n").slice(1).join("\n\nAdditional notes:\n"):"",
     follow_up_date:visit.follow_up_date||""
    };
    const invoiceLabel=clean(data.invoice_number).replace(/[^A-Za-z0-9_-]+/g,"_");
