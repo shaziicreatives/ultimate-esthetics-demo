@@ -9,9 +9,10 @@ function makeInvoicePdf(data){
  const W=595,H=842,ops=[];
  const esc=value=>pdfEscape(value);
  const money=value=>"Rs "+Number(value||0).toLocaleString("en-PK");
- const rect=(x,y,w,h,color)=>ops.push(color+" rg "+x+" "+y+" "+w+" "+h+" re f");
- const line=(x1,y1,x2,y2,color="#E8D4B8",width=1)=>ops.push(color+" RG "+width+" w "+x1+" "+y1+" m "+x2+" "+y2+" l S");
- const txt=(x,y,value,size=10,color="#24180E",font="F1")=>ops.push(color+" rg BT /"+font+" "+size+" Tf "+x+" "+y+" Td ("+esc(value)+") Tj ET");
+ const pdfColor=hex=>{const h=String(hex||"#000000").replace("#","");return [0,2,4].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(" ");};
+ const rect=(x,y,w,h,color)=>ops.push(pdfColor(color)+" rg "+x+" "+y+" "+w+" "+h+" re f");
+ const line=(x1,y1,x2,y2,color="#E8D4B8",width=1)=>ops.push(pdfColor(color)+" RG "+width+" w "+x1+" "+y1+" m "+x2+" "+y2+" l S");
+ const txt=(x,y,value,size=10,color="#24180E",font="F1")=>ops.push(pdfColor(color)+" rg BT /"+font+" "+size+" Tf "+x+" "+y+" Td ("+esc(value)+") Tj ET");
  const wrap=(value,max=74)=>{const words=String(value??"").split(/\s+/),out=[];let row="";for(const word of words){if((row+" "+word).trim().length>max&&row){out.push(row);row=word;}else row=(row+" "+word).trim();}if(row)out.push(row);return out;};
  const dark="#4B3016",gold="#D6A85F",cream="#FFF5E6",ink="#24180E",muted="#6F6254";
  rect(0,0,W,H,"#FFFCF7");rect(0,744,W,98,cream);rect(24,744,4,80,gold);
