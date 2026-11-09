@@ -27,7 +27,7 @@ async function uploadBackup(env,tokens,parent,name,bytes){
  return result.data;
 }
 async function buildSnapshot(env){
- const [users,doctors,patients,appointments,visits,procedures,payments,notes,tokens,counters,invoices,permissions]=await Promise.all([
+ const [users,doctors,patients,appointments,visits,procedures,payments,notes,tokens,counters,invoices,permissions,activity]=await Promise.all([
   safeRows(env,"SELECT id,username,email,role,doctor_id,is_active,first_name,last_name,created_at,updated_at FROM users ORDER BY id"),
   safeRows(env,"SELECT * FROM doctors ORDER BY id"),
   safeRows(env,"SELECT * FROM patients ORDER BY id"),
@@ -39,7 +39,8 @@ async function buildSnapshot(env){
   safeRows(env,"SELECT * FROM appointment_daily_tokens ORDER BY appointment_id"),
   safeRows(env,"SELECT * FROM daily_token_counters ORDER BY clinic_date"),
   safeRows(env,"SELECT * FROM invoice_sequence ORDER BY id"),
-  safeRows(env,"SELECT * FROM user_permissions ORDER BY user_id,permission")
+  safeRows(env,"SELECT * FROM user_permissions ORDER BY user_id,permission"),
+  safeRows(env,"SELECT id,user_id,username,action,entity,entity_id,details,created_at FROM activity_log ORDER BY id")
  ]);
  const data={
   backup_format:"ultimate-esthetics-clinic-json-v1",
@@ -49,7 +50,7 @@ async function buildSnapshot(env){
   security_note:"Password hashes, password salts, session tokens, OAuth tokens, API secrets, login attempts and push subscription endpoints are intentionally excluded.",
   tables:{
    users,doctors,patients,appointments,visits,visit_procedures:procedures,payments,patient_notes:notes,
-   appointment_daily_tokens:tokens,daily_token_counters:counters,invoice_sequence:invoices,user_permissions:permissions
+   appointment_daily_tokens:tokens,daily_token_counters:counters,invoice_sequence:invoices,user_permissions:permissions,activity_log:activity
   }
  };
  const counts=Object.fromEntries(Object.entries(data.tables).map(([name,rows])=>[name,rows.length]));
