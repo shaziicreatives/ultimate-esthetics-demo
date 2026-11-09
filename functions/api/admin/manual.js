@@ -22,7 +22,7 @@ export async function onRequestPost(context) {
     const date = String(body.date || "");
     const time = String(body.time || "");
     const treatment = String(body.treatment || "").trim();
-    const followUpDate = String(body.follow_up_date || "").trim();
+    let followUpDate = String(body.follow_up_date || "").trim();
     if (followUpDate && !/^\d{4}-\d{2}-\d{2}$/.test(followUpDate)) return json({ error: "Follow-up date is invalid." }, 400);
     if (!name || !validPhone || digits.length !== 10 || !Number.isSafeInteger(doctorId) || doctorId < 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ error: "A valid Pakistani mobile number, patient name, doctor, date, and time are required." }, 400);
     const doctor = await env.DB.prepare("SELECT id FROM doctors WHERE id = ? AND is_active = 1").bind(doctorId).first();
