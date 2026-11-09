@@ -941,7 +941,7 @@ function viewSecurity() {
  '<section class="card"><div class="card-head"><h2>Login history</h2></div>'+logRows('logins',live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+(x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'<small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).length?(securityShowAll.sessions?live.sessions:live.sessions.slice(0,8)).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||"IP unavailable")+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join(''):'<div class="empty">No active sessions.</div>')+((live.sessions||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="sessions">'+(securityShowAll.sessions?'Show less':'Show all ('+live.sessions.length+')')+'</button>':'')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Activity log</h2></div>'+logRows('activity',live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'<small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
- '<section class="card wide"><div class="card-head"><h2>Database backup</h2><span class="pill warn">Setup required</span></div><b>Google Drive backup &amp; document storage</b><p class="hint" style="margin-top:6px">Google Drive settings ab Security ke andar hain. Connection, clinic folder, automatic patient/invoice saving aur sync history yahan manage karein.</p>'+(state.driveAllowed?'<button class="btn pri sm" type="button" data-security-drive-toggle style="margin-top:12px">'+(state.securityDriveOpen?'Hide Google Drive settings':'Open Google Drive settings')+'</button>':'<small class="hint" style="display:block;margin-top:10px">Google Drive settings are available to the Owner account only.</small>')+'</section>'+(state.securityDriveOpen&&state.driveAllowed?'<div class="wide">'+viewDrive()+'</div>':'')+
+ '<section class="card wide"><div class="card-head"><h2>Google Drive backup &amp; document storage</h2><span class="pill info">Owner only</span></div><b>Google Drive backup &amp; document storage</b><p class="hint" style="margin-top:6px">Google Drive settings ab Security ke andar hain. Connection, clinic folder, automatic patient/invoice saving aur sync history yahan manage karein.</p>'+(state.driveAllowed?'<button class="btn pri sm" type="button" data-security-drive-toggle style="margin-top:12px">'+(state.securityDriveOpen?'Hide Google Drive settings':'Open Google Drive settings')+'</button>':'<small class="hint" style="display:block;margin-top:10px">Google Drive settings are available to the Owner account only.</small>')+'</section>'+(state.securityDriveOpen&&state.driveAllowed?'<div class="wide">'+viewDrive()+'</div>':'')+
  '</div>';
 }
 function viewHistory() {
@@ -1064,18 +1064,69 @@ function renderNav() {
   }
 }
 
+let driveAutoRefreshTimer=null;
 async function loadDriveSettings(redraw=true){
  try{
   const r=await api('/api/admin/drive');
   state.driveAllowed=r.status!==403;
   state.driveData=r.data||{};
   if(!r.ok&&r.status>=500)state.driveData.migration_required=true;
-  if(r.ok&&state.driveData.connected){const q=await api('/api/admin/drive/sync');state.driveJobs=q.ok?(q.data.jobs||[]):[];const folders=await api('/api/admin/drive?parent=root');state.driveFolders=folders.ok?(folders.data.folders||[]):[];}else{state.driveJobs=[];state.driveFolders=[];}
+  if(r.ok&&state.driveData.connected){
+   const q=await api('/api/admin/drive/sync');
+   state.driveJobs=q.ok?(q.data.jobs||[]):[];
+   state.driveFiles=q.ok?(q.data.files||[]):[];
+   const folders=await api('/api/admin/drive?parent=root');
+   state.driveFolders=folders.ok?(folders.data.folders||[]):[];
+   if(!driveAutoRefreshTimer&&state.driveAllowed){
+    driveAutoRefreshTimer=setInterval(()=>{if(state.driveAllowed&&state.driveData?.connected)loadDriveSettings(false).catch(()=>{});},45000);
+   }
+  }else{
+   state.driveJobs=[];state.driveFiles=[];state.driveFolders=[];
+  }
  }catch(e){
-  if(e && e.message==='unauthorized')throw e;
-  state.driveAllowed=true;state.driveData={migration_required:true};
+  if(e&&e.message==='unauthorized')throw e;
+  state.driveAllowed=true;state.driveData={migration_required:true};state.driveJobs=[];state.driveFiles=[];state.driveFolders=[];
  }
  if(redraw)render();
+}
+async function loadGooglePickerLibrary(){
+ await new Promise((resolve,reject)=>{
+  const load=()=>{try{window.gapi.load('picker',{callback:resolve,onerror:()=>reject(new Error('Google Picker could not load.'))});}catch(error){reject(error);}};
+  if(window.gapi){load();return;}
+  const script=document.createElement('script');script.src='https://apis.google.com/js/api.js';script.async=true;
+  script.onload=load;script.onerror=()=>reject(new Error('Could not load Google Picker from Google.'));
+  document.head.appendChild(script);
+ });
+}
+async function openGoogleDrivePicker(){
+ const response=await api('/api/admin/drive/picker');
+ if(!response.ok)throw new Error(response.data.error||'Google Drive Picker is not configured.');
+ const config=response.data;
+ await loadGooglePickerLibrary();
+ const picker=window.google.picker;
+ const folders=new picker.DocsView(picker.ViewId.FOLDERS);
+ folders.setIncludeFolders(true);
+ folders.setSelectFolderEnabled(true);
+ folders.setMimeTypes('application/vnd.google-apps.folder');
+ const dialog=new picker.PickerBuilder()
+  .setAppId(String(config.app_id))
+  .setDeveloperKey(config.developer_key)
+  .setOAuthToken(config.access_token)
+  .setOrigin(window.location.protocol+'//'+window.location.host)
+  .addView(folders)
+  .setTitle('Choose the clinic Google Drive folder')
+  .setCallback(async data=>{
+   if(data[picker.Response.ACTION]!==picker.Action.PICKED)return;
+   const selected=(data[picker.Response.DOCUMENTS]||[])[0];
+   if(!selected?.id){toast('No folder was selected.');return;}
+   try{
+    const saved=await api('/api/admin/drive',{method:'POST',body:{action:'select_root',folder_id:selected.id}});
+    if(!saved.ok)throw new Error(saved.data.error||'Could not select this Drive folder.');
+    toast('Clinic Drive folder selected: '+(selected.name||'Google Drive folder'));
+    await loadDriveSettings(true);
+   }catch(error){toast(error.message||'Could not save selected Drive folder.');}
+  }).build();
+ dialog.setVisible(true);
 }
 async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
@@ -1091,14 +1142,34 @@ document.addEventListener('click',async e=>{
  b.disabled=true;
  try{
   if(action==='refresh'){await loadDriveSettings(true);return;}
+  if(action==='browse-root'){await openGoogleDrivePicker();return;}
   const path=(action==='retry'||action==='backfill')?'/api/admin/drive/sync':'/api/admin/drive';
-  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}:action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}:action==='retry'?{job_id:Number(b.dataset.job)}:action==='backfill'?{action:'backfill',after_visit_id:state.driveBackfill.after_visit_id,after_patient_id:state.driveBackfill.after_patient_id}:{action:'disconnect'};
-  const r=await api(path,{method:'POST',body});
-  if(!r.ok)throw new Error(r.data.error||'Google Drive action failed.');
-  if(action==='backfill'){state.driveBackfill={after_visit_id:r.data.next_after_visit_id,after_patient_id:r.data.next_after_patient_id,has_more:r.data.has_more};toast('Scheduled '+r.data.scheduled_visits+' visits and '+r.data.scheduled_patients+' patients.'+(r.data.has_more?' Click Sync existing records again for the next batch.':' Existing records backfill has been scheduled.'));}
-  else toast(r.data.message||'Google Drive settings updated.');
+  if(action==='backfill'){
+   let cursor=state.driveBackfill||{after_visit_id:0,after_patient_id:0,has_more:true};
+   let totalVisits=0,totalPatients=0,rounds=0,hasMore=true;
+   while(hasMore&&rounds<25){
+    const result=await api(path,{method:'POST',body:{action:'backfill',after_visit_id:cursor.after_visit_id,after_patient_id:cursor.after_patient_id}});
+    if(!result.ok)throw new Error(result.data.error||'Could not start Drive backfill.');
+    totalVisits+=Number(result.data.scheduled_visits||0);
+    totalPatients+=Number(result.data.scheduled_patients||0);
+    cursor={after_visit_id:result.data.next_after_visit_id,after_patient_id:result.data.next_after_patient_id,has_more:!!result.data.has_more};
+    hasMore=cursor.has_more;rounds++;
+    if(hasMore)await new Promise(resolve=>setTimeout(resolve,900));
+   }
+   state.driveBackfill=hasMore?cursor:{after_visit_id:0,after_patient_id:0,has_more:false};
+   toast('Scheduled '+totalVisits+' visits and '+totalPatients+' patient records for Drive.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
+  }else{
+   const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}
+    :action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}
+    :action==='retry'?{job_id:Number(b.dataset.job)}
+    :action==='test'?{action:'test_connection'}
+    :{action:'disconnect'};
+   const result=await api(path,{method:'POST',body});
+   if(!result.ok)throw new Error(result.data.error||'Google Drive action failed.');
+   toast(action==='test'?'Google Drive connection verified for '+(result.data.email||'your Google account')+'.':(result.data.message||'Google Drive settings updated.'));
+  }
   await loadDriveSettings(true);
- }catch(x){if(x.message!=='unauthorized')toast(x.message||'Google Drive action failed.');}
+ }catch(error){if(error.message!=='unauthorized')toast(error.message||'Google Drive action failed.');}
  finally{b.disabled=false;}
 });
 document.addEventListener('change',async e=>{
