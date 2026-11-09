@@ -202,6 +202,8 @@ export async function syncVisitToDrive(env,visitId){
    (payments.results||[]).forEach(p=>lines.push("Payment: Rs "+Number(p.amount||0).toLocaleString("en-PK")+" ("+p.method+")"));
    lines.push("","Notes: "+(visit.notes||"—"),"Follow-up: "+(visit.follow_up_date||"—"));
    await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",visitFolderInfo.id,"Invoice.pdf","application/pdf",makePdf(lines));
+  }
+  if(connection.auto_save_visit_pdf){
    const visitPdf=["ULTIMATE ESTHETICS CLINIC","VISIT SUMMARY","Patient: "+patient.name+" (#"+patient.id+")","Visit: #"+visit.id,"Date: "+(visit.visit_date||visit.created_at||"—"),"Doctor: "+(visit.doctor_name||"—"),"Notes: "+(visit.notes||"—"),"","Treatments:",...(procedures.results||[]).map(p=>p.procedure_name+" - Rs "+Number(p.fee||0).toLocaleString("en-PK")),"","Follow-up: "+(visit.follow_up_date||"—")];
    await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"visit_details_pdf",visitFolderInfo.id,"Visit Summary.pdf","application/pdf",makePdf(visitPdf));
   }
