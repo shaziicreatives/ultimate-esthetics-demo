@@ -88,13 +88,13 @@ export async function onRequestPost(context) {
       if (paymentLeft > 0) paymentStatements.push(env.DB.prepare("INSERT INTO payments(visit_id,patient_id,amount,method,reference,received_by) VALUES(?,?,?,?,?,?)").bind(visitId,patient.id,paymentLeft,String(body.payment_method||"cash").slice(0,30),String(body.payment_reference||"").slice(0,120)||null,session.user_id));
       paymentStatements.push(env.DB.prepare("UPDATE appointments SET status='done',checked_in_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(inserted.meta.last_row_id));
       await env.DB.batch(paymentStatements);
-      if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));
+      if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));else await syncVisitToDrive(env,visitId);else await syncVisitToDrive(env,visitId);
       manualInvoice = { visit_id: visitId, invoice_number: invoiceNumber, total_amount: netTotal, received, previous_balance: previousBalance, balance: previousBalance + netTotal - received };
     }
     if(manualSubtotal===null&&context.waitUntil){
       context.waitUntil(syncPatientToDrive(env,patient.id));
       const priorVisits=await env.DB.prepare("SELECT id FROM visits WHERE patient_id=? ORDER BY id").bind(patient.id).all();
-      for(const prior of priorVisits.results||[])context.waitUntil(syncVisitToDrive(env,prior.id));
+      for(const prior of priorVisits.results||[]){if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,prior.id));else await syncVisitToDrive(env,prior.id);}
     }
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, entity_id, details, ip) VALUES (?, ?, 'manual_appointment_created', 'appointment', ?, ?, ?)").bind(session.user_id, session.username, inserted.meta.last_row_id, "Manual appointment for patient " + patient.id, request.headers.get("CF-Connecting-IP") || "").run();
     const notify = notifyClinicStaff(env, {
