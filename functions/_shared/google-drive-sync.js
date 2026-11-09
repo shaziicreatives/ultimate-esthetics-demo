@@ -125,7 +125,7 @@ async function patientRecord(env,patientId){
  if(!patient)return null;
  const [notes,appointments,visits]=await Promise.all([
   env.DB.prepare("SELECT note,created_at FROM patient_notes WHERE patient_id=? ORDER BY created_at,id").bind(patientId).all(),
-  env.DB.prepare("SELECT a.id,a.date,a.time,a.treatment,a.status,a.follow_up_date,d.name doctor FROM appointments a LEFT JOIN doctors d ON d.id=a.doctor_id WHERE a.patient_id=? ORDER BY a.date DESC,a.time DESC").bind(patientId).all(),
+  env.DB.prepare("SELECT a.id,a.date,a.time,a.treatment,a.status,a.checked_in_at,a.follow_up_date,dt.clinic_date,dt.token,d.name doctor FROM appointments a LEFT JOIN doctors d ON d.id=a.doctor_id LEFT JOIN appointment_daily_tokens dt ON dt.appointment_id=a.id WHERE a.patient_id=? ORDER BY a.date DESC,a.time DESC").bind(patientId).all(),
   env.DB.prepare("SELECT v.id,v.invoice_number,v.total_amount,v.subtotal_amount,v.discount_amount,v.follow_up_date,v.created_at,COALESCE((SELECT SUM(amount) FROM payments py WHERE py.visit_id=v.id),0) paid FROM visits v WHERE v.patient_id=? ORDER BY v.created_at DESC").bind(patientId).all()
  ]);
  return {
