@@ -30,7 +30,7 @@ function makeInvoicePdf(data){
  txt(34,y,"Phone: "+(data.patient_phone||"—"),10);txt(310,y,"Doctor: "+(data.doctor_name||"—"),10);y-=29;
  section("TREATMENT / PROCEDURES");
  rect(24,y-4,547,21,"#F8EBD8");txt(34,y+3,"#",9,dark);txt(62,y+3,"Procedure",9,dark);txt(430,y+3,"Unit Price (Rs)",9,dark);txt(520,y+3,"Total (Rs)",9,dark);y-=20;
- const procs=data.procedures||[];
+ const procs=(data.procedures||[]).slice(0,8);
  for(let i=0;i<procs.length;i++){
   const p=procs[i],fee=Number(p.fee||0);
   txt(34,y,String(i+1),9);txt(62,y,wrap(p.procedure_name||"Treatment",48)[0],9);txt(448,y,fee.toLocaleString("en-PK"),9);txt(528,y,fee.toLocaleString("en-PK"),9);
@@ -39,7 +39,7 @@ function makeInvoicePdf(data){
  y-=6;txt(350,y,"Total Treatment Amount:",10,dark,"F2");txt(510,y,money(data.subtotal_amount??data.total_amount),10,dark,"F2");y-=30;
  section("PRESCRIPTION / NOTES");
  const notes=wrap(data.notes||"No additional notes",95);
- for(const row of notes.slice(0,4)){txt(34,y,row,9,ink);y-=14;}
+ for(const row of notes.slice(0,3)){txt(34,y,row,9,ink);y-=14;}
  if(data.follow_up_date){y-=3;txt(34,y,"Follow-up date: "+data.follow_up_date,9,muted);y-=18;}
  y-=8;
  section("PAYMENT DETAILS");
