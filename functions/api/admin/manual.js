@@ -38,10 +38,12 @@ export async function onRequestPost(context) {
     if (referralId && (!Number.isSafeInteger(referralId) || !await env.DB.prepare("SELECT id FROM patients WHERE id=?").bind(referralId).first())) return json({ error: "Select a valid referring patient." }, 400);
     if (manualSubtotal !== null && !await env.DB.prepare("SELECT id FROM invoice_sequence WHERE id=1").first()) return json({ error: "Invoice sequence is not configured. Apply migration 0007 first." }, 503);
     const phone = "+92" + digits;
-    let patient = await env.DB.prepare("SELECT id FROM patients WHERE phone = ?").bind(phone).first();\n    const returningPatient = Boolean(patient);
+    let patient = await env.DB.prepare("SELECT id FROM patients WHERE phone = ?").bind(phone).first();
+    const returningPatient = Boolean(patient);
     if (!patient && manualSubtotal === null && received > 0) return json({ error: "This is a new patient with no outstanding invoice to pay." }, 400);
     if (patient) {
-      await env.DB.prepare("UPDATE patients SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(name, patient.id).run();
+      // Phone number is the canonical patient match; keep the existing patient name and ID.
+      if (!followUpDate) followUpDate = date;
     } else {
       const insertedPatient = await env.DB.prepare("INSERT INTO patients (name, phone) VALUES (?, ?)").bind(name, phone).run();
       patient = { id: insertedPatient.meta.last_row_id };
@@ -108,7 +110,7 @@ export async function onRequestPost(context) {
       url: "/admin/index.html"
     });
     if (context.waitUntil) context.waitUntil(notify); else await notify;
-    return json({ success: true, appointment_id: inserted.meta.last_row_id, patient_id: patient.id, invoice: manualInvoice });
+    return json({ success: true, appointment_id: inserted.meta.last_row_id, patient_id: patient.id, repeated_patient: returningPatient, follow_up: returningPatient, invoice: manualInvoice });
   } catch (error) {
     if (String(error.message || "").includes("uq_active_slot") || String(error.message || "").includes("UNIQUE constraint failed")) return json({ error: "This time slot is already booked. Please select another time." }, 409);
     return json({ error: "Unable to save the manual appointment." }, 500);
