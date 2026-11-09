@@ -1071,8 +1071,11 @@ function openPatientEditor(patientId){
 }
 function openInvoiceEditor(id){
  const v=state.visits.find(x=>Number(x.id)===Number(id));if(!v){toast('Invoice could not be found.');return;}
- const appointment=state.appts.find(x=>Number(x.id)===Number(v.appointment_id));
- if(!appointment){toast('The original checked-in appointment could not be loaded, so this visit cannot be edited safely.');return;}
+ let appointment=state.appts.find(x=>Number(x.id)===Number(v.appointment_id));
+ if(!appointment){
+  appointment={id:Number(v.appointment_id)||-Number(v.id),pid:Number(v.patient_id),name:v.patient_name||'',phone:v.phone||'',doc:v.doctor_name||'',date:v.visit_date||String(v.created_at||'').slice(0,10),time:v.visit_time||String(v.created_at||'').slice(11,16),proc:(v.procedures||[]).map(p=>p.procedure_name).join(', '),status:'done'};
+  state.appts.push(appointment);
+ }
  openVisitForm(appointment.id);
  appointment.invoice_number=v.invoice_number||'';
  const modal=$('#visitModal'),form=$('#visitForm');
