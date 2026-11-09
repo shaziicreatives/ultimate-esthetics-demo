@@ -621,44 +621,41 @@ function updateSoundButton() {
   if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
 }
 
-let seenPendingIds = null, timer = null;
+let seenPendingIds = null, timer = null, loadingData=false;
 async function loadData(first) {
-  let r;
-  try { r = await api('/api/admin/appointments'); } catch (e) { if (e && e.message === 'unauthorized') throw e; return; }
-  if (!r.ok) { if (first) toast('Unable to load data (' + r.status + ')'); return; }
-  const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
-  const appts = raw.map(a => ({
-    id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
-    did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
-    proc: a.treatment || '', token: a.daily_token || null, status: a.checked_in_at && a.status === 'confirmed' ? 'in_room' : (a.status === 'noshow' ? 'no_show' : a.status), source: a.source || '', fu: a.follow_up_date || ''
+ if(loadingData)return;
+ loadingData=true;
+ try {
+  const [r,vr]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits')]);
+  if(!r.ok){if(first)toast('Unable to load data ('+r.status+')');return;}
+  const raw=Array.isArray(r.data)?r.data:(r.data.appointments||[]);
+  const appts=raw.map(a=>({
+   id:a.id,pid:a.patient_id,name:a.patient_name||'Unknown',phone:a.patient_phone||'',
+   did:a.doctor_id,doc:a.doctor_name||'',date:a.date||'',time:String(a.time||'').slice(0,5),
+   proc:a.treatment||'',token:a.daily_token||null,status:a.checked_in_at&&a.status==='confirmed'?'in_room':(a.status==='noshow'?'no_show':a.status),source:a.source||'',fu:a.follow_up_date||''
   }));
-  const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
-  if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
-    playAppointmentAlert(); toast('New website booking request!');
-  }
-  seenPendingIds = new Set(pendingIds);
-
+  const pendingIds=appts.filter(a=>a.status==='pending').map(a=>String(a.id));
+  if(seenPendingIds!==null&&pendingIds.some(id=>!seenPendingIds.has(id))){playAppointmentAlert();toast('New website booking request!');}
+  seenPendingIds=new Set(pendingIds);
   if(vr.ok){state.visits=vr.data.visits||[];state.financialPatients=vr.data.patients||[];}
-  const sig = JSON.stringify(appts) + JSON.stringify(state.visits);
-  const changed = sig !== state.sig;
-  state.sig = sig; state.appts = appts;
-  const pm = {};
-  appts.forEach(a => { (pm[a.pid] = pm[a.pid] || { id: a.pid, name: a.name, phone: a.phone, appts: [] }).appts.push(a); });
-  // Keep the complete patient register, including patients with no recent booking.
-  const merged = new Map(Object.values(pm).map(p => [Number(p.id), p]));
-  (state.financialPatients || []).forEach(p => {
-    const id = Number(p.id), existing = merged.get(id);
-    if (existing) { existing.name = p.name || existing.name; existing.phone = p.phone || existing.phone; }
-    else merged.set(id, { id, name: p.name || 'Unknown', phone: p.phone || '', appts: [] });
+  const sig=JSON.stringify(appts)+JSON.stringify(state.visits),changed=sig!==state.sig;
+  state.sig=sig;state.appts=appts;
+  const pm={};
+  appts.forEach(a=>{(pm[a.pid]=pm[a.pid]||{id:a.pid,name:a.name,phone:a.phone,appts:[]}).appts.push(a);});
+  const merged=new Map(Object.values(pm).map(p=>[Number(p.id),p]));
+  (state.financialPatients||[]).forEach(p=>{
+   const id=Number(p.id),existing=merged.get(id);
+   if(existing){existing.name=p.name||existing.name;existing.phone=p.phone||existing.phone;}
+   else merged.set(id,{id,name:p.name||'Unknown',phone:p.phone||'',appts:[]});
   });
-  state.patients = [...merged.values()].sort((x, y) => x.id - y.id);
-  if (!state.histSel && state.patients.length) state.histSel = state.patients[0].id;
-
-  if (first || !state.doctors.length) await loadDoctors();
-  const ae = document.activeElement;
-  const typing = ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && $('#appView').contains(ae);
-  if (first || (changed && !typing)) render(); else renderNav();
-  } catch(e){if(e&&e.message==='unauthorized')throw e;if(first)toast('Unable to load clinic data. Please try again.');} finally {loadingData=false;}\n}
+  state.patients=[...merged.values()].sort((x,y)=>x.id-y.id);
+  if(!state.histSel&&state.patients.length)state.histSel=state.patients[0].id;
+  if(first||!state.doctors.length)await loadDoctors();
+  const ae=document.activeElement,typing=ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&$('#appView').contains(ae);
+  if(first||(changed&&!typing))render();else renderNav();
+ }catch(e){if(e&&e.message==='unauthorized')throw e;if(first)toast('Unable to load clinic data. Please try again.');}
+ finally{loadingData=false;}
+}
 async function loadDoctors() {
   let list = [];
   try {
