@@ -58,7 +58,11 @@ Clinic backups include staff usernames/roles, doctor information, patients, appo
 
 Daily backup checks run while the Owner admin panel is open. This is not an always-on scheduled task when nobody is using the app.
 
-## 4. Preview and Production separation
+## 4. First Preview sign-in and data copy
+
+The isolated Preview database is initially empty. On the first Preview login, enter the existing clinic **Owner** username and password. The Preview-only setup route verifies the password hash against the original database, without writing to or changing the original account. It then copies the existing clinic records into the isolated Preview database before the normal login request runs. The password is not stored by the seeding route. Sign in as Admin or Reception only after the Owner has completed the first Preview sign-in once.
+
+## 5. Preview and Production separation
 
 - Preview D1: `ultimate-esthetics-preview-isolated`.
 - Production D1: `ultimate-esthetics-db-preview`.
