@@ -1157,7 +1157,8 @@ async function openGoogleDrivePicker(){
    try{
     const saved=await api('/api/admin/drive',{method:'POST',body:{action:'select_root',folder_id:selected.id}});
     if(!saved.ok)throw new Error(saved.data.error||'Could not select this Drive folder.');
-    toast('Clinic Drive folder selected: '+(selected.name||'Google Drive folder'));
+    toast('Clinic Drive folder selected: '+(selected.name||'Google Drive folder')+'. Preparing existing records…');
+    await runDriveBackfill(false);
     await loadDriveSettings(true);
    }catch(error){toast(error.message||'Could not save selected Drive folder.');}
   }).build();
