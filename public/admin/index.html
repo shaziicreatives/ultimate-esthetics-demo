@@ -1072,7 +1072,7 @@ function openInvoiceEditor(id){
  if(!modal||!form)return;
  form.dataset.editVisit=String(v.id);
  form.dataset.saved='1';
- form.dataset.invoiceNumber=v.invoice_number||'';
+ form.dataset.invoiceNumber=v.invoice_number||'';const invoiceBadge=modal.querySelector('.ue-invoice-meta span');if(invoiceBadge)invoiceBadge.textContent='#'+(v.invoice_number||'Existing invoice');
  form.dataset.patientId=String(v.patient_id);
  form.dataset.patientName=String(v.patient_name||appointment.name||'');
  form.dataset.patientPhone=String(v.phone||appointment.phone||'');
@@ -1406,7 +1406,7 @@ document.addEventListener('submit',async e=>{
   form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+(r.data.invoice_number||form.dataset.invoiceNumber);
   toast('Invoice '+(r.data.invoice_number||form.dataset.invoiceNumber)+' updated. Existing payments preserved.');$('#visitModal').remove();await loadData();if(state.page==='history')render();return;
  }else{
-  r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});
+  r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:[$('#visitNotes').value.trim(),$('#visitExtraNotes').value.trim()?('Additional notes:\n'+$('#visitExtraNotes').value.trim()):''].filter(Boolean).join('\n\n'),follow_up_date:$('#visitFollow').value||null}});
   if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}
   a.invoice_number=r.data.invoice_number;form.dataset.invoiceNumber=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Permanent invoice number: '+r.data.invoice_number;const modal=$('#visitModal');if(modal&&modal._renderInvoice)modal._renderInvoice();const printBtn=document.querySelector('#visitModal [data-act="printinvoice"]');if(printBtn)printBtn.textContent='Print invoice · '+r.data.invoice_number;toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'.');await loadData();
  }
