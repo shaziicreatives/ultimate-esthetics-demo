@@ -59,6 +59,8 @@ export async function onRequestPatch(context) {
             }
             await env.DB.prepare("UPDATE appointments SET checked_in_at = " + (check_in ? "CURRENT_TIMESTAMP" : "NULL") + ", updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
             await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details,ip) VALUES(?,?,'patient_checkin','appointment',?,?,?)").bind(session.user_id,session.username,id,check_in?'Checked in':'Check-in undone',request.headers.get('CF-Connecting-IP')||'').run();
+            const driveSync=syncPatientToDrive(env,beforeCheck.patient_id);
+            if(context.waitUntil)context.waitUntil(driveSync);else await driveSync;
             if(check_in){
                 const push=notifyClinicStaff(env,{title:"Patient checked in",body:"A patient has arrived. Open Clinic Desk to prepare the visit and invoice.",tag:"patient-checkin-"+id,url:"/admin/index.html"});
                 if(context.waitUntil)context.waitUntil(push);else await push;
