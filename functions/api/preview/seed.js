@@ -125,6 +125,15 @@ export async function onRequestGet({request,env}) {
    if (state?.state === "running") {
      return Response.json({error:"Preview data copy is already running. Refresh in a moment."},{status:409});
    }
+   if (state?.state === "failed") {
+     const partial = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('_cf_KV','_preview_seed_status')").all();
+     const present = new Set((partial.results||[]).map(row=>row.name));
+     const extraTables = [...present].filter(name=>!TABLE_ORDER.includes(name)).sort().reverse();
+     const coreTables = TABLE_ORDER.slice().reverse().filter(name=>present.has(name));
+     for (const name of [...extraTables,...coreTables]) {
+       await env.DB.prepare("DROP TABLE IF EXISTS " + quote(name)).run();
+     }
+   }
    const existing = await env.DB.prepare(
      "SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('_cf_KV','_preview_seed_status')"
    ).first();
