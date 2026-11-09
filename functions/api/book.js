@@ -1,4 +1,5 @@
 import { notifyClinicStaff } from "../_shared/web-push.js";
+import { syncPatientToDrive } from "../_shared/google-drive-sync.js";
 export async function onRequestPost(context) {
     try {
         const { env, request } = context;
@@ -60,6 +61,9 @@ export async function onRequestPost(context) {
         const inserted = await env.DB.prepare(
             "INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source) VALUES (?, ?, ?, ?, ?, 'pending', 'website')"
         ).bind(doctor_id, patient_id, date, timeStr, treatment || null).run();
+        // Keep the app-created patient record current in Drive when the Owner has connected it.
+        const driveSync = syncPatientToDrive(env, patient_id);
+        if (context.waitUntil) context.waitUntil(driveSync); else await driveSync;
         // Await the push attempt before returning success. This makes delivery
         // diagnostics deterministic instead of relying on a background waitUntil task.
         const pushResult = await notifyClinicStaff(env, {
