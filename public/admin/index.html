@@ -1080,6 +1080,7 @@ function openInvoiceEditor(id){
  if(!modal||!form)return;
  form.dataset.editVisit=String(v.id);
  form.dataset.saved='1';
+ const editPrint=modal.querySelector('[data-act="printinvoice"]');if(editPrint){editPrint.disabled=false;editPrint.textContent='Print invoice · '+(v.invoice_number||'Saved');editPrint.title='';}
  form.dataset.invoiceNumber=v.invoice_number||'';const invoiceBadge=modal.querySelector('.ue-invoice-meta span');if(invoiceBadge)invoiceBadge.textContent='#'+(v.invoice_number||'Existing invoice');
  form.dataset.patientId=String(v.patient_id);
  form.dataset.patientName=String(v.patient_name||appointment.name||'');
