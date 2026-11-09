@@ -85,6 +85,11 @@ CREATE TABLE IF NOT EXISTS google_drive_folder_history (
 CREATE INDEX IF NOT EXISTS idx_drive_folder_history_patient ON google_drive_folder_history(patient_id, archived_at);
 CREATE INDEX IF NOT EXISTS idx_drive_folder_history_visit ON google_drive_folder_history(visit_id, archived_at);
 `;
+const migration0010 = `
+ALTER TABLE google_drive_files ADD COLUMN google_email TEXT;
+UPDATE google_drive_files SET google_email=(SELECT google_email FROM google_drive_connections WHERE id=1) WHERE google_email IS NULL;
+CREATE INDEX IF NOT EXISTS idx_drive_files_google_email_updated ON google_drive_files(google_email,updated_at);
+`;
 
 export async function onRequestGet({request,env}) {
  const host = new URL(request.url).hostname;
@@ -164,6 +169,7 @@ export async function onRequestGet({request,env}) {
    for (const item of indexes.results || []) await env.DB.prepare(item.sql).run();
 
    await env.DB.exec(migration0009);
+   await env.DB.exec(migration0010);
    const verification = {};
    for (const name of ["users","patients","doctors","appointments","visits","payments","visit_procedures","activity_log","sessions","login_attempts","google_drive_connections","google_drive_sync_jobs"]) {
      const result = await env.DB.prepare("SELECT COUNT(*) AS n FROM " + quote(name)).first();
