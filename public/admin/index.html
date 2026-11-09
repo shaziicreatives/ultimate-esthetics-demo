@@ -891,30 +891,42 @@ function histDetail() {
 }
 
 function viewDrive(){
- const d=state.driveData||{};
- const connected=!!d.connected;
+ const d=state.driveData||{},connected=!!d.connected,configured=!!d.configured,pickerConfigured=!!d.picker_configured;
  const root=d.root_folder_name?esc(d.root_folder_name):'Not selected';
- return head('Google Drive','Owner-only clinic document storage. Connect or change the Google account and choose the clinic folder.', '')+
+ const missing=(d.missing_config||[]).map(esc).join(', ');
+ const pickerMissing=(d.picker_missing||[]).map(esc).join(', ');
+ const jobRows=(state.driveJobs||[]).map(j=>{
+  const label=j.invoice_number|| (j.visit_id?'Visit #'+j.visit_id:'Patient record');
+  return '<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(label)+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'||j.status==='pending'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>';
+ }).join('');
+ const fileRows=(state.driveFiles||[]).map(f=>'<div class="row"><div><b>'+esc(f.file_name||f.file_kind)+'</b><small>'+esc(f.patient_name||('Patient #'+f.patient_id))+(f.invoice_number?' · '+esc(f.invoice_number):'')+' · '+esc(f.updated_at||'')+'</small></div>'+(f.web_view_link?'<a class="btn sm" href="'+esc(f.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open in Drive</a>':'<small class="muted">Saved</small>')+'</div>').join('');
+ return head('Google Drive','Owner-only document storage. Patient records, visits, invoices and attachments stay in your Google Drive.', '')+
  '<div class="col" style="max-width:850px">'+
- (d.migration_required?'<section class="card"><div class="alert-item warn">The Google Drive database migration has not been applied yet. Drive settings are not active until the migration is applied to the Preview database.</div></section>':'')+
+ (d.migration_required?'<section class="card"><div class="alert-item warn">Google Drive tables are not available yet. Open the latest Preview once so its initial database setup can complete, then refresh this page.</div></section>':'')+
+ (!configured?'<section class="card"><div class="alert-item warn"><b>Google connection setup is incomplete.</b><p style="margin-top:6px">Add these values as Preview-only Cloudflare Pages secrets: '+missing+'. Never paste the client secret into the app or GitHub.</p><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Open Google Cloud Credentials</a>. Add the exact callback URL shown in the setup guide.</div></section>':'')+
  '<section class="card"><div class="card-head"><h2>Google account</h2><span class="pill '+(connected?'ok':'warn')+'">'+(connected?'Connected':'Not connected')+'</span></div>'+
- (connected?'<p style="margin-bottom:8px">Connected account: <b>'+esc(d.email||'')+'</b></p><p class="hint">Last successful sync: '+esc(d.last_sync_at||'Not yet synced')+'</p>':'<p class="hint" style="margin-bottom:12px">Connect the Google account where clinic records should be stored.</p>')+
- '<div class="actions" style="margin-top:14px">'+(d.migration_required?'':'<a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Change Google account':'Connect Google account')+'</a>')+(connected?'<button class="btn bad" type="button" data-drive-action="disconnect">Disconnect</button>':'')+'</div></section>'+
- (connected?'<section class="card"><div class="card-head"><h2>Clinic storage folder</h2></div><p style="margin-bottom:12px">Selected folder: <b>'+root+'</b></p>'+
- '<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="Ultimate Esthetics Clinic"></div>'+
- '<div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select clinic folder</button></div>'+
- '<p class="hint" style="margin-top:10px">The folder list below shows folders this app can access under My Drive. Arbitrary existing folders may require Google Picker authorization; do not assume every folder will appear here.</p></section>'+
- '<section class="card"><div class="card-head"><h2>Choose an accessible existing folder</h2><small class="muted">My Drive</small></div>'+
- ((state.driveFolders||[]).length?state.driveFolders.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><small>Google Drive folder</small></div><button class="btn sm" type="button" data-drive-action="select-root" data-folder="'+esc(x.id)+'">Select</button></div>').join(''):'<div class="empty">No app-accessible folders found at the top level of My Drive. Create a clinic folder above.</div>')+'</section>'+
- '<section class="card"><div class="card-head"><h2>Automatic saving preferences</h2></div>'+
- '<label class="switch-row"><span>Automatically save invoice PDF</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
- '<label class="switch-row"><span>Automatically save editable patient record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
- '<label class="switch-row"><span>Automatically save visit record</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
- '<p class="hint" style="margin-top:10px">Patient folders, visit folders, editable JSON records, invoice PDF uploads and automatic sync are now wired to visit create/edit. Confirm the Preview migration and credentials before relying on Drive.</p></section>'+
- '<section class="card"><div class="card-head"><h2>Synchronization history</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
- ((state.driveJobs||[]).length?state.driveJobs.map(j=>'<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(j.invoice_number||('Visit #'+j.visit_id))+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>').join(''):'<div class="empty">No synchronization jobs yet.</div>')+'</section>':'')+
+ (connected?'<p style="margin-bottom:8px">Connected account: <b>'+esc(d.email||'')+'</b></p><p class="hint">Last successful sync: '+esc(d.last_sync_at||'Not yet synced')+'</p>':'<p class="hint" style="margin-bottom:12px">Connect the clinic Owner Google account. The app requests the restricted drive.file permission for files created or selected by this app.</p>')+
+ '<div class="actions" style="margin-top:14px">'+(d.migration_required?'':(configured?'<a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Reconnect Google account':'Connect Google account')+'</a>':'<button class="btn pri" type="button" disabled>Connect Google account</button>'))+(connected?'<button class="btn sm" type="button" data-drive-action="test">Test connection</button><button class="btn bad" type="button" data-drive-action="disconnect">Disconnect</button>':'')+'</div></section>'+
+ (connected?'<section class="card"><div class="card-head"><h2>Clinic Drive folder</h2><span class="pill '+(d.root_folder_id?'ok':'warn')+'">'+(d.root_folder_id?'Selected':'Not selected')+'</span></div>'+
+ '<p style="margin-bottom:12px">Current folder: <b>'+root+'</b></p>'+
+ (!d.root_folder_id?'<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="Ultimate Esthetics Clinic"></div><div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select folder</button><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Browse Google Drive</button></div>':
+ '<div class="actions"><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Change folder in Google Drive</button></div>')+
+ (!pickerConfigured?'<p class="hint" style="margin-top:10px">Google Picker needs Preview secrets: '+pickerMissing+'. You can still select an app-accessible top-level folder below, or create a new clinic folder.</p>':'<p class="hint" style="margin-top:10px">Use Google Picker to select an existing folder from My Drive or Shared Drives. The app only receives access to the folder you explicitly select.</p>')+
+ ((state.driveFolders||[]).length?'<div style="margin-top:14px"><b>Folders already accessible to this app</b>'+state.driveFolders.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><small>Google Drive folder</small></div><button class="btn sm" type="button" data-drive-action="select-root" data-folder="'+esc(x.id)+'">Select</button></div>').join('')+'</div>':'')+
+ '</section>'+
+ '<section class="card"><div class="card-head"><h2>Automatic saving</h2></div>'+
+ '<label class="switch-row"><span>Invoice PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
+ '<label class="switch-row"><span>Editable patient record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
+ '<label class="switch-row"><span>Visit record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
+ '<p class="hint" style="margin-top:10px">Every patient gets a folder; every visit gets its own subfolder. The app updates existing files instead of making a new copy each time the same record changes.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync all existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
+ (jobRows||'<div class="empty">No synchronization jobs yet.</div>')+
+ '<p class="hint" style="margin-top:10px">Failed jobs retry automatically while the Owner admin panel is open. You can also retry an individual job.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Files saved in Drive</h2></div>'+(fileRows||'<div class="empty">No Drive documents have been uploaded yet.</div>')+'</section>':'')+
+ '<section class="card"><b>Privacy and access</b><p class="hint" style="margin-top:6px">Only the clinic Owner can connect or disconnect Drive and change storage settings. Google tokens are encrypted in the Preview database. Production remains on its separate database and will not use this Preview connection.</p></section>'+
  '</div>';
 }
+
 function viewSecurity() {
  const live=state.security||{};
  const ownerMode=live.currentUser&&live.currentUser.role==='owner';
