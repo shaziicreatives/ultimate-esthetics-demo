@@ -90,6 +90,7 @@ ALTER TABLE google_drive_files ADD COLUMN google_email TEXT;
 UPDATE google_drive_files SET google_email=(SELECT google_email FROM google_drive_connections WHERE id=1) WHERE google_email IS NULL;
 CREATE INDEX IF NOT EXISTS idx_drive_files_google_email_updated ON google_drive_files(google_email,updated_at);
 ALTER TABLE google_drive_connections ADD COLUMN auto_backup_daily INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE google_drive_connections ADD COLUMN auto_save_visit_pdf INTEGER NOT NULL DEFAULT 1;
 CREATE TABLE IF NOT EXISTS google_drive_backups (
  id INTEGER PRIMARY KEY AUTOINCREMENT,
  google_email TEXT NOT NULL,
