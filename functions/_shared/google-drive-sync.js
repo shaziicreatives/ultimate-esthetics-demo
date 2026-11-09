@@ -149,7 +149,7 @@ export async function syncPatientToDrive(env,patientId){
   job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
   if(job)await env.DB.prepare("UPDATE google_drive_sync_jobs SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(job.id).run();
   else{
-   await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();
+   await env.DB.prepare("INSERT OR IGNORE INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();
    job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
   }
   const tokens=await loadTokens(env,connection);
