@@ -144,7 +144,7 @@ export async function syncVisitToDrive(env,visitId){
    (payments.results||[]).forEach(p=>lines.push("Payment: Rs "+Number(p.amount||0).toLocaleString("en-PK")+" ("+p.method+")"));
    lines.push("","Notes: "+(visit.notes||"—"),"Follow-up: "+(visit.follow_up_date||"—"));
    const invoiceLabel=clean(visit.invoice_number||("Visit-"+visit.id)).replace(/[^A-Za-z0-9_-]+/g,"_");
-   const phoneLabel=String(patient.phone||"").replace(/\\D/g,"")||("Patient-"+patient.id);
+   const phoneLabel=String(patient.phone||"").replace(/\D/g,"")||("Patient-"+patient.id);
    await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,phoneLabel+"_"+invoiceLabel+".pdf","application/pdf",makePdf(lines));
   }
   await markJob(env,job.id,"saved");
