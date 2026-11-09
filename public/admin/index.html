@@ -900,6 +900,7 @@ function viewDrive(){
   return '<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(label)+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'||j.status==='pending'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>';
  }).join('');
  const fileRows=(state.driveFiles||[]).map(f=>'<div class="row"><div><b>'+esc(f.file_name||f.file_kind)+'</b><small>'+esc(f.patient_name||('Patient #'+f.patient_id))+(f.invoice_number?' · '+esc(f.invoice_number):'')+' · '+esc(f.updated_at||'')+'</small></div>'+(f.web_view_link?'<a class="btn sm" href="'+esc(f.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open in Drive</a>':'<small class="muted">Saved</small>')+'</div>').join('');
+ const backupRows=(state.driveBackups||[]).map(x=>'<div class="row"><div><b>'+esc(x.backup_kind==='daily'?'Automatic daily backup':'Manual backup')+'</b><small>'+esc(x.file_name)+' · '+esc(x.status)+(x.size_bytes?' · '+(Number(x.size_bytes)/1024).toFixed(1)+' KB':'')+(x.last_error?' · '+esc(x.last_error):'')+'</small></div>'+(x.web_view_link?'<a class="btn sm" href="'+esc(x.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open backup</a>':'')+'</div>').join('');
  return head('Google Drive','Owner-only document storage. Patient records, visits, invoices and attachments stay in your Google Drive.', '')+
  '<div class="col" style="max-width:850px">'+
  (d.migration_required?'<section class="card"><div class="alert-item warn">Google Drive tables are not available yet. Open the latest Preview once so its initial database setup can complete, then refresh this page.</div></section>':'')+
@@ -922,6 +923,10 @@ function viewDrive(){
  '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync all existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
  (jobRows||'<div class="empty">No synchronization jobs yet.</div>')+
  '<p class="hint" style="margin-top:10px">Failed jobs retry automatically while the Owner admin panel is open. You can also retry an individual job.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Clinic data backup</h2><button class="btn pri sm" type="button" data-drive-action="backup-now">Back up now</button></div>'+
+ '<label class="switch-row"><span>Automatic daily clinic-data backup</span><input class="switch" type="checkbox" data-drive-setting="auto_backup_daily" '+(d.auto_backup_daily?'checked':'')+'></label>'+
+ '<p class="hint" style="margin-top:8px">A JSON snapshot is saved in a separate "Clinic Backups" folder. It includes patients, bookings, visits, invoices, payments, doctors and clinic permissions. Password hashes, login sessions, OAuth tokens, API secrets and push subscription endpoints are excluded. Daily backups run while the Owner admin panel is open.</p>'+
+ (backupRows||'<div class="empty">No clinic backups yet.</div>')+'</section>'+
  '<section class="card"><div class="card-head"><h2>Files saved in Drive</h2></div>'+(fileRows||'<div class="empty">No Drive documents have been uploaded yet.</div>')+'</section>':'')+
  '<section class="card"><b>Privacy and access</b><p class="hint" style="margin-top:6px">Only the clinic Owner can connect or disconnect Drive and change storage settings. Google tokens are encrypted in the Preview database. Production remains on its separate database and will not use this Preview connection.</p></section>'+
  '</div>';
@@ -1075,17 +1080,18 @@ async function loadDriveSettings(redraw=true){
    const q=await api('/api/admin/drive/sync');
    state.driveJobs=q.ok?(q.data.jobs||[]):[];
    state.driveFiles=q.ok?(q.data.files||[]):[];
+   state.driveBackups=q.ok?(q.data.backups||[]):[];
    const folders=await api('/api/admin/drive?parent=root');
    state.driveFolders=folders.ok?(folders.data.folders||[]):[];
    if(!driveAutoRefreshTimer&&state.driveAllowed){
     driveAutoRefreshTimer=setInterval(()=>{if(state.driveAllowed&&state.driveData?.connected)loadDriveSettings(false).catch(()=>{});},45000);
    }
   }else{
-   state.driveJobs=[];state.driveFiles=[];state.driveFolders=[];
+   state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
   }
  }catch(e){
   if(e&&e.message==='unauthorized')throw e;
-  state.driveAllowed=true;state.driveData={migration_required:true};state.driveJobs=[];state.driveFiles=[];state.driveFolders=[];
+  state.driveAllowed=true;state.driveData={migration_required:true};state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
  }
  if(redraw)render();
 }
@@ -1143,7 +1149,7 @@ document.addEventListener('click',async e=>{
  try{
   if(action==='refresh'){await loadDriveSettings(true);return;}
   if(action==='browse-root'){await openGoogleDrivePicker();return;}
-  const path=(action==='retry'||action==='backfill')?'/api/admin/drive/sync':'/api/admin/drive';
+  const path=(action==='retry'||action==='backfill'||action==='backup-now')?'/api/admin/drive/sync':'/api/admin/drive';
   if(action==='backfill'){
    let cursor=state.driveBackfill||{after_visit_id:0,after_patient_id:0,has_more:true};
    let totalVisits=0,totalPatients=0,rounds=0,hasMore=true;
@@ -1162,11 +1168,12 @@ document.addEventListener('click',async e=>{
    const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}
     :action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}
     :action==='retry'?{job_id:Number(b.dataset.job)}
+    :action==='backup-now'?{action:'backup'}
     :action==='test'?{action:'test_connection'}
     :{action:'disconnect'};
    const result=await api(path,{method:'POST',body});
    if(!result.ok)throw new Error(result.data.error||'Google Drive action failed.');
-   toast(action==='test'?'Google Drive connection verified for '+(result.data.email||'your Google account')+'.':(result.data.message||'Google Drive settings updated.'));
+   toast(action==='test'?'Google Drive connection verified for '+(result.data.email||'your Google account')+'.':action==='backup-now'?'Clinic data backup started. Refresh the backup history in a moment.':(result.data.message||'Google Drive settings updated.'));
   }
   await loadDriveSettings(true);
  }catch(error){if(error.message!=='unauthorized')toast(error.message||'Google Drive action failed.');}
