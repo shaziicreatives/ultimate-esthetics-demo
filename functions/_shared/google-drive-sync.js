@@ -60,7 +60,7 @@ async function upload(env,tokens,parent,name,mime,bytes,existingId){
  let moveQuery="";
  if(existingId){
   const current=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(existingId)+"?fields=id,parents,trashed&supportsAllDrives=true");
-  if(current.data.trashed)throw new Error("Google Drive file was trashed. A new copy will be created.");
+  if(current.data.trashed)throw new Error("Google Drive API 404: file was trashed; a new copy will be created.");
   const parents=current.data.parents||[];
   if(!parents.includes(parent)){
    moveQuery="&addParents="+encodeURIComponent(parent);
