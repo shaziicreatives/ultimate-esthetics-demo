@@ -41,7 +41,7 @@ export async function onRequestPost(context) {
   statements.push(env.DB.prepare("UPDATE appointments SET status='done',follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,a.id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'visit_saved','visit',?,?)").bind(u.user_id,u.username,visitId,"Previous "+previousBalance+", bill "+total+", received "+received).run();
-  if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));
+  if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,visitId));else await syncVisitToDrive(env,visitId);
   const push=notifyClinicStaff(env,{title:"Invoice saved",body:"A clinic visit invoice "+invoiceNumber+" has been saved.",tag:"invoice-saved-"+visitId,url:"/admin/index.html"});
   if(context.waitUntil)context.waitUntil(push);else await push;
   return json({success:true,visit_id:visitId,invoice_number:invoiceNumber,subtotal_amount:subtotal,discount_type:discountType,discount_value:discountValue,discount_amount:discountAmount,total_amount:total,previous_balance:previousBalance,balance:previousBalance+total-received},201);
@@ -91,7 +91,7 @@ export async function onRequestPatch(context) {
   if(visit.appointment_id)statements.push(env.DB.prepare("UPDATE appointments SET follow_up_date=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(b.follow_up_date||null,visit.appointment_id));
   await env.DB.batch(statements);
   await env.DB.prepare("INSERT INTO activity_log(user_id,username,action,entity,entity_id,details) VALUES(?,?,'invoice_edited','visit',?,?)").bind(u.user_id,u.username,id,"Invoice total updated to "+total+(b.patient_id!==undefined?"; patient profile and booking history updated":"")).run();
-  if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,id));
+  if(context.waitUntil)context.waitUntil(syncVisitToDrive(env,id));else await syncVisitToDrive(env,id);
   return json({success:true,visit_id:id,invoice_number:visit.invoice_number,total_amount:total,paid:receivedAmount,balance:Math.max(0,total-receivedAmount)});
  }catch(e){return json({error:"Invoice update failed: "+String(e.message||"database error")},500);}
 }
