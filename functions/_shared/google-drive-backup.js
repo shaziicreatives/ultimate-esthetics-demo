@@ -26,6 +26,14 @@ async function uploadBackup(env,tokens,parent,name,bytes){
  });
  return result.data;
 }
+async function updateBackupFile(env,tokens,fileId,bytes){
+ const boundary="ue_backup_update_"+crypto.randomUUID().replace(/-/g,"");
+ const body=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n",bytes,"\r\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
+ const result=await googleRequest(env,tokens,"/upload/drive/v3/files/"+encodeURIComponent(fileId)+"?uploadType=multipart&supportsAllDrives=true&fields=id,name,mimeType,webViewLink",{
+  method:"PATCH",headers:{"Content-Type":"multipart/related; boundary="+boundary},body
+ });
+ return result.data;
+}
 async function buildSnapshot(env){
  const [users,doctors,patients,appointments,visits,procedures,payments,notes,tokens,counters,invoices,permissions,activity]=await Promise.all([
   safeRows(env,"SELECT id,username,email,role,doctor_id,is_active,first_name,last_name,created_at,updated_at FROM users ORDER BY id"),
@@ -80,22 +88,23 @@ export async function backupClinicToDrive(env,kind="manual"){
  try{
   const connection=await getConnection(env);
   if(!connection?.root_folder_id)return {success:false,skipped:true,reason:"Clinic Drive folder is not selected"};
+  let existingDaily=null;
   if(kind==="daily"){
-   if(!connection.auto_backup_daily)return {success:true,skipped:true,reason:"Daily backup is disabled"};
-   const recent=await env.DB.prepare("SELECT id,status,created_at FROM google_drive_backups WHERE google_email=? AND backup_kind='daily' AND backup_date=? ORDER BY id DESC LIMIT 1").bind(connection.google_email,dateStamp()).first();
-   if(recent?.status==="saved")return {success:true,skipped:true,reason:"Today's daily backup already exists"};
-   const lastUpdate=Date.parse(String(recent?.updated_at||recent?.created_at||"").replace(" ","T")+"Z");
-   const age=Number.isFinite(lastUpdate)?Date.now()-lastUpdate:Infinity;
-   if(recent?.status==="processing"&&age<15*60*1000)return {success:true,skipped:true,reason:"Today's backup is already running"};
-   if(recent?.status==="failed"&&age<5*60*1000)return {success:true,skipped:true,reason:"Daily backup retry is cooling down"};
-   if(recent?.id){
-    backupId=recent.id;
+   if(!connection.auto_backup_daily)return {success:true,skipped:true,reason:"Automatic backup is disabled"};
+   existingDaily=await env.DB.prepare("SELECT id,status,created_at,updated_at,drive_file_id,file_name FROM google_drive_backups WHERE google_email=? AND backup_kind='daily' ORDER BY id DESC LIMIT 1").bind(connection.google_email).first();
+   const lastStamp=Date.parse(String(existingDaily?.updated_at||existingDaily?.created_at||"").replace(" ","T")+"Z");
+   const age=Number.isFinite(lastStamp)?Date.now()-lastStamp:Infinity;
+   if(existingDaily?.status==="processing"&&age<15*60*1000)return {success:true,skipped:true,reason:"Clinic backup is already running"};
+   if(existingDaily?.status==="failed"&&age<5*60*1000)return {success:true,skipped:true,reason:"Backup retry is cooling down"};
+   if(existingDaily?.status==="saved"&&age<3*24*60*60*1000)return {success:true,skipped:true,reason:"Next full clinic backup is due three days after the previous backup"};
+   if(existingDaily?.id){
+    backupId=existingDaily.id;
     await env.DB.prepare("UPDATE google_drive_backups SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(backupId).run();
    }
   }
   if(!backupId){
    const stamp=dateStamp()+"_"+timeStamp();
-   const fileName="Ultimate_Esthetics_Clinic_"+(kind==="daily"?"DailyBackup_":"ManualBackup_")+stamp+".json";
+   const fileName=kind==="daily"?"Ultimate_Esthetics_Clinic_Backup.json":"Ultimate_Esthetics_Clinic_ManualBackup_"+stamp+".json";
    const inserted=await env.DB.prepare("INSERT INTO google_drive_backups(google_email,backup_kind,backup_date,file_name,status) VALUES(?,?,?,?,'processing')").bind(connection.google_email,kind,kind==="daily"?dateStamp():new Date().toISOString(),fileName).run();
    backupId=inserted.meta.last_row_id;
   }
@@ -111,7 +120,7 @@ export async function backupClinicToDrive(env,kind="manual"){
   }
   await env.DB.prepare("UPDATE google_drive_backups SET drive_file_id=?,web_view_link=?,size_bytes=?,status='saved',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?")
    .bind(saved.id,saved.webViewLink||null,snapshot.bytes.byteLength,backupId).run();
-  return {success:true,backup_id:backupId,file_name:row.file_name,web_view_link:saved.webViewLink||null,daily_report_file:dailyReportFile?.webViewLink||null,daily_report:snapshot.dailyReport,size_bytes:snapshot.bytes.byteLength,counts:snapshot.counts};
+  return {success:true,backup_id:backupId,file_name:row.file_name,web_view_link:saved.webViewLink||existingDaily?.web_view_link||null,daily_report:snapshot.dailyReport,size_bytes:snapshot.bytes.byteLength,counts:snapshot.counts,next_backup_due_in_days:kind==="daily"?3:undefined};
  }catch(error){
   if(backupId)await env.DB.prepare("UPDATE google_drive_backups SET status='failed',last_error=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
    .bind(String(error?.message||"Clinic backup failed").slice(0,500),backupId).run().catch(()=>{});
