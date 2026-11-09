@@ -188,6 +188,26 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .invoice-brand h2{font:30px var(--font-display);color:var(--ink)}
 .invoice-brand p,.invoice-meta{font-size:12px;color:var(--muted);line-height:1.6}
 .invoice-title{font:26px var(--font-display);margin:10px 0 14px}
+
+.ue-invoice-form{width:min(1180px,100%);max-height:97vh;overflow:auto;padding:16px;background:#fffaf2!important;border:1px solid #ead2ae!important;border-radius:22px!important;color:#24180e!important;box-shadow:0 24px 70px #2b1b0d55!important}
+.ue-invoice-header{display:grid;grid-template-columns:132px minmax(0,1fr) 270px;gap:18px;align-items:center;padding:12px 8px 16px;border-bottom:1px solid #ead8bd;background:linear-gradient(100deg,#fffaf2,#fffdf9);border-radius:16px 16px 0 0}
+.ue-brand-mark{height:145px;display:grid;place-items:center;border-right:2px solid #6b481f}.ue-brand-mark svg{height:138px;width:100px}
+.ue-brand-copy h1{font:36px Georgia,serif;color:#39250f;margin:0 0 2px}.ue-brand-copy h2{font:21px Georgia,serif;color:#39250f;margin:0 0 16px}.ue-brand-copy p{font:14px Arial,sans-serif;color:#17120d;margin:8px 0}
+.ue-invoice-meta{display:flex;flex-direction:column;gap:6px;background:#f8ead6;border-radius:15px;padding:13px 18px;color:#25190e}.ue-invoice-meta b{background:#4b3016;color:#fff;border-radius:12px;padding:9px;text-align:center;font: bold 26px Georgia,serif}.ue-invoice-meta span{text-align:center;font-weight:700}.ue-invoice-meta small{font-size:13px}
+.ue-detail-grid{display:grid;grid-template-columns:1.2fr 1fr .82fr;gap:12px;margin:12px 0}
+.ue-panel{border:1px solid #ead4b5!important;border-radius:14px!important;background:#fffdf9!important;overflow:hidden;min-width:0}
+.ue-panel>h3{margin:0;padding:10px 14px;background:linear-gradient(100deg,#3e2813,#68431d);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.ue-panel .who{padding:16px;display:flex;gap:12px;align-items:center}.ue-panel .who b,.ue-panel-body b{font-size:15px;color:#24180e}.ue-panel .who small,.ue-panel-body small{display:block;color:#776653;margin-top:5px}.ue-panel-body{padding:18px}
+.ue-invoice-body{gap:12px!important}.ue-wide{width:100%}.ue-table-head{display:grid;grid-template-columns:48px minmax(0,1fr) 170px 74px;background:#fff4e3;border-bottom:1px solid #ead4b5;font-weight:700;padding:10px 12px;gap:10px}
+.ue-table-head span:first-child{text-align:center}.ue-wide #visitProcedures{padding:0 12px}.ue-wide .proc-line{display:grid;grid-template-columns:48px minmax(0,1fr) 170px 74px;gap:10px;padding:7px 0;border-bottom:1px solid #f0e2cf;margin:0;align-items:center}.ue-wide .proc-line:before{counter-increment:ue-proc;content:counter(ue-proc);text-align:center}.ue-wide #visitProcedures{counter-reset:ue-proc}.ue-wide .proc-line select{grid-column:2}.ue-wide .proc-line input{grid-column:3}.ue-wide .proc-line button{grid-column:4}
+.ue-total-line{display:flex;justify-content:flex-end;align-items:center;gap:40px;margin:8px 12px;padding:12px 16px;background:#fff1dc;border:1px solid #efd6b1;border-radius:12px;font-weight:700}.ue-total-line b{font-size:21px}
+.ue-notes-wrap{position:relative;padding:12px}.ue-notes-wrap textarea{width:calc(100% - 130px);min-height:128px;resize:vertical}.ue-rx-watermark{position:absolute;right:24px;bottom:12px;font:72px Georgia,serif;color:#ead4b5}
+.ue-bottom-grid{display:grid;grid-template-columns:1.1fr .95fr;gap:12px}.ue-payment-grid{display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr);gap:8px 12px;align-items:center;padding:14px}.ue-payment-grid label{font-weight:600;color:#261a0e}.ue-payment-grid .inp{margin:0;min-width:0}.ue-value{background:#fff3e2;border:1px solid #ecd4b2;border-radius:9px;padding:9px;text-align:right}.ue-balance{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;background:#eef3d8;border:1px solid #dbe5b4;border-radius:10px;padding:11px;color:#183d1b}.ue-balance strong{font-size:23px}.ue-discount-readout{grid-column:1/-1;text-align:right;color:#6b5841}.ue-extra-notes{margin:12px;width:calc(100% - 24px);min-height:220px;resize:vertical}.ue-stamp{margin:0 12px 12px;border:1px dashed #bca98e;border-radius:10px;min-height:70px;display:grid;place-items:center;color:#8a7b69}
+.ue-thanks{display:flex;align-items:center;gap:18px;margin:16px 10px;color:#39250f}.ue-thanks span{height:1px;background:#b58b4c;flex:1}.ue-thanks em{font:italic 23px Georgia,serif;white-space:nowrap}
+.ue-invoice-footer{display:flex;align-items:center;justify-content:space-around;gap:10px;padding:12px 8px;border-top:1px solid #ead8bd;color:#24180e;font-size:12px}.ue-invoice-footer i{height:22px;border-left:1px solid #8b6a42}
+.ue-form-actions{display:flex;justify-content:center;gap:14px;padding:14px}.ue-form-actions .btn.pri{background:#4b3016;border-color:#4b3016;color:white}.ue-invoice-form .hint{color:#806b51;text-align:center}.ue-invoice-form .inp{background:#fffdfa;border-color:#eadbc8;color:#251a10}
+@media(max-width:760px){.ue-invoice-header{grid-template-columns:70px minmax(0,1fr)}.ue-brand-mark{height:100px}.ue-brand-mark svg{height:95px;width:65px}.ue-brand-copy h1{font-size:25px}.ue-brand-copy h2{font-size:15px;margin-bottom:8px}.ue-brand-copy p{font-size:11px}.ue-invoice-meta{grid-column:1/-1}.ue-detail-grid,.ue-bottom-grid{grid-template-columns:1fr}.ue-table-head{grid-template-columns:28px minmax(0,1fr) 95px 48px;font-size:11px}.ue-wide .proc-line{grid-template-columns:28px minmax(0,1fr) 95px 48px;gap:5px}.ue-thanks em{font-size:16px;white-space:normal;text-align:center}.ue-invoice-footer{flex-wrap:wrap;font-size:10px}.ue-invoice-footer i{display:none}.ue-notes-wrap textarea{width:100%}.ue-rx-watermark{display:none}}
+
 .invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .invoice-summary .stat-box{padding:12px}
 .invoice-summary .val{font:22px var(--font-display)}
@@ -1069,7 +1089,7 @@ function openInvoiceEditor(id){
  $('#visitTotal').value=String(Number(v.subtotal_amount??v.total_amount??0));
  $('#visitDiscountType').value=v.discount_type||'none';
  $('#visitDiscountValue').value=String(Number(v.discount_value||0));
- $('#visitNotes').value=v.notes||'';
+ $('#visitNotes').value=String(v.notes||'').split('\n\nAdditional notes:\n')[0];$('#visitExtraNotes').value=String(v.notes||'').includes('\n\nAdditional notes:\n')?String(v.notes).split('\n\nAdditional notes:\n').slice(1).join('\n\nAdditional notes:\n'):'';
  $('#visitFollow').value=v.follow_up_date||'';
  const alreadyPaid=Number(v.received||0);
  $('#visitReceived').value=String(alreadyPaid);$('#visitReceived').disabled=false;
@@ -1079,7 +1099,7 @@ function openInvoiceEditor(id){
  const outstanding=Math.max(0,Number(v.total_amount||0)-alreadyPaid);
  const previous=Math.max(0,Number(fp?.balance||0)-outstanding);
  $('#visitPrevValue').textContent=previous.toLocaleString('en-PK');
- $('#visitPrevCard').textContent='Rs '+previous.toLocaleString('en-PK');
+ if($('#visitPrevCard'))$('#visitPrevCard').textContent='Rs '+previous.toLocaleString('en-PK');
  const recalc=()=>{
   const subtotal=Number($('#visitTotal').value||0),type=$('#visitDiscountType').value,value=Number($('#visitDiscountValue').value||0);
   const discount=type==='percentage'?Math.round(subtotal*Math.min(value,100)/100):type==='fixed'?Math.min(subtotal,value):0;
@@ -1374,7 +1394,7 @@ document.addEventListener('submit',async e=>{
  if(form.dataset.editVisit){
   const editName=$('#editVisitPatientName').value.trim(),editPhone=$('#editVisitPatientPhone').value.trim();
   if(editName.length<2||editPhone.replace(/\\D/g,'').length<10){err.textContent='Enter a valid patient name and phone number.';err.hidden=false;return;}
-  r=await api('/api/admin/visits',{method:'PATCH',body:{visit_id:Number(form.dataset.editVisit),patient_id:Number(form.dataset.patientId||form.dataset.pid),patient_name:editName,patient_phone:editPhone,procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_amount:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});
+  r=await api('/api/admin/visits',{method:'PATCH',body:{visit_id:Number(form.dataset.editVisit),patient_id:Number(form.dataset.patientId||form.dataset.pid),patient_name:editName,patient_phone:editPhone,procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_amount:received,payment_method:$('#visitMethod').value,notes:[$('#visitNotes').value.trim(),$('#visitExtraNotes').value.trim()?('Additional notes:\n'+$('#visitExtraNotes').value.trim()):''].filter(Boolean).join('\n\n'),follow_up_date:$('#visitFollow').value||null}});
   if(!r.ok){err.textContent=r.data.error||'Unable to update the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit changes';return;}
   form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+(r.data.invoice_number||form.dataset.invoiceNumber);
   toast('Invoice '+(r.data.invoice_number||form.dataset.invoiceNumber)+' updated. Existing payments preserved.');$('#visitModal').remove();await loadData();if(state.page==='history')render();return;
