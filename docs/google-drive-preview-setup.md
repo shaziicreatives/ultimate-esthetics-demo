@@ -24,6 +24,8 @@ Google Drive settings are Owner-only. The integration is designed to store clini
 
 The app requests `openid`, `email`, and `https://www.googleapis.com/auth/drive.file`. This is deliberately narrower than full Drive access: the app can create/manage its own clinic files and files/folders the Owner explicitly selects through Google Picker. It does not read all unrelated personal Drive files.
 
+**Important token-lifetime note:** Google states that an external OAuth app left in **Testing** issues refresh tokens that expire after 7 days when Drive scopes are requested. For uninterrupted sync and daily backups, move the OAuth app to **In production** and complete any Google verification that Google requires for the requested scopes. Otherwise the Owner may need to reconnect the account weekly.
+
 ## 2. Cloudflare Pages Preview secrets
 
 Open Cloudflare Dashboard → Workers & Pages → `ultimate-esthetics-demo` → Settings → Variables and Secrets → **Preview**.
