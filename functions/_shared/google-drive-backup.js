@@ -110,12 +110,9 @@ export async function backupClinicToDrive(env,kind="manual"){
   if(snapshot.bytes.byteLength>10*1024*1024)throw new Error("Clinic data backup is larger than 10 MB. Use the per-patient Drive records and contact the developer for a large export.");
   const folder=await ensureBackupFolder(env,tokens,connection.root_folder_id);
   const row=await env.DB.prepare("SELECT file_name FROM google_drive_backups WHERE id=?").bind(backupId).first();
-  const saved=await uploadBackup(env,tokens,folder.id,row.file_name,snapshot.bytes);
-  let dailyReportFile=null;
-  if(kind==="daily"){
-   const reportBytes=enc.encode(JSON.stringify(snapshot.dailyReport,null,2));
-   dailyReportFile=await uploadBackup(env,tokens,folder.id,"Daily_Activity_"+dateStamp()+".json",reportBytes);
-  }
+  const saved=kind==="daily"&&existingDaily?.drive_file_id
+   ?await updateBackupFile(env,tokens,existingDaily.drive_file_id,snapshot.bytes)
+   :await uploadBackup(env,tokens,folder.id,row.file_name,snapshot.bytes);
   await env.DB.prepare("UPDATE google_drive_backups SET drive_file_id=?,web_view_link=?,size_bytes=?,status='saved',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?")
    .bind(saved.id,saved.webViewLink||null,snapshot.bytes.byteLength,backupId).run();
   return {success:true,backup_id:backupId,file_name:row.file_name,web_view_link:saved.webViewLink||existingDaily?.web_view_link||null,daily_report:snapshot.dailyReport,size_bytes:snapshot.bytes.byteLength,counts:snapshot.counts,next_backup_due_in_days:kind==="daily"?3:undefined};
