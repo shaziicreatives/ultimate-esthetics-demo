@@ -142,7 +142,7 @@ export async function syncVisitToDrive(env,visitId){
  let job=null;
  try{
   const connection=await getConnection(env);if(!connection?.root_folder_id)return {success:false,skipped:true,reason:"Drive folder is not configured"};
-  const visit=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone patient_phone,d.name doctor_name,a.date visit_date FROM visits v JOIN patients p ON p.id=v.patient_id LEFT JOIN doctors d ON d.id=v.doctor_id LEFT JOIN appointments a ON a.id=v.appointment_id WHERE v.id=?").bind(visitId).first();
+  const visit=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone patient_phone,d.name doctor_name,a.date visit_date,a.time visit_time FROM visits v JOIN patients p ON p.id=v.patient_id LEFT JOIN doctors d ON d.id=v.doctor_id LEFT JOIN appointments a ON a.id=v.appointment_id WHERE v.id=?").bind(visitId).first();
   if(!visit)return {success:false,skipped:true,reason:"Visit not found"};
   await env.DB.prepare("INSERT INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,?,'visit','processing') ON CONFLICT(job_kind,visit_id,patient_id) DO UPDATE SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP")
    .bind(visit.patient_id,visit.id).run();
