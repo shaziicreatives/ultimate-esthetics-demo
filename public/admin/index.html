@@ -1273,9 +1273,9 @@ document.addEventListener('click',async e=>{
 
 function patientSearchResults(query, targetId, hiddenId, mode){
  const box=document.getElementById(targetId),hidden=document.getElementById(hiddenId);if(!box||!hidden)return;
- const q=String(query||'').trim().toLowerCase(),digits=q.replace(/\\D/g,'');
+ const q=String(query||'').trim().toLowerCase(),digits=q.replace(/\D/g,'');
  if(!q){box.innerHTML='';hidden.value='';return;}
- const found=state.patients.filter(p=>p.name.toLowerCase().includes(q)||String(p.phone||'').toLowerCase().includes(q)||(digits.length>=4&&last10(p.phone).includes(digits))).slice(0,8);
+ const found=state.patients.filter(p=>p.name.toLowerCase().includes(q)||String(p.phone||'').toLowerCase().includes(q)||(digits.length>=4&&last10(p.phone).includes(digits.slice(-10)))).slice(0,8);
  box.innerHTML=found.length?found.map(p=>'<button type="button" class="search-result" data-patient-pick="'+p.id+'" data-pick-mode="'+mode+'"><b>'+esc(p.name)+'</b><small>'+esc(prettyPhone(p.phone))+' · Patient #'+p.id+'</small></button>').join(''):'<div class="search-empty">No matching patient found.</div>';
 }
 function applyManualPhoneMatch(){
