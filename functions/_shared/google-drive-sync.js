@@ -79,7 +79,10 @@ async function storeFile(env,tokens,googleEmail,patientId,visitId,kind,parent,na
  let saved;
  try{saved=await upload(env,tokens,parent,name,mime,bytes,old?.drive_file_id||null);}
  catch(error){
-  if(!old?.drive_file_id||!String(error.message||"").includes("404"))throw error;
+  const message=String(error?.message||"");
+  if(!old?.drive_file_id||!/(?:400|403|404)|trashed|cannot be moved/i.test(message))throw error;
+  // If a previous file is trashed or cannot be moved between Drive locations,
+  // create a fresh copy in the currently selected clinic folder.
   saved=await upload(env,tokens,parent,name,mime,bytes,null);
  }
  await env.DB.prepare("INSERT INTO google_drive_files(patient_id,visit_id,file_kind,drive_file_id,file_name,mime_type,web_view_link,google_email,updated_at) VALUES(?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(drive_file_id) DO UPDATE SET file_name=excluded.file_name,mime_type=excluded.mime_type,web_view_link=excluded.web_view_link,google_email=excluded.google_email,updated_at=CURRENT_TIMESTAMP")
