@@ -473,7 +473,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false, sessions:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
+const state = { page: 'dashboard', currentUser: null, profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -743,6 +743,8 @@ async function boot(afterLogin = false) {
       return false;
     }
     showApp();
+    const identity = await fetch('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
+    if (identity.ok) { const who = await identity.json(); state.currentUser = who.user || null; }
     await loadData(true);
     render();
     showDriveOAuthResult();
@@ -834,7 +836,8 @@ function viewDashboard() {
   const daily = Array.from({length:7},(_,i)=>{const d=plusDays(i-6);return {date:d,count:state.appts.filter(a=>a.date===d && ['confirmed','done','no_show'].includes(a.status)).length};});
   const maxDaily = Math.max(1,...daily.map(x=>x.count));
   const chart = '<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:112px;padding:8px 4px 0">' + daily.map(x=>'<div style="display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:5px"><b class="muted" style="font-size:10px">'+x.count+'</b><div title="'+nice(x.date)+': '+x.count+' patients" style="width:100%;max-width:28px;height:'+Math.max(4,Math.round(x.count/maxDaily*72))+'px;background:var(--sand);border:1px solid var(--line);border-radius:5px 5px 0 0"></div><small class="muted">'+WD[new Date(x.date+'T12:00:00').getDay()]+'</small></div>').join('') + '</div>';
-  return head(greet + ', Owner', wday(t) + ', ' + nice(t) + '. Here is your daily overview.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
+  const roleName = state.currentUser?.role === 'owner' ? 'Owner' : state.currentUser?.role === 'admin' ? 'Admin' : (state.currentUser?.role === 'receptionist' || String(state.currentUser?.username || '').toLowerCase() === 'reception') ? 'Receptionist' : 'Staff';
+  return head(greet + ', ' + roleName, wday(t) + ', ' + nice(t) + '. Here is your daily overview.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
     '<div class="stats-grid">' +
     '<div class="stat-box hero"><div class="lbl">Collected today</div><div class="val num">Rs ' + collectedToday.toLocaleString('en-PK') + '</div><div class="sub">Payments received today</div></div>' +
     '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + totalPatients + '</div><div class="sub">Patient register</div></div>' +
