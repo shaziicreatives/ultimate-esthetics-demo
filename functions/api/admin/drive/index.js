@@ -58,11 +58,8 @@ export async function onRequestPost({request,env}){
    const id=String(b.folder_id||"").trim();if(!id)return json({error:"Select a folder."},400);
    const found=await googleRequest(env,tokens,"/drive/v3/files/"+encodeURIComponent(id)+"?"+new URLSearchParams({fields:"id,name,mimeType,trashed,driveId",supportsAllDrives:"true"}).toString());
    if(found.data.mimeType!=="application/vnd.google-apps.folder"||found.data.trashed)return json({error:"Choose an accessible Google Drive folder."},400);
-   let selectedDriveId=found.data.driveId||null,selectedDriveName=null;
-   if(selectedDriveId){
-    const drive=await googleRequest(env,tokens,"/drive/v3/drives/"+encodeURIComponent(selectedDriveId)+"?"+new URLSearchParams({fields:"id,name"}).toString());
-    selectedDriveName=drive.data.name||null;
-   }
+   const selectedDriveId=found.data.driveId||null;
+   const selectedDriveName=selectedDriveId?"Shared Drive":null;
    await env.DB.prepare("UPDATE google_drive_connections SET root_folder_id=?,root_folder_name=?,selected_drive_id=?,selected_drive_name=?,updated_at=CURRENT_TIMESTAMP WHERE id=1")
     .bind(found.data.id,found.data.name,selectedDriveId,selectedDriveName).run();
    return json({success:true,folder:{id:found.data.id,name:found.data.name,drive_id:selectedDriveId,drive_name:selectedDriveName}});
