@@ -42,11 +42,29 @@ async function buildSnapshot(env){
   safeRows(env,"SELECT * FROM user_permissions ORDER BY user_id,permission"),
   safeRows(env,"SELECT id,user_id,username,action,entity,entity_id,details,created_at FROM activity_log ORDER BY id")
  ]);
+ const reportDate=dateStamp();
+ const [dailyVisits,dailyPayments,dailyAppointments]=await Promise.all([
+  env.DB.prepare("SELECT v.id visit_id,v.invoice_number,v.total_amount,v.user_id,v.created_at,p.id patient_id,p.name patient_name,u.username entered_by,u.role entered_by_role FROM visits v JOIN patients p ON p.id=v.patient_id LEFT JOIN users u ON u.id=v.user_id WHERE DATE(datetime(v.created_at,'+5 hours'))=? ORDER BY v.created_at,v.id").bind(reportDate).all(),
+  env.DB.prepare("SELECT py.id payment_id,py.visit_id,py.patient_id,py.amount,py.method,py.reference,py.created_at,p.name patient_name,v.invoice_number,py.received_by,u.username received_by_username,u.role received_by_role FROM payments py JOIN patients p ON p.id=py.patient_id LEFT JOIN visits v ON v.id=py.visit_id LEFT JOIN users u ON u.id=py.received_by WHERE DATE(datetime(py.created_at,'+5 hours'))=? ORDER BY py.created_at,py.id").bind(reportDate).all(),
+  env.DB.prepare("SELECT a.id appointment_id,a.patient_id,p.name patient_name,a.date,a.time,a.source,a.created_at,a.created_by,u.username entered_by,u.role entered_by_role FROM appointments a JOIN patients p ON p.id=a.patient_id LEFT JOIN users u ON u.id=a.created_by WHERE DATE(datetime(a.created_at,'+5 hours'))=? ORDER BY a.created_at,a.id").bind(reportDate).all()
+ ]);
+ const dailyReport={
+  report_date:reportDate,timezone:"Asia/Karachi",
+  unique_patients_seen:new Set((dailyVisits.results||[]).map(x=>x.patient_id)).size,
+  visit_entries:(dailyVisits.results||[]).length,
+  appointment_entries:(dailyAppointments.results||[]).length,
+  payments_count:(dailyPayments.results||[]).length,
+  payments_total:(dailyPayments.results||[]).reduce((sum,x)=>sum+Number(x.amount||0),0),
+  visit_entries_detail:dailyVisits.results||[],
+  appointment_entries_detail:dailyAppointments.results||[],
+  payments_detail:dailyPayments.results||[]
+ };
  const data={
-  backup_format:"ultimate-esthetics-clinic-json-v1",
+  backup_format:"ultimate-esthetics-clinic-json-v2",
   clinic:"Ultimate Esthetics",
   created_at:new Date().toISOString(),
   timezone:"Asia/Karachi",
+  daily_activity_report:dailyReport,
   security_note:"Password hashes, password salts, session tokens, OAuth tokens, API secrets, login attempts and push subscription endpoints are intentionally excluded.",
   tables:{
    users,doctors,patients,appointments,visits,visit_procedures:procedures,payments,patient_notes:notes,
@@ -54,7 +72,7 @@ async function buildSnapshot(env){
   }
  };
  const counts=Object.fromEntries(Object.entries(data.tables).map(([name,rows])=>[name,rows.length]));
- return {bytes:enc.encode(JSON.stringify(data,null,2)),counts};
+ return {bytes:enc.encode(JSON.stringify(data,null,2)),counts,dailyReport};
 }
 
 export async function backupClinicToDrive(env,kind="manual"){
@@ -86,9 +104,14 @@ export async function backupClinicToDrive(env,kind="manual"){
   const folder=await ensureBackupFolder(env,tokens,connection.root_folder_id);
   const row=await env.DB.prepare("SELECT file_name FROM google_drive_backups WHERE id=?").bind(backupId).first();
   const saved=await uploadBackup(env,tokens,folder.id,row.file_name,snapshot.bytes);
+  let dailyReportFile=null;
+  if(kind==="daily"){
+   const reportBytes=enc.encode(JSON.stringify(snapshot.dailyReport,null,2));
+   dailyReportFile=await uploadBackup(env,tokens,folder.id,"Daily_Activity_"+dateStamp()+".json",reportBytes);
+  }
   await env.DB.prepare("UPDATE google_drive_backups SET drive_file_id=?,web_view_link=?,size_bytes=?,status='saved',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?")
    .bind(saved.id,saved.webViewLink||null,snapshot.bytes.byteLength,backupId).run();
-  return {success:true,backup_id:backupId,file_name:row.file_name,web_view_link:saved.webViewLink||null,size_bytes:snapshot.bytes.byteLength,counts:snapshot.counts};
+  return {success:true,backup_id:backupId,file_name:row.file_name,web_view_link:saved.webViewLink||null,daily_report_file:dailyReportFile?.webViewLink||null,daily_report:snapshot.dailyReport,size_bytes:snapshot.bytes.byteLength,counts:snapshot.counts};
  }catch(error){
   if(backupId)await env.DB.prepare("UPDATE google_drive_backups SET status='failed',last_error=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
    .bind(String(error?.message||"Clinic backup failed").slice(0,500),backupId).run().catch(()=>{});
