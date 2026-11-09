@@ -1119,6 +1119,7 @@ async function openGoogleDrivePicker(){
   .setDeveloperKey(config.developer_key)
   .setOAuthToken(config.access_token)
   .setOrigin(window.location.protocol+'//'+window.location.host)
+  .enableFeature(picker.Feature.SUPPORT_DRIVES)
   .addView(folders)
   .setTitle('Choose the clinic Google Drive folder')
   .setCallback(async data=>{
