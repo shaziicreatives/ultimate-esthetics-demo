@@ -89,6 +89,7 @@ const migration0010 = `
 ALTER TABLE google_drive_files ADD COLUMN google_email TEXT;
 UPDATE google_drive_files SET google_email=(SELECT google_email FROM google_drive_connections WHERE id=1) WHERE google_email IS NULL;
 CREATE INDEX IF NOT EXISTS idx_drive_files_google_email_updated ON google_drive_files(google_email,updated_at);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_drive_patient_sync_job ON google_drive_sync_jobs(patient_id) WHERE job_kind='patient';
 ALTER TABLE google_drive_connections ADD COLUMN auto_backup_daily INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE google_drive_connections ADD COLUMN auto_save_visit_pdf INTEGER NOT NULL DEFAULT 1;
 CREATE TABLE IF NOT EXISTS google_drive_backups (
