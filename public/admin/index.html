@@ -670,7 +670,11 @@ async function ensurePreviewSeed(username,password) {
         body:JSON.stringify({username,password})
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success !== true) throw new Error(data.error || 'Could not prepare Preview database.');
+      if (!response.ok || data.success !== true) {
+        const error=new Error(data.error || 'Could not prepare Preview database.');
+        error.status=response.status;
+        throw error;
+      }
       return data;
     })().catch(error => {
       previewSeedPromise = null;
@@ -743,7 +747,10 @@ $('#loginForm').addEventListener('submit', async e => {
     await boot(true); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
-  } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
+  } catch (x) {
+    err.textContent = x && x.message ? x.message : 'Unable to connect to the server.';
+    err.hidden = false;
+  }
   if(!btn.hidden){btn.disabled = false; btn.textContent = 'Sign In';}
 });
 $('#logoutBtn').addEventListener('click', async () => {
