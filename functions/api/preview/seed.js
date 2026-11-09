@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS google_drive_backups (
 CREATE INDEX IF NOT EXISTS idx_drive_backups_account_date ON google_drive_backups(google_email,backup_kind,backup_date,created_at);
 `;
 
-export async function onRequestGet({request,env}) {
+export async function onRequestPost({request,env}) {
  const host = new URL(request.url).hostname;
  if (host === "ultimate-esthetics-demo.pages.dev" ||
      !host.endsWith(".ultimate-esthetics-demo.pages.dev")) {
@@ -118,14 +118,41 @@ export async function onRequestGet({request,env}) {
    return Response.json({error:"Preview DB bindings are not configured."},{status:503});
  }
  try {
-   await env.DB.prepare("CREATE TABLE IF NOT EXISTS _preview_seed_status (id INTEGER PRIMARY KEY CHECK(id=1), state TEXT NOT NULL, copied_tables INTEGER NOT NULL DEFAULT 0, copied_rows INTEGER NOT NULL DEFAULT 0, counts_json TEXT, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)").run();
+   await env.DB.prepare("CREATE TABLE IF NOT EXISTS _preview_seed_status (id INTEGER PRIMARY KEY CHECK(id=1), state TEXT NOT NULL, copied_tables INTEGER NOT NULL DEFAULT 0, copied_rows INTEGER NOT NULL DEFAULT 0, counts_json TEXT, failed_attempts INTEGER NOT NULL DEFAULT 0, locked_until INTEGER, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)").run();
    const state = await env.DB.prepare("SELECT * FROM _preview_seed_status WHERE id=1").first();
    if (state?.state === "complete") {
-     return Response.json({success:true,already_seeded:true,copied_tables:state.copied_tables,copied_rows:state.copied_rows,counts:JSON.parse(state.counts_json||"[]")});
+     return Response.json({success:true,already_seeded:true,copied_tables:state.copied_tables,copied_rows:state.copied_rows});
    }
    if (state?.state === "running") {
      return Response.json({error:"Preview data copy is already running. Refresh in a moment."},{status:409});
    }
+   const now=Math.floor(Date.now()/1000);
+   if(Number(state?.locked_until||0)>now)return Response.json({error:"Preview setup is temporarily locked after repeated failed Owner sign-in attempts. Try again in 15 minutes."},{status:429});
+   let credentials={};
+   try{credentials=await request.json();}catch{}
+   const username=String(credentials.username||"").trim(),password=String(credentials.password||"");
+   if(!username||!password)return Response.json({error:"Enter the existing Owner username and password to prepare Preview."},{status:400});
+   const sourceUser=await env.SOURCE_DB.prepare(
+     "SELECT id,username,password_hash,password_salt,role,is_active,locked_until FROM users WHERE (username=? COLLATE NOCASE OR (role='owner' AND username='admin' COLLATE NOCASE AND ?='Owner')) AND is_active=1"
+   ).bind(username,username).first();
+   let effectiveRole=sourceUser?.role||"";
+   if(sourceUser?.role==="owner"&&username.toLowerCase()==="owner"&&sourceUser.username.toLowerCase()==="admin")sourceUser.username="Owner";
+   if(sourceUser?.role==="owner"&&sourceUser.username.toLowerCase()==="admin")effectiveRole="admin";
+   const emergency=typeof env.GENERAL_LOGIN_PASSWORD==="string"?env.GENERAL_LOGIN_PASSWORD:"";
+   const emergencyAllowed=!!sourceUser&&effectiveRole==="owner"&&emergency.length>=8&&password===emergency;
+   const sourceLocked=!!sourceUser?.locked_until&&new Date(sourceUser.locked_until.replace(" ","T")+(sourceUser.locked_until.includes("Z")?"":"Z")).getTime()>Date.now();
+   let passwordValid=false;
+   if(sourceUser&&effectiveRole==="owner"&&!sourceLocked){
+    const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password+sourceUser.password_salt));
+    const hash=Array.from(new Uint8Array(digest)).map(value=>value.toString(16).padStart(2,"0")).join("");
+    passwordValid=hash===sourceUser.password_hash||emergencyAllowed;
+   }
+   if(!passwordValid){
+    await env.DB.prepare("INSERT INTO _preview_seed_status(id,state,failed_attempts,locked_until,updated_at) VALUES(1,'pending',1,CASE WHEN 1>=5 THEN ? ELSE NULL END,CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET failed_attempts=failed_attempts+1,locked_until=CASE WHEN failed_attempts+1>=5 THEN ? ELSE locked_until END,updated_at=CURRENT_TIMESTAMP")
+     .bind(now+900,now+900).run();
+    return Response.json({error:"Owner username or password is incorrect. Only the existing Owner account can prepare Preview."},{status:401});
+   }
+   await env.DB.prepare("INSERT INTO _preview_seed_status(id,state,failed_attempts,locked_until,updated_at) VALUES(1,'pending',0,NULL,CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET failed_attempts=0,locked_until=NULL,updated_at=CURRENT_TIMESTAMP").run();
    if (state?.state === "failed") {
      const partial = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT IN ('_cf_KV','_preview_seed_status')").all();
      const present = new Set((partial.results||[]).map(row=>row.name));
