@@ -68,7 +68,7 @@ async function upload(env,tokens,parent,name,mime,bytes,existingId){
   }
  }
  const meta=JSON.stringify({name,mimeType:mime,...(existingId?{}:{parents:[parent]})});
- const body=new Blob(["--"+boundary+"\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n"+meta+"\\r\\n--"+boundary+"\\r\\nContent-Type: "+mime+"\\r\\n\\r\\n",bytes,"\\r\\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
+ const body=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+meta+"\r\n--"+boundary+"\r\nContent-Type: "+mime+"\r\n\r\n",bytes,"\r\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
  const base="/upload/drive/v3/files"+(existingId?"/"+encodeURIComponent(existingId):"");
  const path=base+"?uploadType=multipart&fields=id,name,mimeType,webViewLink&supportsAllDrives=true"+moveQuery;
  const result=await api(env,tokens,path,{method:existingId?"PATCH":"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
