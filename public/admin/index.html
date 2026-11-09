@@ -431,7 +431,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false, sessions:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
+const state = { page: 'dashboard', profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -706,11 +706,10 @@ async function boot(afterLogin = false) {
     }
     showApp();
     await loadData(true);
-    await loadDriveSettings(false);
-    await refreshNotificationAccessButton();
     render();
     showDriveOAuthResult();
     updateSoundButton();
+    refreshNotificationAccessButton().catch(() => {});
     if (!timer) timer = setInterval(() => loadData(false), 8000);
     return true;
   } catch (e) {
@@ -924,6 +923,8 @@ function viewDrive(){
  const backupRows=(state.driveBackups||[]).map(x=>'<div class="row"><div><b>'+esc(x.backup_kind==='daily'?'Automatic daily backup':'Manual backup')+'</b><small>'+esc(x.file_name)+' · '+esc(x.status)+(x.size_bytes?' · '+(Number(x.size_bytes)/1024).toFixed(1)+' KB':'')+(x.last_error?' · '+esc(x.last_error):'')+'</small></div>'+(x.web_view_link?'<a class="btn sm" href="'+esc(x.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open backup</a>':'')+'</div>').join('');
  return head('Google Drive','Owner-only document storage. Patient records, visits, invoices and attachments stay in your Google Drive.', '')+
  '<div class="col" style="max-width:850px">'+
+  (state.driveLoading&&!state.driveData?'<section class="card"><p class="hint">Loading Google Drive settings…</p></section>':'')+
+  '<section class="card"><b>Setup progress</b><p class="hint" style="margin-top:8px">'+(configured?'✓ Google credentials configured':'1. Google account · Pending')+'<br>'+(connected?'✓ Google account connected':'2. Google account connection · Pending')+'<br>'+(d.root_folder_id?'✓ Clinic folder selected':'3. Clinic folder · Pending')+'<br>'+(d.root_folder_id?'Automatic saving can be configured below.':'Automatic saving starts after selecting a clinic folder.')+'</p></section>'+
  (d.migration_required?'<section class="card"><div class="alert-item warn">Google Drive tables are not available yet. Open the latest Preview once so its initial database setup can complete, then refresh this page.</div></section>':'')+
  (!configured?'<section class="card"><div class="alert-item warn"><b>Google connection setup is incomplete.</b><p style="margin-top:6px">Add these values as Preview-only Cloudflare Pages secrets: '+missing+'. Never paste the client secret into the app or GitHub.</p><p style="margin-top:8px"><b>Authorized redirect URI:</b><br><code>https://feature-clinic-patients-invo.ultimate-esthetics-demo.pages.dev/api/admin/drive/oauth/callback</code></p><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Open Google Cloud Credentials</a> · <a href="https://github.com/shaziicreatives/ultimate-esthetics-demo/blob/feature/clinic-patients-invoices-push/docs/google-drive-preview-setup.md" target="_blank" rel="noopener noreferrer">Preview setup guide</a></div></section>':'')+
  '<section class="card"><div class="card-head"><h2>Google account</h2><span class="pill '+(connected?'ok':'warn')+'">'+(connected?'Connected':'Not connected')+'</span></div>'+
@@ -932,22 +933,23 @@ function viewDrive(){
  '<div class="actions" style="margin-top:14px">'+(d.migration_required?'':(configured?'<a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Reconnect Google account':'Connect Google account')+'</a>':'<button class="btn pri" type="button" disabled>Connect Google account</button>'))+(connected?'<button class="btn sm" type="button" data-drive-action="test">Test connection</button><button class="btn bad" type="button" data-drive-action="disconnect">Disconnect</button>':'')+'</div></section>'+
  (connected?'<section class="card"><div class="card-head"><h2>Clinic Drive folder</h2><span class="pill '+(d.root_folder_id?'ok':'warn')+'">'+(d.root_folder_id?'Selected':'Not selected')+'</span></div>'+
  '<p style="margin-bottom:12px">Current folder: <b>'+root+'</b></p>'+
- (!d.root_folder_id?'<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="Ultimate Esthetics Clinic"></div><div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select folder</button><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Browse Google Drive</button></div>':
+ (!d.root_folder_id?'<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="'+esc(state.driveRootName||'Ultimate Esthetics Clinic')+'"></div><div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select folder</button><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Browse Google Drive</button></div>':
  '<div class="actions"><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Change folder in Google Drive</button></div>')+
  (!pickerConfigured?'<p class="hint" style="margin-top:10px">Google Picker needs Preview secrets: '+pickerMissing+'. You can still select an app-accessible top-level folder below, or create a new clinic folder.</p>':'<p class="hint" style="margin-top:10px">Use Google Picker to select an existing folder from My Drive or Shared Drives. The app only receives access to the folder you explicitly select.</p>')+
  ((state.driveFolders||[]).length?'<div style="margin-top:14px"><b>Folders already accessible to this app</b>'+state.driveFolders.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><small>Google Drive folder</small></div><button class="btn sm" type="button" data-drive-action="select-root" data-folder="'+esc(x.id)+'">Select</button></div>').join('')+'</div>':'')+
  '</section>'+
  '<section class="card"><div class="card-head"><h2>Automatic saving</h2></div>'+
- '<label class="switch-row"><span>Invoice PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
- '<label class="switch-row"><span>Visit Summary PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_pdf" '+(d.auto_save_visit_pdf?'checked':'')+'></label>'+
- '<label class="switch-row"><span>Editable patient record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
- '<label class="switch-row"><span>Visit record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
+  (!d.root_folder_id?'<div class="alert-item warn" style="margin-bottom:10px">Select a clinic folder first. No patient or invoice files can be saved until a folder is selected.</div>':'')+
+ '<label class="switch-row"><span>Invoice PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
+ '<label class="switch-row"><span>Visit Summary PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_pdf" '+(d.auto_save_visit_pdf?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
+ '<label class="switch-row"><span>Editable patient record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
+ '<label class="switch-row"><span>Visit record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
  '<p class="hint" style="margin-top:10px">Every patient gets a folder; every visit gets its own subfolder. The app updates existing files instead of making a new copy each time the same record changes.</p></section>'+
  '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync all existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
  (jobRows||'<div class="empty">No synchronization jobs yet.</div>')+
  '<p class="hint" style="margin-top:10px">Failed jobs retry automatically while the Owner admin panel is open. You can also retry an individual job.</p></section>'+
  '<section class="card"><div class="card-head"><h2>Clinic data backup</h2><button class="btn pri sm" type="button" data-drive-action="backup-now">Back up now</button></div>'+
- '<label class="switch-row"><span>Automatic daily clinic-data backup</span><input class="switch" type="checkbox" data-drive-setting="auto_backup_daily" '+(d.auto_backup_daily?'checked':'')+'></label>'+
+ '<label class="switch-row"><span>Automatic daily clinic-data backup</span><input class="switch" type="checkbox" data-drive-setting="auto_backup_daily" '+(d.auto_backup_daily?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
  '<p class="hint" style="margin-top:8px">A JSON snapshot is saved in a separate "Clinic Backups" folder. It includes patients, bookings, visits, invoices, payments, doctors and clinic permissions. Password hashes, login sessions, OAuth tokens, API secrets and push subscription endpoints are excluded. Daily backups run while the Owner admin panel is open.</p>'+
  (backupRows||'<div class="empty">No clinic backups yet.</div>')+'</section>'+
  '<section class="card"><div class="card-head"><h2>Files saved in Drive</h2></div>'+(fileRows||'<div class="empty">No Drive documents have been uploaded yet.</div>')+'</section>':'')+
@@ -969,7 +971,7 @@ function viewSecurity() {
  '<section class="card"><div class="card-head"><h2>Login history</h2></div>'+logRows('logins',live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+(x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'<small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).length?(securityShowAll.sessions?live.sessions:live.sessions.slice(0,8)).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||"IP unavailable")+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join(''):'<div class="empty">No active sessions.</div>')+((live.sessions||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="sessions">'+(securityShowAll.sessions?'Show less':'Show all ('+live.sessions.length+')')+'</button>':'')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Activity log</h2></div>'+logRows('activity',live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'<small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
- '<section class="card wide"><div class="card-head"><h2>Google Drive backup &amp; document storage</h2><span class="pill info">Owner only</span></div><b>Google Drive backup &amp; document storage</b><p class="hint" style="margin-top:6px">Google Drive settings ab Security ke andar hain. Connection, clinic folder, automatic patient/invoice saving aur sync history yahan manage karein.</p>'+(state.driveAllowed?'<button class="btn pri sm" type="button" data-security-drive-toggle style="margin-top:12px">'+(state.securityDriveOpen?'Hide Google Drive settings':'Open Google Drive settings')+'</button>':'<small class="hint" style="display:block;margin-top:10px">Google Drive settings are available to the Owner account only.</small>')+'</section>'+(state.securityDriveOpen&&state.driveAllowed?'<div class="wide">'+viewDrive()+'</div>':'')+
+ '<section class="card wide"><div class="card-head"><h2>Google Drive backup &amp; document storage</h2><span class="pill info">Owner only</span></div><b>Google Drive backup &amp; document storage</b><p class="hint" style="margin-top:6px">Google Drive settings ab Security ke andar hain. Connection, clinic folder, automatic patient/invoice saving aur sync history yahan manage karein.</p>'+(ownerMode?'<button class="btn pri sm" type="button" data-security-drive-toggle style="margin-top:12px">'+(state.securityDriveOpen?'Hide Google Drive settings':'Open Google Drive settings')+'</button>':'<small class="hint" style="display:block;margin-top:10px">Google Drive settings are available to the Owner account only.</small>')+'</section>'+(state.securityDriveOpen&&ownerMode&&state.driveAllowed?'<div class="wide">'+viewDrive()+'</div>':'')+
  '</div>';
 }
 function viewHistory() {
@@ -1094,6 +1096,8 @@ function renderNav() {
 
 let driveAutoRefreshTimer=null;
 async function loadDriveSettings(redraw=true){
+ state.driveLoading=true;
+ if(redraw)render();
  try{
   const r=await api('/api/admin/drive');
   state.driveAllowed=r.status!==403;
@@ -1107,7 +1111,7 @@ async function loadDriveSettings(redraw=true){
    const folders=await api('/api/admin/drive?parent=root');
    state.driveFolders=folders.ok?(folders.data.folders||[]):[];
    if(!driveAutoRefreshTimer&&state.driveAllowed){
-    driveAutoRefreshTimer=setInterval(()=>{if(state.driveAllowed&&state.driveData?.connected)loadDriveSettings(false).catch(()=>{});},45000);
+    driveAutoRefreshTimer=setInterval(()=>{if(!document.hidden&&state.driveAllowed&&state.driveData?.connected)loadDriveSettings(false).catch(()=>{});},45000);
    }
   }else{
    state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
@@ -1116,6 +1120,7 @@ async function loadDriveSettings(redraw=true){
   if(e&&e.message==='unauthorized')throw e;
   state.driveAllowed=true;state.driveData={migration_required:true};state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
  }
+ state.driveLoading=false;
  if(redraw)render();
 }
 async function loadGooglePickerLibrary(){
@@ -1158,9 +1163,9 @@ async function openGoogleDrivePicker(){
   }).build();
  dialog.setVisible(true);
 }
-async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
+async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw','driveRootName'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
-function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
+function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(!document.hidden&&state.page==='security')loadSecurity();},5000);}
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
 function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
@@ -1214,6 +1219,7 @@ document.addEventListener('click',async e=>{
  }catch(error){if(error.message!=='unauthorized')toast(error.message||'Google Drive action failed.');}
  finally{b.disabled=false;}
 });
+document.addEventListener('input',e=>{if(e.target.id==='driveRootName')state.driveRootName=e.target.value;});
 document.addEventListener('change',async e=>{
  const key=e.target.dataset.driveSetting;if(!key)return;
  const body={action:'settings',[key]:e.target.checked};
@@ -1273,7 +1279,7 @@ document.addEventListener('submit',async e=>{
 });
 
 document.addEventListener('click', async e => {
-  const driveToggle=e.target.closest('[data-security-drive-toggle]');if(driveToggle){state.securityDriveOpen=!state.securityDriveOpen;if(state.securityDriveOpen)loadDriveSettings(false).then(()=>render());else render();return;} const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const driveToggle=e.target.closest('[data-security-drive-toggle]');if(driveToggle){state.securityDriveOpen=!state.securityDriveOpen;if(state.securityDriveOpen){state.driveLoading=true;render();loadDriveSettings(true).catch(()=>{});}else render();return;} const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
   const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
