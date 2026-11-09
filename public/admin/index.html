@@ -928,6 +928,7 @@ function viewDrive(){
  '</section>'+
  '<section class="card"><div class="card-head"><h2>Automatic saving</h2></div>'+
  '<label class="switch-row"><span>Invoice PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_invoice_pdf" '+(d.auto_save_invoice_pdf?'checked':'')+'></label>'+
+ '<label class="switch-row"><span>Visit Summary PDF (per visit)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_pdf" '+(d.auto_save_visit_pdf?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Editable patient record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_patient_record" '+(d.auto_save_patient_record?'checked':'')+'></label>'+
  '<label class="switch-row"><span>Visit record (JSON)</span><input class="switch" type="checkbox" data-drive-setting="auto_save_visit_record" '+(d.auto_save_visit_record?'checked':'')+'></label>'+
  '<p class="hint" style="margin-top:10px">Every patient gets a folder; every visit gets its own subfolder. The app updates existing files instead of making a new copy each time the same record changes.</p></section>'+
