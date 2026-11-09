@@ -1,10 +1,9 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 async function auth(request,env){
- const m=(request.headers.get("Cookie")||"").match(/(?:^|;\s*)admin_token=([^;]+)/);if(!m)return null;
- const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(decodeURIComponent(m[1])));
- const h=Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("");
- const user=await env.DB.prepare("SELECT s.id session_id,s.user_id,u.username,u.role FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
- return user?{...user,tokenHash:h}:null;
+ const user=await getAdminSession(request,env);
+ if(user&&user.role==="owner"&&String(user.username).toLowerCase()==="admin")user.role="admin";
+ return user;
 }
 function device(ua){ua=String(ua||"");const os=/Windows/i.test(ua)?"Windows":/Android/i.test(ua)?"Android":/(iPhone|iPad)/i.test(ua)?"iOS":/Mac OS/i.test(ua)?"macOS":/Linux/i.test(ua)?"Linux":"Unknown OS";const browser=/Edg\//i.test(ua)?"Edge":/Chrome\//i.test(ua)?"Chrome":/Firefox\//i.test(ua)?"Firefox":/Safari\//i.test(ua)?"Safari":"Browser";return browser+" · "+os;}
 export async function onRequestGet({request,env}){

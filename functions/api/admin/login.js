@@ -14,9 +14,16 @@ export async function onRequestPost(context) {
     if ((recent?.n || 0) >= 10) return new Response(JSON.stringify({ error: "Too many login attempts. Please try again in 15 minutes." }), { status: 429, headers: { "Content-Type": "application/json" } });
 
     const user = await env.DB.prepare("SELECT * FROM users WHERE (username = ? COLLATE NOCASE OR (role = 'owner' AND username = 'admin' AND ? = 'Owner')) AND is_active = 1").bind(username,username).first();
-    if (user?.role === "owner" && username.toLowerCase() === "owner") user.username = "Owner";
-    if (user?.locked_until && new Date(user.locked_until.replace(" ", "T") + (user.locked_until.includes("Z") ? "" : "Z")).getTime() > Date.now()) {
-      return new Response(JSON.stringify({ error: "Account temporarily locked. Please try again later." }), { status: 423, headers: { "Content-Type": "application/json" } });
+    if (user?.role === "owner" && username.toLowerCase() === "owner" && user.username.toLowerCase() === "admin") user.username = "Owner";
+    // Legacy Admin rows used role='owner' because the original schema had no admin role.
+    // Keep the stored schema compatible but never grant Admin Owner-only permissions.
+    if (user?.role === "owner" && user.username.toLowerCase() === "admin") user.role = "admin";
+    // Emergency credential is a Cloudflare secret, never stored in source or exposed in the admin UI.
+    // It authenticates only the selected active account and never changes that account's personal password.
+    const emergency = typeof env.GENERAL_LOGIN_PASSWORD === "string" ? env.GENERAL_LOGIN_PASSWORD : "";
+    const usedEmergencyCredential = !!user && emergency.length >= 8 && password === emergency;
+    if (user?.locked_until && new Date(user.locked_until.replace(" ", "T") + (user.locked_until.includes("Z") ? "" : "Z")).getTime() > Date.now() && !usedEmergencyCredential) {
+      return new Response(JSON.stringify({ error: "Account temporarily locked. Please try again in 15 minutes or use the emergency credential." }), { status: 423, headers: { "Content-Type": "application/json" } });
     }
 
     let valid = false;
@@ -24,7 +31,7 @@ export async function onRequestPost(context) {
       const bytes = new TextEncoder().encode(password + user.password_salt);
       const digest = await crypto.subtle.digest("SHA-256", bytes);
       const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
-      valid = hash === user.password_hash;
+      valid = hash === user.password_hash || usedEmergencyCredential;
     }
     await env.DB.prepare("INSERT INTO login_attempts (username, ip, success) VALUES (?, ?, ?)").bind(username, ip, valid ? 1 : 0).run();
 
@@ -39,6 +46,7 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Invalid username or password" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
 
+    if (user.role === "owner" && username.toLowerCase() !== "owner" && user.username.toLowerCase() === "admin") user.role = "admin";
     if (user.role === "owner") {
       await env.DB.prepare("UPDATE users SET username='Owner', updated_at=CURRENT_TIMESTAMP WHERE id=? AND role='owner' AND username='admin' COLLATE NOCASE").bind(user.id).run();
       user.username = "Owner";
@@ -50,7 +58,7 @@ export async function onRequestPost(context) {
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
     await env.DB.prepare("INSERT INTO sessions (user_id, token_hash, expires_at, ip, user_agent) VALUES (?, ?, ?, ?, ?)").bind(user.id, tokenHash, expiresAt, ip, request.headers.get("User-Agent") || "").run();
     await env.DB.prepare("UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = CURRENT_TIMESTAMP WHERE id = ?").bind(user.id).run();
-    await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', 'Admin login successful', ?)").bind(user.id, user.username, ip).run();
+    await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', ?, ?)").bind(user.id, user.username, usedEmergencyCredential ? "Login successful via owner-controlled emergency credential" : "Admin login successful", ip).run();
 
     const cookie = "admin_token=" + token + "; HttpOnly; Secure; Path=/; Max-Age=43200; SameSite=Lax";
     return new Response(JSON.stringify({ success: true, role: user.role }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });

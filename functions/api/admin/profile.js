@@ -1,14 +1,20 @@
+import { getAdminSession } from "../../_shared/admin-session.js";
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
+const maskEmail=value=>{const email=String(value||"");const at=email.lastIndexOf("@");if(at<1)return "Hidden";const local=email.slice(0,at),domain=email.slice(at+1);return local.length<=4?local[0]+"**"+local.slice(-1)+"@"+domain:local.slice(0,2)+"****"+local.slice(-2)+"@"+domain;};
 const hash=async v=>{const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(v));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("")};
 async function currentUser(request,env){
- const m=(request.headers.get("Cookie")||"").match(/(?:^|;\\s*)admin_token=([^;]+)/);if(!m)return null;
- const token=decodeURIComponent(m[1]),h=await hash(token);
- return env.DB.prepare("SELECT s.user_id,u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND datetime(s.expires_at)>datetime('now') AND u.is_active=1").bind(h).first();
+ const session=await getAdminSession(request,env);
+ if(!session)return null;
+ const u=await env.DB.prepare("SELECT u.username,u.email,u.role,u.first_name,u.last_name,u.password_hash,u.password_salt FROM users u WHERE u.id=? AND u.is_active=1").bind(session.user_id).first();
+ if(u&&u.role==="owner"&&u.username.toLowerCase()==="admin")u.role="admin";
+ if(u)u.user_id=session.user_id;
+ return u;
 }
 async function verify(u,password){return !!u&&!!password&&(await hash(String(password)+u.password_salt))===u.password_hash;}
 export async function onRequestGet({request,env}) {
  const u=await currentUser(request,env);if(!u)return json({error:"Unauthorized"},401);
- return json({username:u.username,role:u.role,first_name:u.first_name||"",last_name:u.last_name||"",email:u.email||""});
+ if(u.role!=="owner")return json({error:"Login from Owner account."},403);
+ return json({username:u.username,role:u.role,first_name:u.first_name||"",last_name:u.last_name||"",email:maskEmail(u.email)});
 }
 export async function onRequestPost({request,env}) {
  let b;try{b=await request.json()}catch{return json({error:"Invalid request."},400)}
@@ -42,9 +48,10 @@ export async function onRequestPost({request,env}) {
   return json({success:true,message:"Both email addresses verified. Your new email is now active."});
  }
  const u=await currentUser(request,env);if(!u)return json({error:"Unauthorized"},401);
+ if(u.role!=="owner")return json({error:"Login from Owner account."},403);
  if(!await verify(u,b.password))return json({error:"Login ID or password is incorrect."},403);
  if(String(b.username||"").trim().toLowerCase()!==u.username.toLowerCase())return json({error:"Enter your current Login ID."},403);
- if(action==="verify")return json({success:true,profile:{username:u.username,role:u.role,first_name:u.first_name||"",last_name:u.last_name||"",email:u.email||""}});
+ if(action==="verify")return json({success:true,profile:{username:u.username,role:u.role,first_name:u.first_name||"",last_name:u.last_name||"",email:maskEmail(u.email)}});
  if(action==="update_name"){
   const first=String(b.first_name||"").trim(),last=String(b.last_name||"").trim();
   if(!first||!last||first.length>80||last.length>80)return json({error:"Enter a valid first and last name."},400);

@@ -45,7 +45,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .nowrap{white-space:nowrap}
 
 /* login */
-#loginView{position:fixed;inset:0;background:var(--bg);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+#loginView{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center}
 .brand-mark{width:38px;height:38px;border-radius:12px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--font-display);font-size:22px;flex:none}
 .login-card .brand-mark{width:46px;height:46px;font-size:26px;margin:0 auto 12px}
@@ -132,8 +132,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .tabs button.on{background:var(--accent);color:var(--accent-ink)}
 .tabs .n{font-size:11px;padding:1px 6px;border-radius:99px;background:var(--sand);color:var(--ink);margin-left:4px}
 
-.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
-.req-item:last-child{border-bottom:0}
+.req-item{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px;border:1px solid var(--line);border-radius:16px;margin:10px 0;background:linear-gradient(115deg,rgba(66,133,244,.09),rgba(234,67,53,.055) 38%,rgba(251,188,5,.07) 68%,rgba(52,168,83,.07));box-shadow:0 3px 14px rgba(60,70,90,.045)}
+.req-item:last-child{border-bottom:1px solid var(--line)}
 .req-meta{display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap}
 .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -169,13 +169,55 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;background:var(--accent);color:var(--accent-ink);padding:11px 18px;border-radius:12px;z-index:9999;font-weight:500;box-shadow:var(--shadow);max-width:min(560px,calc(100% - 32px))}
 .err{color:var(--bad);font-size:12.5px}
-.visit-modal{position:fixed;inset:0;background:#0008;z-index:10000;display:grid;place-items:center;padding:16px}
-.visit-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.visit-modal{position:fixed;inset:0;background:rgba(39,25,11,.58);z-index:10000;display:grid;place-items:center;padding:12px}
+.visit-card{width:min(1180px,100%);max-height:96vh;overflow:auto;background:#fffaf2;border:1px solid #e8c99d;border-radius:22px;padding:20px;box-shadow:0 24px 70px #2b1b0d55;color:#24180e}
+.visit-card>.card-head{background:linear-gradient(110deg,#3e2813,#68431d);color:#fff;border-radius:13px;padding:13px 17px;margin:-2px -2px 14px}
+.visit-card>.card-head h2,.visit-card .card-head h2{color:inherit}
+.visit-card .card{background:#fffdf9;border:1px solid #ead4b5;border-radius:14px;box-shadow:none}
+.visit-card .card-head:not(:first-child){color:#fff;background:linear-gradient(110deg,#3e2813,#68431d);border-radius:10px;padding:10px 14px}
+.visit-card .inp{background:#fffdfa;border-color:#eadbc8;color:#251a10}
+.visit-card label{color:#24180e}
+.visit-card .hint,.visit-card .muted{color:#766653}
+.visit-card .actions .btn.pri,.visit-card #visitSave{background:#4b3016;border-color:#4b3016;color:#fff}
+#visitNotes{min-height:150px;resize:vertical;line-height:1.5}
+#visitModal .visit-card{background:linear-gradient(180deg,#fffaf2,#fffdf9)}
+#visitModal .invoice-summary .stat-box.hero{background:#eff4d9;border-color:#d8e4ad;color:#173d19}
+
 .proc-line{display:grid;grid-template-columns:minmax(0,1fr) 140px;gap:8px;margin:8px 0}
 .invoice-brand{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid var(--line);padding-bottom:14px;margin-bottom:16px}
 .invoice-brand h2{font:30px var(--font-display);color:var(--ink)}
 .invoice-brand p,.invoice-meta{font-size:12px;color:var(--muted);line-height:1.6}
 .invoice-title{font:26px var(--font-display);margin:10px 0 14px}
+
+.ue-invoice-form{width:min(1180px,100%);max-height:97vh;overflow:auto;padding:16px;background:#fffaf2!important;border:1px solid #ead2ae!important;border-radius:22px!important;color:#24180e!important;box-shadow:0 24px 70px #2b1b0d55!important}
+.ue-invoice-header{display:grid;grid-template-columns:132px minmax(0,1fr) 270px;gap:18px;align-items:center;padding:12px 8px 16px;border-bottom:1px solid #ead8bd;background:linear-gradient(100deg,#fffaf2,#fffdf9);border-radius:16px 16px 0 0}
+.ue-brand-mark{height:145px;display:grid;place-items:center;border-right:2px solid #6b481f}.ue-brand-mark svg{height:138px;width:100px}
+.ue-brand-copy h1{font:36px Georgia,serif;color:#39250f;margin:0 0 2px}.ue-brand-copy h2{font:21px Georgia,serif;color:#39250f;margin:0 0 16px}.ue-brand-copy p{font:14px Arial,sans-serif;color:#17120d;margin:8px 0}
+.ue-invoice-meta{display:flex;flex-direction:column;gap:6px;background:#f8ead6;border-radius:15px;padding:13px 18px;color:#25190e}.ue-invoice-meta b{background:#4b3016;color:#fff;border-radius:12px;padding:9px;text-align:center;font: bold 26px Georgia,serif}.ue-invoice-meta span{text-align:center;font-weight:700}.ue-invoice-meta small{font-size:13px}
+.ue-detail-grid{display:grid;grid-template-columns:1.2fr 1fr .82fr;gap:12px;margin:12px 0}
+.ue-panel{border:1px solid #ead4b5!important;border-radius:14px!important;background:#fffdf9!important;overflow:hidden;min-width:0}
+.ue-panel>h3{margin:0;padding:10px 14px;background:linear-gradient(100deg,#3e2813,#68431d);color:#fff;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.ue-panel .who{padding:16px;display:flex;gap:12px;align-items:center}.ue-panel .who b,.ue-panel-body b{font-size:15px;color:#24180e}.ue-panel .who small,.ue-panel-body small{display:block;color:#776653;margin-top:5px}.ue-panel-body{padding:18px}
+.ue-invoice-body{gap:12px!important}.ue-wide{width:100%}.ue-table-head{display:grid;grid-template-columns:48px minmax(0,1fr) 170px 74px;background:#fff4e3;border-bottom:1px solid #ead4b5;font-weight:700;padding:10px 12px;gap:10px}
+.ue-table-head span:first-child{text-align:center}.ue-wide #visitProcedures{padding:0 12px}.ue-wide .proc-line{display:grid;grid-template-columns:48px minmax(0,1fr) 170px 74px;gap:10px;padding:7px 0;border-bottom:1px solid #f0e2cf;margin:0;align-items:center}.ue-wide .proc-line:before{counter-increment:ue-proc;content:counter(ue-proc);text-align:center}.ue-wide #visitProcedures{counter-reset:ue-proc}.ue-wide .proc-line select{grid-column:2}.ue-wide .proc-line input{grid-column:3}.ue-wide .proc-line button{grid-column:4}
+.ue-total-line{display:flex;justify-content:flex-end;align-items:center;gap:40px;margin:8px 12px;padding:12px 16px;background:#fff1dc;border:1px solid #efd6b1;border-radius:12px;font-weight:700}.ue-total-line b{font-size:21px}
+.ue-notes-wrap{position:relative;padding:12px}.ue-notes-wrap textarea{width:calc(100% - 130px);min-height:128px;resize:vertical}.ue-rx-watermark{position:absolute;right:24px;bottom:12px;font:72px Georgia,serif;color:#ead4b5}
+.ue-bottom-grid{display:grid;grid-template-columns:1.1fr .95fr;gap:12px}.ue-payment-grid{display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr);gap:8px 12px;align-items:center;padding:14px}.ue-payment-grid label{font-weight:600;color:#261a0e}.ue-payment-grid .inp{margin:0;min-width:0}.ue-value{background:#fff3e2;border:1px solid #ecd4b2;border-radius:9px;padding:9px;text-align:right}.ue-balance{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;background:#eef3d8;border:1px solid #dbe5b4;border-radius:10px;padding:11px;color:#183d1b}.ue-balance strong{font-size:23px}.ue-discount-readout{grid-column:1/-1;text-align:right;color:#6b5841}.ue-extra-notes{margin:12px;width:calc(100% - 24px);min-height:220px;resize:vertical}.ue-stamp{margin:0 12px 12px;border:1px dashed #bca98e;border-radius:10px;min-height:70px;display:grid;place-items:center;color:#8a7b69}
+.ue-thanks{display:flex;align-items:center;gap:18px;margin:16px 10px;color:#39250f}.ue-thanks span{height:1px;background:#b58b4c;flex:1}.ue-thanks em{font:italic 23px Georgia,serif;white-space:nowrap}
+.ue-invoice-footer{display:flex;align-items:center;justify-content:space-around;gap:10px;padding:12px 8px;border-top:1px solid #ead8bd;color:#24180e;font-size:12px}.ue-invoice-footer i{height:22px;border-left:1px solid #8b6a42}
+.ue-form-actions{display:flex;justify-content:center;gap:14px;padding:14px}.ue-form-actions .btn.pri{background:#4b3016;border-color:#4b3016;color:white}.ue-invoice-form .hint{color:#806b51;text-align:center}.ue-invoice-form .inp{background:#fffdfa;border-color:#eadbc8;color:#251a10}
+@media(max-width:760px){.ue-invoice-header{grid-template-columns:70px minmax(0,1fr)}.ue-brand-mark{height:100px}.ue-brand-mark svg{height:95px;width:65px}.ue-brand-copy h1{font-size:25px}.ue-brand-copy h2{font-size:15px;margin-bottom:8px}.ue-brand-copy p{font-size:11px}.ue-invoice-meta{grid-column:1/-1}.ue-detail-grid,.ue-bottom-grid{grid-template-columns:1fr}.ue-table-head{grid-template-columns:28px minmax(0,1fr) 95px 48px;font-size:11px}.ue-wide .proc-line{grid-template-columns:28px minmax(0,1fr) 95px 48px;gap:5px}.ue-thanks em{font-size:16px;white-space:normal;text-align:center}.ue-invoice-footer{flex-wrap:wrap;font-size:10px}.ue-invoice-footer i{display:none}.ue-notes-wrap textarea{width:100%}.ue-rx-watermark{display:none}}
+
+
+.ue-print-invoice{background:#fffaf2;color:#24180e;padding:12px;font-family:Arial,sans-serif;border:1px solid #ead2ae}
+.ue-print-invoice .ue-invoice-header{grid-template-columns:112px minmax(0,1fr) 235px}.ue-print-invoice .ue-brand-mark{height:126px}.ue-print-invoice .ue-brand-mark svg{height:120px}
+.ue-print-table{width:100%;border-collapse:collapse}.ue-print-table th{background:#fff4e3;text-align:left;padding:10px;border:1px solid #ead4b5}.ue-print-table td{padding:10px;border-bottom:1px solid #eadbc8}
+.ue-print-notes{padding:15px;min-height:80px;line-height:1.55}.ue-print-payment{padding:12px}.ue-print-payment p{display:flex;justify-content:space-between;border-bottom:1px solid #eee0ce;padding:7px;margin:0}.ue-print-payment .ue-balance{background:#eef3d8;color:#183d1b;margin-top:8px;border-radius:9px;padding:12px}
+@media print{#visitInvoicePrint{padding:0!important}#visitInvoicePrint .ue-print-invoice{border:0;padding:0;background:#fffaf2!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-panel>h3,#visitInvoicePrint .ue-invoice-meta b{background:#4b3016!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-invoice-header,#visitInvoicePrint .ue-detail-grid,#visitInvoicePrint .ue-panel,#visitInvoicePrint .ue-bottom-grid,#visitInvoicePrint .ue-thanks,#visitInvoicePrint .ue-invoice-footer{break-inside:avoid}}
+
+
+.ue-repeat-banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #e4c38f;border-radius:12px;background:#fff1d9;color:#644116}.ue-repeat-banner>b{font-size:13px}.ue-repeat-banner>span{flex:1;min-width:200px;font-size:13px}\n.search-results{display:grid;gap:4px;margin-top:5px;max-height:220px;overflow:auto}.search-result{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 11px;border:1px solid var(--line,#e6d7c5);border-radius:8px;background:#fffaf3;cursor:pointer;color:inherit}.search-result small{color:#806b51}.search-empty{padding:9px;color:#806b51}.repeated-client-hint{display:block;margin-top:6px;padding:9px 11px;border-radius:8px;background:#fff0d7;color:#71430f;font-weight:700}
+
 .invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .invoice-summary .stat-box{padding:12px}
 .invoice-summary .val{font:22px var(--font-display)}
@@ -184,12 +226,17 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .invoice-table th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .invoice-table td:last-child,.invoice-table th:last-child{text-align:right}
 .invoice-print-area{display:none}
+.proc-line{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(110px,.8fr) auto;gap:8px;align-items:center;margin:8px 0}
+.proc-line .remove-procedure{padding:8px 10px}
+.invoice-stamp{width:116px;height:116px;border:3px double #8a6a2a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#8a6a2a;font-weight:800;letter-spacing:.08em;line-height:1.2;transform:rotate(-9deg);margin:20px 0 0 auto;opacity:.88}
+.invoice-stamp strong{font:700 13px Arial,sans-serif}.invoice-stamp span{font:700 8px Arial,sans-serif;margin-top:5px}.invoice-stamp small{font:700 7px Arial,sans-serif;margin-top:4px}
+@media(max-width:520px){.proc-line{grid-template-columns:minmax(0,1fr) minmax(95px,.7fr) auto}.proc-line .inp{min-width:0}}
 @media print{
  @page{size:A4;margin:14mm}
  body{background:#fff!important;color:#2F2619!important}
  body *{visibility:hidden!important}
  #visitInvoicePrint,#visitInvoicePrint *{visibility:visible!important}
- #visitInvoicePrint{display:block!important;position:absolute;inset:0;width:100%;padding:0;background:#fff!important;color:#2F2619!important;font-family:Arial,sans-serif}
+ #visitInvoicePrint{display:block!important;position:fixed;top:0;left:0;right:0;width:100%;min-height:100vh;padding:0;background:#fff!important;color:#2F2619!important;font-family:Arial,sans-serif}
  #visitInvoicePrint .invoice-brand h2,#visitInvoicePrint .invoice-title{color:#2F2619!important}
  #visitInvoicePrint .invoice-brand p,#visitInvoicePrint .invoice-meta{color:#6c6255!important}
  #visitInvoicePrint table{width:100%;border-collapse:collapse}
@@ -198,6 +245,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
  #visitInvoicePrint .invoice-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
  #visitInvoicePrint .stat-box{border:1px solid #ddd;padding:12px}
  #visitInvoicePrint .val{font-size:18px;font-weight:bold}
+ #visitInvoicePrint .invoice-stamp{break-inside:avoid}
 }
 /* reference dashboard proportions */
 @media(min-width:901px){#appView{padding:0}.app{max-width:none;min-height:100vh;border-radius:0;grid-template-columns:250px minmax(0,1fr)}.side{border-radius:0;padding:18px 12px}.main{padding:26px 28px}.stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.dash-layout{grid-template-columns:minmax(0,1.6fr) minmax(250px,.8fr)}}
@@ -237,7 +285,7 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media(max-width:900px){.page-head h1{font-size:30px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .activity-list .row{font-size:11px;padding:7px 0}
 .security-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);position:sticky;top:18px}
+.patient-calendar{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px 14px;box-shadow:var(--shadow);position:static;align-self:start}
 .patient-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .patient-calendar-title{font-family:var(--font-display);font-size:23px;color:var(--ink)}
 .patient-calendar-nav{display:flex;align-items:center;gap:7px}
@@ -255,14 +303,18 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 .patient-calendar-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;color:var(--muted);font-size:12px}
 @media(max-width:600px){.patient-calendar{padding:12px}.patient-day{min-height:34px}.patient-calendar-title{font-size:20px}}
 
-.patient-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:18px;align-items:start}
-.patient-list-panel{min-width:0}
+.patient-workspace{display:grid;grid-template-columns:minmax(190px,1fr) 310px;gap:18px;align-items:start}
+.patient-summary{display:grid;gap:12px;align-content:start}
+.patient-summary .stat-box{min-height:112px}
+.patient-summary .val{font:30px var(--font-display)}
+.patient-list-panel{min-width:0;grid-column:1/-1}
 .patient-calendar .patient-day{min-height:36px}
 .patient-calendar .patient-calendar-title{font-size:20px}
 .patient-calendar .patient-calendar-grid{gap:3px}
 .patient-calendar .patient-calendar-foot{flex-wrap:wrap}
-@media(max-width:1100px){.patient-workspace{grid-template-columns:minmax(0,1fr) 285px;gap:12px}}
-@media(max-width:900px){.patient-workspace{grid-template-columns:minmax(0,1fr)}.patient-calendar{position:static;grid-row:1}.patient-list-panel{grid-row:2}}
+@media(max-width:1100px){.patient-workspace{grid-template-columns:minmax(180px,1fr) 285px;gap:12px}}
+@media(max-width:900px){.patient-workspace{grid-template-columns:minmax(0,1fr)}.patient-summary{grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr))}.patient-calendar{position:static;grid-row:2}.patient-list-panel{grid-row:3}}
+@media(max-width:480px){.patient-summary{grid-template-columns:1fr 1fr}.patient-summary .stat-box{min-height:90px;padding:10px}.patient-summary .val{font-size:24px}}
 .security-grid .card{padding:14px}
 .security-grid h2{font-size:13px}
 .permission-table{width:100%;border-collapse:collapse;font-size:11px}
@@ -414,18 +466,19 @@ const STATUS = {
   no_show: ['bad', 'No-show'], rejected: ['bad', 'Rejected'], cancelled: ['mute', 'Cancelled']
 };
 const stPill = s => { const x = STATUS[s] || ['mute', s]; return '<span class="pill ' + x[0] + '">' + x[1] + '</span>'; };
+const appointmentIsFuture = a => { const d=new Date(String(a.date||'')+'T'+String(a.time||'00:00').slice(0,5)+':00+05:00'); return Number.isFinite(d.getTime()) && d.getTime()>Date.now(); };
 
 const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => toastEl.hidden = true, 3600); };
 
 /* ---------- state ---------- */
-const securityShowAll = { logins:false, activity:false };
-const state = { page: 'dashboard', profile: null, profileUnlocked: false, tab: 'pending', filter: 'all', patientDate: null, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '' };
+const securityShowAll = { logins:false, activity:false, sessions:false };
+const state = { page: 'dashboard', currentUser: null, profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
 async function api(path, opts) {
-  const o = Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {});
+  const o = Object.assign({ credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' } }, opts || {});
   if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
   const res = await fetch(path, o);
   if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
@@ -451,6 +504,7 @@ function beep() {
   } catch (e) { }
 }
 function vibrate(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern || [35,25,45]); } catch(e) {} }
+function playWrongPasswordAlert(){try{beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());if(beepCtx.state==='suspended')beepCtx.resume();[0,.10,.20,.32].forEach((delay,i)=>{const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;o.type='square';o.frequency.value=[520,660,880,1040][i];g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.13,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.075);o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.08);});}catch(e){}vibrate([45,35,70]);}
 function playClickTone() {
  if (!soundEnabled) return;
  try {
@@ -462,6 +516,21 @@ function playClickTone() {
   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.09);
  } catch(e) {}
 }
+function playInvoiceReminder() {
+ // Three-second reminder after check-in; independent of the optional UI click sound.
+ try {
+  beepCtx=beepCtx||(new (window.AudioContext||window.webkitAudioContext)());
+  if(beepCtx.state==='suspended')beepCtx.resume();
+  for(let i=0;i<10;i++){
+   const t=beepCtx.currentTime+i*.30,o=beepCtx.createOscillator(),g=beepCtx.createGain();
+   o.type='triangle';o.frequency.value=i%2?1320:990;
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.82,t+.02);
+   g.gain.setValueAtTime(.82,t+.13);g.gain.exponentialRampToValueAtTime(.0001,t+.25);
+   o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.27);
+  }
+ } catch(e) {}
+ vibrate([300,100,300,100,300,100,300]);
+}
 function playAppointmentAlert() {
  // Appointment alerts are intentionally independent of the optional UI click-sound switch.
  try {
@@ -469,36 +538,79 @@ function playAppointmentAlert() {
   if(beepCtx.state==='suspended')beepCtx.resume();
   [0,.28,.56,.84,1.12].forEach((delay,i)=>{
    const o=beepCtx.createOscillator(),g=beepCtx.createGain(),t=beepCtx.currentTime+delay;
-   o.type='sine';o.frequency.value=[880,1175,1480,1175,1480][i];
+   o.type='sine';o.frequency.value=[740,880,1046,880,1175][i];
    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.72,t+.025);g.gain.setValueAtTime(.72,t+.16);g.gain.exponentialRampToValueAtTime(.0001,t+.30);
    o.connect(g);g.connect(beepCtx.destination);o.start(t);o.stop(t+.32);
   });
  } catch(e) {}
- vibrate([350,120,350,120,500]);
+ vibrate([70,45,120,55,190]);
 }
 async function refreshNotificationAccessButton() {
   const b = $('#notificationAccessBtn');
   if (!b) return;
-  if (!('Notification' in window)) { b.textContent = 'Notifications Unsupported'; b.disabled = true; return; }
-  const granted = Notification.permission === 'granted';
-  b.textContent = granted ? 'Notifications: Enabled' : (Notification.permission === 'denied' ? 'Notifications Blocked in Browser' : 'Enable Notifications');
-  b.disabled = Notification.permission === 'denied';
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    b.textContent = 'Push Notifications Unsupported'; b.disabled = true; return;
+  }
+  if (Notification.permission === 'denied') {
+    b.textContent = 'Notifications Blocked in Browser'; b.disabled = true; return;
+  }
+  b.disabled = false;
+  b.textContent = Notification.permission === 'granted' ? 'Enable Background Alerts' : 'Enable Notifications';
+  try {
+    const response = await fetch('/api/admin/push-subscription', { credentials:'same-origin', cache:'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      const registration = await navigator.serviceWorker.ready;
+      const localSubscription = await registration.pushManager.getSubscription();
+      if (data.subscribed && localSubscription && Notification.permission === 'granted') b.textContent = 'Background Alerts: On';
+      else if (!data.publicKey) b.textContent = 'Push Setup Required';
+      else if (data.subscribed && !localSubscription) b.textContent = 'Reconnect Background Alerts';
+    }
+  } catch(e) {}
+}
+function decodeVapidKey(value) {
+  const padding = '='.repeat((4 - value.length % 4) % 4);
+  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from(raw, ch => ch.charCodeAt(0));
 }
 async function enableClinicNotifications() {
-  if (!('Notification' in window)) { toast('This browser does not support notifications.'); return; }
-  if (!('serviceWorker' in navigator)) { toast('Service workers are not supported in this browser.'); return; }
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('Background push is not supported by this browser.'); return;
+  }
+  const b = $('#notificationAccessBtn');
+  if (b) { b.disabled = true; b.textContent = 'Setting up alerts…'; }
   try {
-    const permission = await Notification.requestPermission();
-    await refreshNotificationAccessButton();
-    if (permission !== 'granted') { toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.'); return; }
+    const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if (permission !== 'granted') {
+      toast(permission === 'denied' ? 'Allow notifications from browser site settings.' : 'Notification permission was not granted.');
+      return;
+    }
+    const info = await api('/api/admin/push-subscription');
+    if (!info.ok || !info.data.publicKey) {
+      toast(info.data.error || 'Push service is not configured on this Preview yet.'); return;
+    }
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification('Ultimate Esthetics Clinic Desk', {
-      body: 'Notifications are enabled on this device. Keep this device signed in to receive in-app alerts.',
-      icon: '/admin/icon.svg',
-      tag: 'clinic-notification-enabled'
+    let subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: decodeVapidKey(info.data.publicKey)
+      });
+    }
+    const saved = await api('/api/admin/push-subscription', {
+      method:'POST',
+      body:{ subscription: subscription.toJSON() }
     });
-    toast('Browser notification access enabled on this device.');
-  } catch (e) { toast('Could not enable notifications on this device.'); }
+    if (!saved.ok) throw new Error(saved.data.error || 'Could not save this device subscription.');
+    toast(saved.data.test_push_accepted
+      ? 'Push service accepted a test alert. Check this device’s notification center.'
+      : 'Background appointment alerts are enabled on this device.');
+  } catch (e) {
+    toast(e.message || 'Could not enable background alerts. Check browser notification settings.');
+  } finally {
+    await refreshNotificationAccessButton();
+  }
 }
 document.addEventListener('click', e => {
   if (e.target && e.target.id === 'notificationAccessBtn') enableClinicNotifications();
@@ -509,48 +621,41 @@ function updateSoundButton() {
   if (b) b.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
 }
 
-let seenPendingIds = null, timer = null;
+let seenPendingIds = null, timer = null, loadingData=false;
 async function loadData(first) {
-  let r;
-  try { r = await api('/api/admin/appointments'); } catch (e) { return; }
-  if (!r.ok) { if (first) toast('Unable to load data (' + r.status + ')'); return; }
-  const raw = Array.isArray(r.data) ? r.data : (r.data.appointments || []);
-  const appts = raw.map(a => ({
-    id: a.id, pid: a.patient_id, name: a.patient_name || 'Unknown', phone: a.patient_phone || '',
-    did: a.doctor_id, doc: a.doctor_name || '', date: a.date || '', time: String(a.time || '').slice(0, 5),
-    proc: a.treatment || '', status: a.checked_in_at && a.status === 'confirmed' ? 'in_room' : (a.status === 'noshow' ? 'no_show' : a.status), source: a.source || '', fu: a.follow_up_date || ''
+ if(loadingData)return;
+ loadingData=true;
+ try {
+  const [r,vr]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits')]);
+  if(!r.ok){if(first)toast('Unable to load data ('+r.status+')');return;}
+  const raw=Array.isArray(r.data)?r.data:(r.data.appointments||[]);
+  const appts=raw.map(a=>({
+   id:a.id,pid:a.patient_id,name:a.patient_name||'Unknown',phone:a.patient_phone||'',
+   did:a.doctor_id,doc:a.doctor_name||'',date:a.date||'',time:String(a.time||'').slice(0,5),
+   proc:a.treatment||'',token:a.daily_token||null,status:a.checked_in_at&&a.status==='confirmed'?'in_room':(a.status==='noshow'?'no_show':a.status),source:a.source||'',fu:a.follow_up_date||''
   }));
-  const pendingIds = appts.filter(a => a.status === 'pending').map(a => String(a.id));
-  if (seenPendingIds !== null && pendingIds.some(id => !seenPendingIds.has(id))) {
-    playAppointmentAlert(); toast('New website booking request!');
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try { new Notification('Ultimate Esthetics', { body: 'A new appointment request has arrived.' }); } catch (e) { }
-    }
-  }
-  seenPendingIds = new Set(pendingIds);
-
-  try { const vr = await api('/api/admin/visits'); if (vr.ok) { state.visits = vr.data.visits || []; state.financialPatients = vr.data.patients || []; } } catch(e) { }
-  const sig = JSON.stringify(appts) + JSON.stringify(state.visits);
-  const changed = sig !== state.sig;
-  state.sig = sig; state.appts = appts;
-  const pm = {};
-  appts.forEach(a => { (pm[a.pid] = pm[a.pid] || { id: a.pid, name: a.name, phone: a.phone, appts: [] }).appts.push(a); });
-  // Keep the complete patient register, including patients with no recent booking.
-  const merged = new Map(Object.values(pm).map(p => [Number(p.id), p]));
-  (state.financialPatients || []).forEach(p => {
-    const id = Number(p.id), existing = merged.get(id);
-    if (existing) { existing.name = p.name || existing.name; existing.phone = p.phone || existing.phone; }
-    else merged.set(id, { id, name: p.name || 'Unknown', phone: p.phone || '', appts: [] });
+  const pendingIds=appts.filter(a=>a.status==='pending').map(a=>String(a.id));
+  if(seenPendingIds!==null&&pendingIds.some(id=>!seenPendingIds.has(id))){playAppointmentAlert();toast('New website booking request!');}
+  seenPendingIds=new Set(pendingIds);
+  if(vr.ok){state.visits=vr.data.visits||[];state.financialPatients=vr.data.patients||[];}
+  const sig=JSON.stringify(appts)+JSON.stringify(state.visits),changed=sig!==state.sig;
+  state.sig=sig;state.appts=appts;
+  const pm={};
+  appts.forEach(a=>{(pm[a.pid]=pm[a.pid]||{id:a.pid,name:a.name,phone:a.phone,appts:[]}).appts.push(a);});
+  const merged=new Map(Object.values(pm).map(p=>[Number(p.id),p]));
+  (state.financialPatients||[]).forEach(p=>{
+   const id=Number(p.id),existing=merged.get(id);
+   if(existing){existing.name=p.name||existing.name;existing.phone=p.phone||existing.phone;}
+   else merged.set(id,{id,name:p.name||'Unknown',phone:p.phone||'',appts:[]});
   });
-  state.patients = [...merged.values()].sort((x, y) => x.id - y.id);
-  if (!state.histSel && state.patients.length) state.histSel = state.patients[0].id;
-
-  if (first || !state.doctors.length) await loadDoctors();
-  const ae = document.activeElement;
-  const typing = ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && $('#appView').contains(ae);
-  if (first || (changed && !typing)) render(); else renderNav();
+  state.patients=[...merged.values()].sort((x,y)=>x.id-y.id);
+  if(!state.histSel&&state.patients.length)state.histSel=state.patients[0].id;
+  if(first||!state.doctors.length)await loadDoctors();
+  const ae=document.activeElement,typing=ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&$('#appView').contains(ae);
+  if(first||(changed&&!typing))render();else renderNav();
+ }catch(e){if(e&&e.message==='unauthorized')throw e;if(first)toast('Unable to load clinic data. Please try again.');}
+ finally{loadingData=false;}
 }
-
 async function loadDoctors() {
   let list = [];
   try {
@@ -580,22 +685,81 @@ function showLogin() {
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
-async function boot() {
+function showDriveOAuthResult(){
+ const params=new URLSearchParams(location.search),status=params.get('drive');
+ if(!status)return;
+ if(status==='connected')toast('Google Drive connected. Select the clinic folder to begin syncing.');
+ else if(status==='oauth_error')toast(params.get('message')||'Google authorization did not finish. Please try connecting again.');
+ params.delete('drive');params.delete('message');
+ const query=params.toString();
+ history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
+}
+let previewSeedPromise = null;
+async function ensurePreviewSeed(username,password) {
+  const host = location.hostname;
+  if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
+  if (!previewSeedPromise) {
+    const btn = $('#loginBtn'),wasDisabled=!!btn?.disabled,oldText=btn?.textContent||'Sign In';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
+    previewSeedPromise = (async () => {
+      const response = await fetch('/api/preview/seed', {
+        method:'POST', credentials:'same-origin', cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password})
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success !== true) {
+        const error=new Error(data.error || 'Could not prepare Preview database.');
+        error.status=response.status;
+        throw error;
+      }
+      return data;
+    })().catch(error => {
+      previewSeedPromise = null;
+      throw error;
+    }).finally(() => {
+      if (btn) { btn.disabled = wasDisabled; btn.textContent = oldText; }
+    });
+  }
+  return previewSeedPromise;
+}
+async function boot(afterLogin = false) {
   try {
     const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
-    if (res.status === 401) { showLogin(); return; }
+    if (res.status === 401) {
+      showLogin();
+      if (afterLogin) {
+        const err = $('#loginErr');
+        err.textContent = 'The password was accepted, but the server did not receive a valid session cookie. Open the latest Preview link (not an older deployment URL), then sign in again.';
+        err.hidden = false;
+      }
+      return false;
+    }
     if (!res.ok) {
       showLogin();
-      const err = $('#loginErr'); err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.'; err.hidden = false;
-      return;
+      const err = $('#loginErr');
+      err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.';
+      err.hidden = false;
+      return false;
     }
     showApp();
+    const identity = await fetch('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
+    if (identity.ok) { const who = await identity.json(); state.currentUser = who.user || null; }
     await loadData(true);
+    render();
+    showDriveOAuthResult();
     updateSoundButton();
+    refreshNotificationAccessButton().catch(() => {});
     if (!timer) timer = setInterval(() => loadData(false), 8000);
+    return true;
   } catch (e) {
     showLogin();
-    const err = $('#loginErr'); err.textContent = 'Unable to connect to the server. The admin API is unavailable.'; err.hidden = false;
+    const err = $('#loginErr');
+    err.textContent = e && e.message === 'unauthorized'
+      ? 'The admin session was rejected by the API. Please sign in again using the latest Preview URL.'
+      : (e && e.message ? e.message : 'Unable to connect to the server. The admin API is unavailable.');
+    err.hidden = false;
+    return false;
   }
 }
 function showLoginLocked() {
@@ -615,13 +779,17 @@ $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const err = $('#loginErr'), btn = $('#loginBtn'); if(btn.hidden)return; err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
   try {
+    await ensurePreviewSeed($('#uName').value.trim(), $('#uPass').value);
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success !== false) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume(); await startSecurityAutoRefresh();
-boot(); }
+    if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
+    await boot(true); }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
-    else { err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; }
-  } catch (x) { err.textContent = 'Unable to connect to the server.'; err.hidden = false; }
+    else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
+  } catch (x) {
+    err.textContent = x && x.message ? x.message : 'Unable to connect to the server.';
+    err.hidden = false;
+  }
   if(!btn.hidden){btn.disabled = false; btn.textContent = 'Sign In';}
 });
 $('#logoutBtn').addEventListener('click', async () => {
@@ -668,7 +836,8 @@ function viewDashboard() {
   const daily = Array.from({length:7},(_,i)=>{const d=plusDays(i-6);return {date:d,count:state.appts.filter(a=>a.date===d && ['confirmed','done','no_show'].includes(a.status)).length};});
   const maxDaily = Math.max(1,...daily.map(x=>x.count));
   const chart = '<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:112px;padding:8px 4px 0">' + daily.map(x=>'<div style="display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:5px"><b class="muted" style="font-size:10px">'+x.count+'</b><div title="'+nice(x.date)+': '+x.count+' patients" style="width:100%;max-width:28px;height:'+Math.max(4,Math.round(x.count/maxDaily*72))+'px;background:var(--sand);border:1px solid var(--line);border-radius:5px 5px 0 0"></div><small class="muted">'+WD[new Date(x.date+'T12:00:00').getDay()]+'</small></div>').join('') + '</div>';
-  return head(greet + ', Owner', wday(t) + ', ' + nice(t) + '. Here is your daily overview.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
+  const roleName = state.currentUser?.role === 'owner' ? 'Owner' : state.currentUser?.role === 'admin' ? 'Admin' : (state.currentUser?.role === 'receptionist' || String(state.currentUser?.username || '').toLowerCase() === 'reception') ? 'Receptionist' : 'Staff';
+  return head(greet + ', ' + roleName, wday(t) + ', ' + nice(t) + '. Here is your daily overview.', '<button class="btn" data-go="manual">Manual patient</button><button class="btn pri" data-go="requests">Requests' + (pend.length ? ' (' + pend.length + ')' : '') + '</button>') +
     '<div class="stats-grid">' +
     '<div class="stat-box hero"><div class="lbl">Collected today</div><div class="val num">Rs ' + collectedToday.toLocaleString('en-PK') + '</div><div class="sub">Payments received today</div></div>' +
     '<div class="stat-box"><div class="lbl">Total patients</div><div class="val num">' + totalPatients + '</div><div class="sub">Patient register</div></div>' +
@@ -697,7 +866,7 @@ function viewRequests() {
   const body = list.length ? list.map(a => {
     if (state.tab === 'pending') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><button class="btn pri sm" data-act="accept" data-id="' + a.id + '">Accept</button><a class="btn sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', regarding your appointment request for ' + nice(a.date) + ' at ' + t12(a.time) + ', we can offer an alternative time. Would that work for you?') + '">Offer other time</a><button class="btn bad sm" data-act="reject" data-id="' + a.id + '">Reject</button></div></div>';
     if (state.tab === 'accepted') return '<div class="req-item">' + left(a) + when(a) + '<div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', your appointment is confirmed for ' + wday(a.date) + ', ' + nice(a.date) + ' at ' + t12(a.time) + ' with ' + a.doc + '. Ultimate Esthetics.') + '">Send on WhatsApp</a><button class="btn bad sm" data-act="cancel" data-id="' + a.id + '">Cancel</button></div></div>';
-    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', unfortunately we cannot accommodate your requested time. Would you like us to offer another time? Ultimate Esthetics.') + '">Offer other time</a><button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button></div></div>';
+    return '<div class="req-item">' + left(a) + '<div>' + stPill(a.status) + '<div class="hint" style="margin-top:6px">' + nice(a.date) + ' · ' + t12(a.time) + '</div></div><div class="btns"><a class="btn wa sm" target="_blank" rel="noopener" href="' + waLink(a.phone, 'Hello ' + a.name + ', unfortunately we cannot accommodate your requested time. Would you like us to offer another time? Ultimate Esthetics.') + '">Offer other time</a>' + (a.status==='rejected'&&!appointmentIsFuture(a)?'<span class="hint">Rejected · time passed</span>':'<button class="btn sm" data-act="restore" data-id="' + a.id + '">Move back</button>') + '</div></div>';
   }).join('') : '<div class="empty">Nothing to display here.</div>';
   return head('Requests', 'Online appointment requests. Accepted appointments are added to the Patients list.', '') +
     '<div class="tabs">' + tabs.map(t => '<button class="' + (state.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '">' + t[1] + '<span class="n num">' + lists[t[0]].length + '</span></button>').join('') + '</div>' +
@@ -719,29 +888,40 @@ function viewToday() {
   const scoped=state.patientDate?all.filter(a=>a.date===state.patientDate):all.filter(a=>a.date.startsWith(monthPrefix));
   const fl=[['all','All'],['confirmed','Awaiting check-in'],['in_room','Checked in'],['done','Completed'],['no_show','No-show']];
   const rows=scoped.filter(a=>state.filter==='all'||a.status===state.filter).map(a=>{
-    const act=a.status==='confirmed'?'<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
+    let act=a.status==='confirmed'?'<button class="btn pri sm" data-act="checkin" data-id="'+a.id+'">Check-in</button> <button class="btn sm" data-act="noshow" data-id="'+a.id+'">No-show</button>'
       :a.status==='in_room'?'<button class="btn pri sm" data-act="visit" data-id="'+a.id+'">Open form</button> <button class="btn sm" data-act="done" data-id="'+a.id+'">Mark completed</button>'
       :a.status==='no_show'?'<a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(a.phone,'Hello '+a.name+', we missed you today. Would you like to reschedule? Ultimate Esthetics.')+'">New time</a> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>'
       :'<button class="btn sm" data-act="hist" data-p="'+a.pid+'">History</button> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>';
-    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0);
-    return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
+    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0),invoice=state.visits.find(v=>Number(v.appointment_id)===Number(a.id));
+    if(invoice)act+=' <button class="btn sm" data-act="editinvoice" data-id="'+invoice.id+'" aria-label="Edit invoice">✎</button>';
+    return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+(a.token?'<small class="muted" style="display:block">Token #'+a.token+'</small>':'')+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">No patients scheduled for this date or month.</td></tr>';
   const title=state.patientDate?nice(state.patientDate):monthLabel;
-  const list='<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">'+title+'</h2><small class="muted">'+scoped.length+' scheduled patient'+(scoped.length===1?'':'s')+'</small></div><button class="btn pri sm" data-go="manual">Add walk-in</button></div><div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
-  return head('Patients','All accepted appointments and walk-in patients. Choose a date to view that day’s schedule.','')+'<div class="patient-workspace">'+list+calendar+'</div>';
+  const selectedDate=state.patientDate||t;
+  const selectedCount=all.filter(a=>a.date===selectedDate).length;
+  const overallCount=state.patients.length;
+  const summary='<div class="patient-summary"><div class="stat-box"><div class="lbl">Selected Date Patients</div><div class="val num">'+selectedCount+'</div><div class="sub">'+nice(selectedDate)+'</div></div><div class="stat-box"><div class="lbl">Overall Patients</div><div class="val num">'+overallCount.toLocaleString('en-PK')+'</div><div class="sub">Unique patient records</div><button class="btn sm" type="button" data-overall-patients style="margin-top:8px">View all patients</button></div></div>';
+  const overallRows=state.patients.map(p=>{const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{};return '<tr><td class="id">#'+p.id+'</td><td><b>'+esc(p.name)+'</b><small class="muted" style="display:block">'+esc(prettyPhone(p.phone))+'</small></td><td class="num">'+Number(fp.visit_count||0)+'</td><td class="num">'+(Number(fp.balance||0)?'Rs '+Number(fp.balance).toLocaleString('en-PK'):'Clear')+'</td><td><button class="btn sm" data-act="hist" data-p="'+p.id+'">History</button> <button class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</button></td></tr>';}).join('')||'<tr><td colspan="5" class="empty">No patient records yet.</td></tr>';
+  const list=state.patientShowOverall?'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">Overall Patients</h2><small class="muted">'+overallCount.toLocaleString('en-PK')+' unique patient records · permanent patient numbers</small></div><button class="btn sm" type="button" data-overall-patients>Back to date-wise</button></div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:600px"><thead><tr><th>Overall No.</th><th>Patient</th><th>Visits</th><th>Balance</th><th></th></tr></thead><tbody>'+overallRows+'</tbody></table></div></div></div>':'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">'+title+'</h2><small class="muted">'+scoped.length+' scheduled patient'+(scoped.length===1?'':'s')+'</small></div><button class="btn pri sm" data-go="manual">Add walk-in</button></div><div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
+  return head('Patients','All accepted appointments and walk-in patients. Choose a date to view that day’s schedule.','')+'<div class="patient-workspace">'+summary+calendar+list+'</div>';
 }
 
 function viewManual() {
   const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
   const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
   const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
+  const referralOptions = '<option value="">No referral / Other source</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+'</option>').join('');
+  const existingPatientOptions = '<option value="">New patient / Search by phone</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+' · '+esc(prettyPhone(p.phone))+'</option>').join('');
   return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
     '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
     '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
+    '<div class="field"><label for="mExistingSearch">Select existing patient (optional)</label><input class="inp" id="mExistingSearch" placeholder="Search patient by name or phone number..." autocomplete="off"><input type="hidden" id="mExistingPatient"><div class="search-results" id="mExistingResults"></div><small class="hint">Search by name or phone to reuse the same patient ID and payment history.</small></div>' +
     '<div class="two-col"><div class="field"><label for="mName">Full name</label><input class="inp" id="mName" required></div>' +
     '<div class="field"><label for="mPhone">Phone number</label><input class="inp" id="mPhone" required inputmode="tel" autocomplete="tel" placeholder="+923001234567 or 03001234567"><span class="hint" id="mDup">Enter a Pakistani mobile number: +92 followed by 10 digits, or 11 digits starting with 03.</span></div></div>' +
     '<div class="two-col"><div class="field"><label for="mDoc">Doctor</label><select class="inp" id="mDoc">' + docs + '</select></div>' +
     '<div class="field"><label for="mProc">Procedure</label><input class="inp" id="mProc" list="procList" placeholder="e.g. Consultation"><datalist id="procList">' + procs.map(p => '<option value="' + esc(p) + '">').join('') + '</datalist></div></div>' +
+    '<div class="field"><label for="mReferralSearch">Referred by existing patient</label><input class="inp" id="mReferralSearch" placeholder="Search referrer by phone number or name..." autocomplete="off"><input type="hidden" id="mReferral"><div class="search-results" id="mReferralResults"></div><small class="hint">Enter a phone number or name to find the referring patient.</small></div>' +
+    '<div class="card" style="padding:14px"><div class="card-head"><h2>Manual invoice & payment (optional)</h2><small class="muted">Use this for returning walk-ins</small></div><div class="two-col"><div class="field"><label for="mSubtotal">Treatment total (Rs)</label><input class="inp" id="mSubtotal" type="number" min="0" step="1" placeholder="Leave blank if no invoice"></div><div class="field"><label for="mReceived">Received now (Rs)</label><input class="inp" id="mReceived" type="number" min="0" step="1" value="0"></div></div><div class="two-col"><div class="field"><label for="mDiscountType">Discount</label><select class="inp" id="mDiscountType"><option value="none">No discount</option><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount (Rs)</option></select></div><div class="field"><label for="mDiscountValue">Discount value</label><input class="inp" id="mDiscountValue" type="number" min="0" step="1" value="0"></div></div><div class="field"><label for="mPaymentMethod">Payment method</label><select class="inp" id="mPaymentMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="field"><label for="mFollow">Follow-up date</label><input class="inp" id="mFollow" type="date"></div><small class="hint">Enter a treatment total to create a permanent invoice; leave it blank to collect payment against an old outstanding invoice. Discount is applied before payment.</small></div>' +
     '<div class="two-col"><div class="field"><label for="mDate">Date</label><input class="inp" id="mDate" type="date" required value="' + todayStr() + '"></div>' +
     '<div class="field"><label for="mTime">Time</label><input class="inp" id="mTime" type="time" required value="' + pad(new Date().getHours()) + ':00"></div></div>' +
     '<div class="err" id="mErr" hidden></div>' +
@@ -753,7 +933,7 @@ function histList() {
   const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
   const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
   if (!l.length) return '<div class="empty">No patients found.</div>';
-  return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span></button>';}).join('');
+  return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span><span class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</span></button>';}).join('');
 }
 function histDetail() {
   const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Select a patient.</div></div>';
@@ -761,13 +941,56 @@ function histDetail() {
   const list=state.visits.filter(v=>Number(v.patient_id)===Number(p.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   const appt=p.appts.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
   const fu=fp.follow_up_date;
-  const tl=list.map(v=>'<div class="tl"><div class="d">'+esc(pkDateTime(v.created_at))+'</div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span></div></div></div>').join('');
+  const tl=list.map(v=>'<div class="tl"><div class="d">'+esc(pkDateTime(v.created_at))+'</div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">'+esc(v.invoice_number||'Invoice pending')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span><button class="btn sm" type="button" data-act="editinvoice" data-id="'+v.id+'" aria-label="Edit invoice">✎ Edit invoice</button></div></div></div>').join('');
   const bookings=appt.map(a=>'<div class="tl"><div class="d">'+nice(a.date)+'<small>'+t12(a.time)+'</small></div><div><b>'+esc(procName(a))+'</b><div class="req-meta"><span class="chip">'+esc(a.doc)+'</span>'+stPill(a.status)+'</div></div></div>').join('');
   return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">'+initials(p.name)+'</div><div><b style="font-size:18px">'+esc(p.name)+'</b><small class="num"><span class="id">#'+p.id+'</span> · '+esc(prettyPhone(p.phone))+'</small></div></div><a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(p.phone,'Hello '+p.name+', thank you for contacting Ultimate Esthetics. ')+'">WhatsApp</a></div>'+
   '<div class="stats-grid" style="margin:14px 0;grid-template-columns:repeat(4,minmax(0,1fr))"><div class="stat-box"><div class="lbl">Visits</div><div class="val num">'+Number(fp.visit_count||0)+'</div></div><div class="stat-box"><div class="lbl">Billed</div><div class="val num">Rs '+Number(fp.billed||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Received</div><div class="val num">Rs '+Number(fp.received||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Balance</div><div class="val num" style="color:var(--bad)">Rs '+Number(fp.balance||0).toLocaleString('en-PK')+'</div></div></div>'+
   (fu?'<div class="alert-item info" style="margin-bottom:10px">Follow-up due <b>'+nice(fu)+'</b></div>':'')+
+  (p.referred_by_name||p.referral_notes?'<div class="alert-item info" style="margin-bottom:10px"><b>Referral:</b> '+(p.referred_by_name?'Referred by '+esc(p.referred_by_name):'')+(p.referral_notes?' · '+esc(p.referral_notes):'')+'</div>':'')+
   '<h2 style="font-size:15px;margin:8px 0">Visit timeline</h2>'+(tl||'<div class="empty">No visit records yet.</div>')+
   '<h2 style="font-size:15px;margin:18px 0 4px">Appointment history</h2>'+(bookings||'<div class="empty">No appointments.</div>')+'</div>';
+}
+
+function viewDrive(){
+ const d=state.driveData||{},connected=!!d.connected,configured=!!d.configured,pickerConfigured=!!d.picker_configured;
+ const root=d.root_folder_name?esc(d.root_folder_name):'Not selected';
+ const missing=(d.missing_config||[]).map(esc).join(', ');
+ const pickerMissing=(d.picker_missing||[]).map(esc).join(', ');
+ const jobRows=(state.driveJobs||[]).map(j=>{
+  const label=j.invoice_number|| (j.visit_id?'Visit #'+j.visit_id:'Patient record');
+  return '<div class="row"><div><b>'+esc(j.patient_name||('Patient #'+j.patient_id))+' · '+esc(label)+'</b><small>'+esc(j.status)+' · Attempts: '+Number(j.attempts||0)+(j.last_error?' · '+esc(j.last_error):'')+'</small></div>'+(j.status==='failed'||j.status==='pending'?'<button class="btn sm" type="button" data-drive-action="retry" data-job="'+j.id+'">Retry</button>':'')+'</div>';
+ }).join('');
+ const fileRows=(state.driveFiles||[]).map(f=>'<div class="row"><div><b>'+esc(f.file_name||f.file_kind)+'</b><small>'+esc(f.patient_name||('Patient #'+f.patient_id))+(f.invoice_number?' · '+esc(f.invoice_number):'')+' · '+esc(f.updated_at||'')+'</small></div>'+(f.web_view_link?'<a class="btn sm" href="'+esc(f.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open in Drive</a>':'<small class="muted">Saved</small>')+'</div>').join('');
+ const backupRows=(state.driveBackups||[]).map(x=>'<div class="row"><div><b>'+esc(x.backup_kind==='daily'?'Automatic daily backup':'Manual backup')+'</b><small>'+esc(x.file_name)+' · '+esc(x.status)+(x.size_bytes?' · '+(Number(x.size_bytes)/1024).toFixed(1)+' KB':'')+(x.last_error?' · '+esc(x.last_error):'')+'</small></div>'+(x.web_view_link?'<a class="btn sm" href="'+esc(x.web_view_link)+'" target="_blank" rel="noopener noreferrer">Open backup</a>':'')+'</div>').join('');
+ return '<div class="col" style="gap:12px">'+
+  (state.driveLoading&&!state.driveData?'<section class="card"><p class="hint">Loading Google Drive settings…</p></section>':'')+
+  '<section class="card"><b>Setup progress</b><p class="hint" style="margin-top:8px">'+(configured?'✓ Google credentials configured':'1. Google account · Pending')+'<br>'+(connected?'✓ Google account connected':'2. Google account connection · Pending')+'<br>'+(d.root_folder_id?'✓ Clinic folder selected':'3. Clinic folder · Pending')+'<br>'+(d.root_folder_id?'Automatic saving can be configured below.':'Automatic saving starts after selecting a clinic folder.')+'</p></section>'+
+ (d.migration_required?'<section class="card"><div class="alert-item warn">Google Drive tables are not available yet. Open the latest Preview once so its initial database setup can complete, then refresh this page.</div></section>':'')+
+ (!configured?'<section class="card"><div class="alert-item warn"><b>Google connection setup is incomplete.</b><p style="margin-top:6px">Add these values as Preview-only Cloudflare Pages secrets: '+missing+'. Never paste the client secret into the app or GitHub.</p><p style="margin-top:8px"><b>Authorized redirect URI:</b><br><code>https://feature-clinic-patients-invo.ultimate-esthetics-demo.pages.dev/api/admin/drive/oauth/callback</code></p><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Open Google Cloud Credentials</a> · <a href="https://github.com/shaziicreatives/ultimate-esthetics-demo/blob/feature/clinic-patients-invoices-push/docs/google-drive-preview-setup.md" target="_blank" rel="noopener noreferrer">Preview setup guide</a></div></section>':'')+
+ '<section class="card"><div class="card-head"><h2>Google account</h2><span class="pill '+(connected?'ok':'warn')+'">'+(connected?'Connected':'Not connected')+'</span></div>'+
+ (connected?'<p style="margin-bottom:8px">Connected account: <b>'+esc(d.email||'')+'</b></p><p class="hint">Last successful sync: '+esc(d.last_sync_at||'Not yet synced')+'</p>':'<p class="hint" style="margin-bottom:12px">Connect the clinic Owner Google account. The app requests the restricted drive.file permission for files created or selected by this app.</p>')+
+ '<p class="hint" style="margin-top:10px">Google OAuth apps left in Testing can have Drive refresh tokens expire after 7 days. For uninterrupted sync and backups, publish the OAuth app to In production and complete any Google verification required for its scopes.</p>'+
+ '<div class="actions" style="margin-top:14px">'+(d.migration_required?'':(configured?'<a class="btn pri" href="/api/admin/drive/oauth">'+(connected?'Reconnect Google account':'Connect Google account')+'</a>':'<button class="btn pri" type="button" disabled>Connect Google account</button>'))+(connected?'<button class="btn sm" type="button" data-drive-action="test">Test connection</button><button class="btn bad" type="button" data-drive-action="disconnect">Disconnect</button>':'')+'</div></section>'+
+ (connected?'<section class="card"><div class="card-head"><h2>Clinic Drive folder</h2><span class="pill '+(d.root_folder_id?'ok':'warn')+'">'+(d.root_folder_id?'Selected':'Not selected')+'</span></div>'+
+ '<p style="margin-bottom:12px">Current folder: <b>'+root+'</b></p>'+
+ (!d.root_folder_id?'<div class="field" style="margin-bottom:10px"><label>New clinic folder name</label><input class="inp" id="driveRootName" maxlength="100" value="'+esc(state.driveRootName||'Ultimate Esthetics Clinic')+'"></div><div class="actions"><button class="btn pri" type="button" data-drive-action="create-root">Create and select folder</button><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Browse Google Drive</button></div>':
+ '<div class="actions"><button class="btn" type="button" data-drive-action="browse-root" '+(!pickerConfigured?'disabled':'')+'>Change folder in Google Drive</button></div>')+
+ (!pickerConfigured?'<p class="hint" style="margin-top:10px">Google Picker needs Preview secrets: '+pickerMissing+'. You can still select an app-accessible top-level folder below, or create a new clinic folder.</p>':'<p class="hint" style="margin-top:10px">Use Google Picker to select an existing folder from My Drive or Shared Drives. The app only receives access to the folder you explicitly select.</p>')+
+ ((state.driveFolders||[]).length?'<div style="margin-top:14px"><b>Folders already accessible to this app</b>'+state.driveFolders.map(x=>'<div class="row"><div><b>'+esc(x.name)+'</b><small>Google Drive folder</small></div><button class="btn sm" type="button" data-drive-action="select-root" data-folder="'+esc(x.id)+'">Select</button></div>').join('')+'</div>':'')+
+ '</section>'+
+ '<section class="card"><div class="card-head"><h2>Automatic saving</h2></div>'+
+  (!d.root_folder_id?'<div class="alert-item warn" style="margin-bottom:10px">Select a clinic folder first. No patient or invoice files can be saved until a folder is selected.</div>':'')+
+ '<div class="alert-item info">Invoice PDFs only are saved in one shared folder named <b>Patients (Overall)</b>. No separate folder is created per patient. Patient JSON, visit JSON and visit-summary PDFs are not uploaded.</div></section>'+
+ '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync existing invoices</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
+ (jobRows||'<div class="empty">No synchronization jobs yet.</div>')+
+ '<p class="hint" style="margin-top:10px">Failed jobs retry automatically while the Owner admin panel is open. You can also retry an individual job.</p></section>'+
+ '<section class="card"><div class="card-head"><h2>Clinic data backup</h2><button class="btn pri sm" type="button" data-drive-action="backup-now">Back up now</button></div>'+
+ '<label class="switch-row"><span>Automatic clinic backup every 3 days</span><input class="switch" type="checkbox" data-drive-setting="auto_backup_daily" '+(d.auto_backup_daily?'checked':'')+(d.root_folder_id?'':' disabled')+'></label>'+
+ '<p class="hint" style="margin-top:8px">One file named "Ultimate_Esthetics_Clinic_Backup.json" is kept in "Clinic Backups" and refreshed every 3 days. It contains the full clinic data snapshot and its Daily Activity report: unique patients seen, visit/invoice entries, appointment entries, payment count and total, and each payment/entry with the staff account and role that recorded it. Password hashes, login sessions, OAuth tokens, API secrets and push subscription endpoints are excluded. The three-day schedule is checked while the Owner admin panel is open.</p>'+
+ (backupRows||'<div class="empty">No clinic backups yet.</div>')+'</section>'+
+ '<section class="card"><div class="card-head"><h2>Files saved in Drive</h2></div>'+(fileRows||'<div class="empty">No Drive documents have been uploaded yet.</div>')+'</section>':'')+
+ '<section class="card"><b>Privacy and access</b><p class="hint" style="margin-top:6px">Only the clinic Owner can connect or disconnect Drive and change storage settings. Google tokens are encrypted in the Preview database. Production remains on its separate database and will not use this Preview connection.</p></section>'+
+ '</div>';
 }
 
 function viewSecurity() {
@@ -775,16 +998,16 @@ function viewSecurity() {
  const ownerMode=live.currentUser&&live.currentUser.role==='owner';
  const rows=(items,fn,empty)=>items&&items.length?items.map(fn).join(''):'<tr><td colspan="5" class="empty">'+empty+'</td></tr>';
  const logRows=(key,items,fn,empty)=>'<div class="tbl-wrap '+(securityShowAll[key]?'':'security-log-collapsed')+'"><table class="tbl"><thead><tr>'+(key==='logins'?'<th>When</th><th>User</th><th>IP address</th><th>Result</th>':'<th>Time</th><th>User</th><th>Action</th><th>Details</th><th>IP</th>')+'</tr></thead><tbody>'+rows((securityShowAll[key]?items:(items||[]).slice(0,8)),fn,empty)+'</tbody></table></div>'+((items||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="'+key+'">'+(securityShowAll[key]?'Show less':'View all ('+items.length+')')+'</button>':'');
- const accounts=(live.users||[]).map(x=>'<div class="device-row"><span><b>'+(x.role==='owner'?'Owner':esc(x.username))+'</b><small>'+esc(x.role)+' · '+(x.is_active?'Active':'Inactive')+'</small></span></div>').join('');
- const ownerTools=live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Staff accounts</h2><span class="pill info">Owner only</span></div><p class="hint" style="margin-bottom:10px">Enter the Owner password to change the Admin or Reception password. Their active sessions will be signed out.</p>'+accounts+'<form id="staffPwForm" class="col" style="gap:9px;margin-top:12px"><div class="field"><label>Account</label><select class="inp" id="staffTarget"><option value="Admin">Admin</option><option value="Reception">Reception</option></select></div><div class="field"><label>Owner password</label><input class="inp" id="staffOwnerPw" type="password" autocomplete="current-password" required></div><div class="field"><label>New staff password</label><input class="inp" id="staffNewPw" type="password" autocomplete="new-password" required></div><div class="field"><label>Repeat new password</label><input class="inp" id="staffAgainPw" type="password" autocomplete="new-password" required></div><div class="err" id="staffPwErr" hidden></div><button class="btn pri" type="submit" id="staffPwSave">Update staff password</button></form></section>':'';
+ const accounts=(live.users||[]).map(x=>{const displayRole=x.username.toLowerCase()==='admin'&&x.role==='owner'?'admin':x.role;return '<div class="device-row"><span><b>'+esc(x.username)+'</b><small>'+esc(displayRole)+' · '+(x.is_active?'Active':'Inactive')+'</small></span></div>';}).join('');
+ const ownerTools=live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Staff accounts</h2><span class="pill info">Owner only</span></div><p class="hint" style="margin-bottom:10px">Enter the Owner password to change the Admin or Reception password. Their active sessions will be signed out.</p>'+accounts+'<form id="staffPwForm" class="col" style="gap:9px;margin-top:12px"><div class="field"><label>Account</label><select class="inp" id="staffTarget"><option value="Admin">Admin</option><option value="Reception">Reception</option></select></div><div class="field"><label>Owner password</label><input class="inp" id="staffOwnerPw" type="password" autocomplete="current-password" required></div><div class="field"><label>New staff password</label><input class="inp" id="staffNewPw" type="password" autocomplete="new-password" required></div><div class="field"><label>Repeat new password</label><input class="inp" id="staffAgainPw" type="password" autocomplete="new-password" required></div><small class="hint">At least 8 characters. Admin and Reception passwords are updated independently.</small><div class="err" id="staffPwErr" hidden></div><button class="btn pri" type="submit" id="staffPwSave">Update staff password</button></form></section>':'';
  return head('Security','Account protection, login records and clinic data backups.','<span class="hint">Updates automatically every 5 seconds · Pakistan Standard Time</span>')+
  '<div class="security-grid">'+
- (live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Change my password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use at least 10 characters and include a number.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>':'')+
+ (live.currentUser?.role==='owner'?'<section class="card"><div class="card-head"><h2>Change my password</h2></div><form id="pwForm" class="col" style="gap:9px"><div class="field"><label>Current password</label><input class="inp" id="pwCurrent" type="password" autocomplete="current-password" required></div><div class="field"><label>New password</label><input class="inp" id="pwNew" type="password" autocomplete="new-password" required><small class="hint">Use at least 8 characters.</small></div><div class="field"><label>Repeat new password</label><input class="inp" id="pwAgain" type="password" autocomplete="new-password" required></div><div class="err" id="pwErr" hidden></div><button class="btn pri" type="submit" id="pwSave">Save password</button><small class="hint">Your password will be updated and all existing sessions will be signed out. Sign in again with your new password.</small></form></section>':'')+
  ownerTools+
  '<section class="card"><div class="card-head"><h2>Login history</h2></div>'+logRows('logins',live.logins,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username)+'</td><td class="num">'+esc(x.ip||'—')+'</td><td>'+(x.success?'<span class="pill ok">Success</span>':'<span class="pill bad">Failed</span>')+'</td></tr>','No login attempts recorded yet.')+'<small class="hint">IP address is recorded by the login API. City-level location is not currently configured.</small></section>'+
- '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||'IP unavailable')+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join('')||'<div class="empty">No active sessions.</div>')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
+ '<section class="card"><div class="card-head"><h2>Active sessions</h2></div>'+((live.sessions||[]).length?(securityShowAll.sessions?live.sessions:live.sessions.slice(0,8)).map(x=>'<div class="device-row"><span><b>'+esc(x.device||'Unknown browser')+'</b><small>'+esc(x.username)+' · '+esc(x.ip||"IP unavailable")+'<br>Expires '+esc(pkDateTime(x.expires_at))+'</small></span>'+(x.current?'<span class="pill info">This device</span>':'<button class="btn bad sm" data-revoke-session="'+Number(x.id)+'">End session</button>')+'</div>').join(''):'<div class="empty">No active sessions.</div>')+((live.sessions||[]).length>8?'<button class="btn sm security-log-toggle" type="button" data-expand-log="sessions">'+(securityShowAll.sessions?'Show less':'Show all ('+live.sessions.length+')')+'</button>':'')+'<small class="hint">Browser labels are inferred from User-Agent, not a verified physical device identity.</small></section>'+
  '<section class="card"><div class="card-head"><h2>Activity log</h2></div>'+logRows('activity',live.activity,(x)=>'<tr><td>'+esc(pkDateTime(x.created_at))+'</td><td>'+esc(x.username||'—')+'</td><td>'+esc(x.action)+'</td><td>'+esc(x.details||x.entity||'')+'</td><td>'+esc(x.ip||'—')+'</td></tr>','No activity recorded yet.')+'<small class="hint">Only actions currently written by the application appear here; full audit coverage is still being expanded.</small></section>'+
- '<section class="card wide"><div class="card-head"><h2>Database backup</h2><span class="pill warn">Not configured</span></div><b>Automatic backup is not active.</b><p class="hint" style="margin-top:6px">No backup is claimed until a separate private storage bucket, scheduled export, retention policy and restore test are configured. Your clinic records remain securely stored.</p></section>'+
+ '<section class="card wide"><div class="card-head"><h2>Google Drive backup &amp; document storage</h2><span class="pill info">Owner only</span></div><p class="hint" style="margin-top:6px">Google Drive connection, clinic folder, automatic patient/invoice saving aur sync history yahin manage karein.</p>'+(ownerMode?'<button class="btn pri sm" type="button" data-security-drive-toggle style="margin-top:12px">'+(state.securityDriveOpen?'Hide Google Drive settings':'Open Google Drive settings')+'</button>':'<small class="hint" style="display:block;margin-top:10px">Google Drive settings are available to the Owner account only.</small>')+(state.securityDriveOpen&&ownerMode?(state.driveAllowed?'<div class="drive-inline" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">'+viewDrive()+'</div>':'<div class="alert-item warn" style="margin-top:12px">Google Drive settings could not be loaded. Please refresh and sign in with the Owner account.</div>'):'')+'</section>'+
  '</div>';
 }
 function viewHistory() {
@@ -796,31 +1019,124 @@ function viewHistory() {
 /* ---------- render + events ---------- */
 function viewProfile() {
  if(!state.profileUnlocked||!state.profile)return head('My Profile','Verify your account to view and update your own profile.')+
- '<section class="card" style="max-width:520px"><div class="card-head"><h2>Confirm your identity</h2></div><p class="hint" style="margin-bottom:14px">Enter your current Login ID and password. You can only access your own profile.</p><form id="profileVerifyForm" class="col" style="gap:10px"><div class="field"><label>Login ID</label><input class="inp" id="profileLoginId" autocomplete="username" required></div><div class="field"><label>Password</label><input class="inp" id="profileLoginPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileVerifyErr" hidden></div><button class="btn pri" type="submit" id="profileVerifyBtn">Verify and open profile</button></form></section>';
+ '<section class="card" style="max-width:520px"><div class="card-head"><h2>Confirm your identity</h2></div><p class="hint" style="margin-bottom:14px">Only the Owner account can open this profile. Admin and Receptionist accounts must sign in from the Owner account.</p><form id="profileVerifyForm" class="col" style="gap:10px"><div class="field"><label>Login ID</label><input class="inp" id="profileLoginId" autocomplete="username" required></div><div class="field"><label>Password</label><input class="inp" id="profileLoginPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileVerifyErr" hidden></div><button class="btn pri" type="submit" id="profileVerifyBtn">Verify Owner account</button></form><p class="hint" style="margin-top:12px;font-weight:700">Login from Owner account</p></section>';
  const p=state.profile;
  return head('My Profile','Your account details. Changes apply only to your signed-in account.')+
  '<div class="col" style="max-width:680px"><section class="card"><div class="card-head"><h2>Account details</h2><span class="pill info">'+esc(p.role)+'</span></div><div class="two-col" style="margin-bottom:14px"><div class="field"><label>Login ID</label><input class="inp" value="'+esc(p.username)+'" readonly></div><div class="field"><label>Email address</label><input class="inp" value="'+esc(p.email)+'" readonly></div></div><form id="profileNameForm" class="col" style="gap:10px"><div class="two-col"><div class="field"><label>First name</label><input class="inp" id="profileFirstName" maxlength="80" value="'+esc(p.first_name)+'" required></div><div class="field"><label>Last name</label><input class="inp" id="profileLastName" maxlength="80" value="'+esc(p.last_name)+'" required></div></div><div class="field"><label>Confirm your current password</label><input class="inp" id="profileSavePassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileNameErr" hidden></div><button class="btn pri" type="submit" id="profileNameSave">Save name</button></form></section><section class="card"><div class="card-head"><h2>Change email address</h2></div><p class="hint">Email changes require a verification link sent to your current email first, followed by confirmation at the new email address.</p><form id="profileEmailForm" class="col" style="gap:10px;margin-top:12px"><div class="field"><label>New email address</label><input class="inp" id="profileNewEmail" type="email" autocomplete="email" required></div><div class="field"><label>Confirm your current password</label><input class="inp" id="profileEmailPassword" type="password" autocomplete="current-password" required></div><div class="err" id="profileEmailErr" hidden></div><button class="btn" type="submit" id="profileEmailSave">Request email change</button></form><p class="hint" style="margin-top:10px">The secure sender must be connected before verification links can be delivered. Your email will not change until both verification steps are completed.</p><button class="btn" type="button" data-profile-lock style="margin-top:12px">Lock profile</button></section></div>';
 }
 
 
-const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity };
+const VIEWS = { profile: viewProfile, dashboard: viewDashboard, requests: viewRequests, today: viewToday, manual: viewManual, history: viewHistory, security: viewSecurity, drive: viewDrive };
 
+const INVOICE_TREATMENTS=['Hair transplant','Hair PRP','Hair exosomes','PRGF (3 sessions)','Hydrafacial','PRP & microneedling','Dermapen microneedling','Acne & scar treatment','Skin whitening','Laser treatment','Glow drip'];
+function procedureSelectOptions(selected){const values=[...INVOICE_TREATMENTS];if(selected&&!values.some(x=>x.toLowerCase()===String(selected).toLowerCase()))values.unshift(String(selected));return '<option value="">Select treatment</option>'+values.map(x=>'<option value="'+esc(x)+'"'+(x.toLowerCase()===String(selected||'').toLowerCase()?' selected':'')+'>'+esc(x)+'</option>').join('');}
 function openVisitForm(id) {
  const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
  const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
- const html='<div class="visit-modal" id="visitModal"><section class="visit-card"><div class="card-head"><div><h2>Patient visit & invoice</h2><small class="muted">Complete treatment details and record payment</small></div><button class="btn sm" type="button" data-act="closevisit">Close</button></div><div class="card tint" style="margin-bottom:12px"><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small>Patient #'+a.pid+' · '+esc(prettyPhone(a.phone))+'</small><small>'+esc(a.doc)+' · '+nice(a.date)+' · '+t12(a.time)+'</small></div></div><div class="req-meta"><span class="chip">Booked treatment: '+esc(a.proc||'Not specified')+'</span><span class="chip">Previous balance: Rs '+prev.toLocaleString('en-PK')+'</span></div></div><form id="visitForm" data-id="'+a.id+'" data-pid="'+a.pid+'" class="col" style="gap:10px"><div class="card"><div class="card-head"><h2>Treatment & charges</h2><button class="btn sm" type="button" id="addProcedure">+ Add treatment</button></div><div id="visitProcedures"><div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" value="'+esc(a.proc)+'" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div></div><div class="field" style="margin-top:10px"><label>Visit notes</label><textarea class="inp" id="visitNotes" rows="2" placeholder="Optional notes"></textarea></div></div><div class="card"><div class="card-head"><h2>Invoice & payment</h2><span class="chip">PKR · Rs</span></div><div class="alert-item info">Previous outstanding balance: <b>Rs <span id="visitPrevValue">'+prev.toLocaleString('en-PK')+'</span></b></div><div class="two-col"><div class="field"><label>Total amount (Rs)</label><input class="inp" id="visitTotal" type="number" min="0" step="1" value="0" required></div><div class="field"><label>Received amount now (Rs)</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0" required></div></div><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val num" id="visitPrevCard">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val num" id="visitDue">Rs '+prev.toLocaleString('en-PK')+'</div></div><div class="stat-box hero"><div class="lbl">Remaining balance</div><div class="val num" id="visitRemaining">Rs '+prev.toLocaleString('en-PK')+'</div></div></div><div class="two-col"><div class="field"><label>Payment method</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select></div><div class="field"><label>Follow-up date</label><input class="inp" id="visitFollow" type="date"></div></div><div class="err" id="visitErr" hidden></div><div class="actions"><button class="btn" type="button" data-act="printinvoice">Print invoice</button><button class="btn pri" type="submit" id="visitSave">Save visit & payment</button></div></div></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>';
- document.body.insertAdjacentHTML('beforeend',html);
- const form=$('#visitForm'),total=$('#visitTotal'),received=$('#visitReceived'),procBox=$('#visitProcedures');
+ const previousVisits=state.visits.filter(v=>Number(v.patient_id)===Number(a.pid)).sort((x,y)=>String(y.created_at).localeCompare(String(x.created_at)));
+ const previousVisit=previousVisits[0]||null, repeated=previousVisits.length>0;
+ const sameDoctor=previousVisit&&String(previousVisit.doctor_name||'').trim().toLowerCase()===String(a.doc||'').trim().toLowerCase();
+ const repeatBanner=repeated?'<div class="ue-repeat-banner"><b>'+(sameDoctor?'FOLLOW-UP CLIENT · SAME DOCTOR':'REPEATED CLIENT')+'</b><span>Previous procedure: '+esc((previousVisit.procedures||[]).map(x=>x.procedure_name).join(', ')||'Not recorded')+' · Previous doctor: '+esc(previousVisit.doctor_name||'Not recorded')+'</span><button type="button" class="btn sm" data-act="editinvoice" data-id="'+previousVisit.id+'">Open previous invoice · '+esc(previousVisit.invoice_number||'Invoice')+'</button></div>':'';
  const money=n=>'Rs '+Math.max(0,Number(n)||0).toLocaleString('en-PK');
+ const html=`<div class="visit-modal" id="visitModal"><section class="visit-card ue-invoice-form">
+<header class="ue-invoice-header"><div class="ue-brand-mark"><svg viewBox="0 0 100 150" aria-hidden="true"><path d="M48 8C10 35 4 83 31 126c7-23 18-37 37-50 18-14 23-39 6-59 4 22-5 37-21 48C68 43 60 23 48 8Z" fill="none" stroke="#D6A85F" stroke-width="5"/><path d="M37 113c-2-29 9-48 31-64M24 129c16-7 28-19 35-35" fill="none" stroke="#6B481F" stroke-width="4" stroke-linecap="round"/></svg></div><div class="ue-brand-copy"><h1>Ultimate Esthetics</h1><h2>(Skin, Hair &amp; Body Clinic)</h2><p>⌖ &nbsp; Al-ain Arcade, Old Airport Road, Rawalpindi 46000</p><p>☎ &nbsp; 0334 0005909 &nbsp; • &nbsp; Mon to Sat, 11:00 AM – 08:00 PM</p></div><div class="ue-invoice-meta"><b>INVOICE</b><span>#${esc(a.invoice_number||'Assigned on save')}</span><small>Date: ${esc(nice(a.date))}</small><small>Time: ${esc(t12(a.time))} PKT</small></div></header>
+${repeatBanner}<div class="ue-detail-grid"><section class="ue-panel"><h3>♟ &nbsp; Patient Details</h3><div class="who"><div class="avatar">${initials(a.name)}</div><div><b>${esc(a.name)}</b><small>Patient #${a.pid}</small><small>${esc(prettyPhone(a.phone))}</small></div></div></section><section class="ue-panel"><h3>♟ &nbsp; Doctor</h3><div class="ue-panel-body"><b>${esc(a.doc||'Not assigned')}</b><small>Doctor / Practitioner</small></div></section><section class="ue-panel"><h3>▣ &nbsp; Appointment</h3><div class="ue-panel-body"><b>Check-in</b><small>${esc(nice(a.date))} · ${esc(t12(a.time))}</small><small>${esc(a.proc||'Treatment not specified')}</small></div></section></div>
+<form id="visitForm" data-id="${a.id}" data-pid="${a.pid}" class="col ue-invoice-body" style="gap:12px">
+<section class="ue-panel ue-wide"><h3>♧ &nbsp; Treatment / Procedures <button class="btn sm" type="button" id="addProcedure">+ Add Procedure</button></h3><div class="ue-table-head"><span>#</span><span>Procedure</span><span>Unit Price (Rs)</span><span>Actions</span></div><div id="visitProcedures"><div class="proc-line"><select class="inp" name="procedure" required>${procedureSelectOptions(a.proc)}</select><input class="inp" name="fee" type="number" min="0" step="1" inputmode="numeric" placeholder="0" value="0" required><button class="btn bad sm remove-procedure" type="button" aria-label="Remove procedure">×</button></div></div><div class="ue-total-line"><span>Total Treatment Amount</span><b id="visitNetTotal">Rs 0</b></div></section>
+<section class="ue-panel ue-wide"><h3>℞ &nbsp; Prescription</h3><div class="ue-notes-wrap"><textarea class="inp" id="visitNotes" rows="6" placeholder="Type prescription, medications and instructions here..."></textarea><span class="ue-rx-watermark">℞</span></div></section>
+<div class="ue-bottom-grid"><section class="ue-panel"><h3>▣ &nbsp; Payment Details</h3><div class="ue-payment-grid"><label>Previous Balance:</label><div class="ue-value" id="visitPrevValue">Rs ${prev.toLocaleString('en-PK')}</div><label>Total Amount:</label><div class="ue-value" id="visitDue">Rs ${prev.toLocaleString('en-PK')}</div><label>Subtotal (Rs):</label><input class="inp" id="visitTotal" type="number" min="0" step="1" value="0" required><label>Discount type:</label><select class="inp" id="visitDiscountType"><option value="none">No discount</option><option value="percentage">Percentage (%)</option><option value="fixed">Fixed amount (Rs)</option></select><label>Discount value:</label><input class="inp" id="visitDiscountValue" type="number" min="0" step="1" value="0"><label>Amount Received:</label><input class="inp" id="visitReceived" type="number" min="0" step="1" value="0" required><label>Payment Method:</label><select class="inp" id="visitMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="bank transfer">Bank transfer</option><option value="online">Online</option></select><label>Follow-up date:</label><input class="inp" id="visitFollow" type="date"><div class="ue-balance"><b>Remaining Balance:</b><strong id="visitRemaining">Rs ${prev.toLocaleString('en-PK')}</strong></div><div class="ue-discount-readout">Discount: <b id="visitDiscountDisplay">-Rs 0</b></div></div></section>
+<section class="ue-panel"><h3>▤ &nbsp; Notes</h3><textarea class="inp ue-extra-notes" id="visitExtraNotes" rows="10" placeholder="Add any notes (optional)..."></textarea><div class="ue-stamp">♙ &nbsp; Doctor Stamp (Optional)</div></section></div>
+<div class="ue-thanks"><span></span><em>Thank you for choosing Ultimate Esthetics.</em><span></span></div><footer class="ue-invoice-footer"><span>⌖ &nbsp; Al-ain Arcade, Old Airport Road, Rawalpindi 46000</span><i></i><span>☎ &nbsp; 0334 0005909</span><i></i><span>◷ &nbsp; Mon to Sat, 11:00 AM – 08:00 PM</span></footer>
+<div class="err" id="visitErr" hidden></div><div class="ue-form-actions"><button class="btn" type="button" data-act="printinvoice" disabled title="Save the visit first">Print Invoice · Save first</button><button class="btn pri" type="submit" id="visitSave">Save Visit &amp; Payment</button><button class="btn sm" type="button" data-act="closevisit">Close</button></div><p class="hint" id="visitInvoiceNumberNotice">Save the visit first to assign the permanent invoice number.</p></form><div id="visitInvoicePrint" class="invoice-print-area"></div></section></div>`;
+ document.body.insertAdjacentHTML('beforeend',html);
+ const form=$('#visitForm'),total=$('#visitTotal'),received=$('#visitReceived'),procBox=$('#visitProcedures'),discountType=$('#visitDiscountType'),discountValue=$('#visitDiscountValue');
  const getProcedures=()=>[...procBox.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value||0)}));
- const calc=()=>{const due=prev+Number(total.value||0),paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
+ const discount=()=>{const sub=Math.max(0,Number(total.value||0)),v=Math.max(0,Number(discountValue.value||0));return discountType.value==='percentage'?Math.min(sub,Math.round(sub*Math.min(v,100)/100)):discountType.value==='fixed'?Math.min(sub,v):0;};
+ const calc=()=>{const net=Math.max(0,Number(total.value||0)-discount()),due=prev+net,paid=Number(received.value||0),left=Math.max(0,due-paid);$('#visitNetTotal').textContent=money(net);$('#visitDiscountDisplay').textContent=money(discount());$('#visitDue').textContent=money(due);$('#visitRemaining').textContent=money(left);};
  const autoTotal=()=>{total.value=getProcedures().reduce((n,p)=>n+(Number.isFinite(p.fee)?p.fee:0),0);calc();};
  procBox.addEventListener('input',e=>{if(e.target.name==='fee')autoTotal();});
- total.addEventListener('input',calc);received.addEventListener('input',calc);calc();
- const invoice=()=>{const procs=getProcedures(),bill=Number(total.value||0),paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString());return '<div class="invoice-brand"><div><h2>Ultimate Esthetics</h2><p>Skin, Hair &amp; Body Clinic<br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000<br>Phone: 0334 0005909<br>Mon to Sat · 11:00 AM – 08:00 PM</p></div><div class="invoice-meta" style="text-align:right"><b>INVOICE</b><br>Invoice #: UE-'+a.id+'<br>Date: '+esc(today)+'</div></div><div class="invoice-title">Patient Invoice</div><div class="invoice-meta"><b>Patient:</b> '+esc(a.name)+'<br><b>Patient ID:</b> #'+a.pid+'<br><b>Phone:</b> '+esc(prettyPhone(a.phone))+'<br><b>Doctor:</b> '+esc(a.doc)+'<br><b>Appointment:</b> '+nice(a.date)+' · '+t12(a.time)+'</div><table class="invoice-table"><thead><tr><th>Treatment / Procedure</th><th>Amount (Rs)</th></tr></thead><tbody>'+procs.map(p=>'<tr><td>'+esc(p.name||'Treatment')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="invoice-summary"><div class="stat-box"><div class="lbl">Previous balance</div><div class="val">'+money(prev)+'</div></div><div class="stat-box"><div class="lbl">Total due</div><div class="val">'+money(due)+'</div></div><div class="stat-box"><div class="lbl">Received now</div><div class="val">'+money(paid)+'</div></div></div><h2 style="text-align:right;margin:12px 0">Balance remaining: '+money(left)+'</h2><p class="invoice-meta">Payment method: '+esc($('#visitMethod').value)+'<br>Thank you for choosing Ultimate Esthetics.</p>';};
- const print=()=>{$('#visitInvoicePrint').innerHTML=invoice();$('#visitInvoicePrint').style.display='block';window.print();$('#visitInvoicePrint').style.display='none';};
- $('#visitModal').dataset.printReady='1'; $('#visitModal')._printInvoice=print;
+ total.addEventListener('input',calc);received.addEventListener('input',calc);discountType.addEventListener('change',()=>{discountValue.value='0';calc();});discountValue.addEventListener('input',calc);calc();
+ const invoice=()=>{const procs=getProcedures(),subtotal=Number(total.value||0),disc=discount(),bill=subtotal-disc,paid=Number(received.value||0),due=prev+bill,left=Math.max(0,due-paid),today=pkDateTime(new Date().toISOString()),extra=$('#visitExtraNotes')?.value||'',prescription=$('#visitNotes').value||'',invoiceNo=form.dataset.invoiceNumber||a.invoice_number||'Assigned on save';return '<article class="ue-print-invoice"><header class="ue-invoice-header"><div class="ue-brand-mark"><svg viewBox="0 0 100 150"><path d="M48 8C10 35 4 83 31 126c7-23 18-37 37-50 18-14 23-39 6-59 4 22-5 37-21 48C68 43 60 23 48 8Z" fill="none" stroke="#D6A85F" stroke-width="5"/><path d="M37 113c-2-29 9-48 31-64M24 129c16-7 28-19 35-35" fill="none" stroke="#6B481F" stroke-width="4"/></svg></div><div class="ue-brand-copy"><h1>Ultimate Esthetics</h1><h2>(Skin, Hair &amp; Body Clinic)</h2><p>⌖ &nbsp; Al-ain Arcade, Old Airport Road, Rawalpindi 46000</p><p>☎ &nbsp; 0334 0005909 &nbsp; • &nbsp; Mon to Sat, 11:00 AM – 08:00 PM</p></div><div class="ue-invoice-meta"><b>INVOICE</b><span>#'+esc(invoiceNo)+'</span><small>Date: '+esc(today)+'</small><small>Time: '+esc(t12(a.time))+' PKT</small></div></header><div class="ue-detail-grid"><section class="ue-panel"><h3>♟ &nbsp; Patient Details</h3><div class="ue-panel-body"><b>'+esc(a.name)+'</b><small>Patient ID: #'+a.pid+'</small><small>Phone: '+esc(prettyPhone(a.phone))+'</small></div></section><section class="ue-panel"><h3>♟ &nbsp; Doctor</h3><div class="ue-panel-body"><b>'+esc(a.doc||'Not assigned')+'</b></div></section><section class="ue-panel"><h3>▣ &nbsp; Appointment</h3><div class="ue-panel-body"><b>Check-in</b><small>'+esc(nice(a.date))+' · '+esc(t12(a.time))+'</small></div></section></div><section class="ue-panel ue-wide"><h3>♧ &nbsp; Treatment / Procedures</h3><table class="ue-print-table"><thead><tr><th>#</th><th>Procedure</th><th>Quantity</th><th>Unit Price (Rs)</th><th>Total (Rs)</th></tr></thead><tbody>'+procs.map((p,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(p.name||'Treatment')+'</td><td>1</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td><td>'+Number(p.fee||0).toLocaleString('en-PK')+'</td></tr>').join('')+'</tbody></table><div class="ue-total-line"><span>Total Treatment Amount:</span><b>'+money(subtotal)+'</b></div></section><section class="ue-panel ue-wide"><h3>℞ &nbsp; Prescription</h3><div class="ue-print-notes">'+(prescription?esc(prescription).replace(/\n/g,'<br>'):'No prescription recorded')+'</div></section><div class="ue-bottom-grid"><section class="ue-panel"><h3>▣ &nbsp; Payment Details</h3><div class="ue-print-payment"><p>Previous Balance: <b>'+money(prev)+'</b></p><p>Total Amount: <b>'+money(bill)+'</b></p><p>Amount Received: <b>'+money(paid)+'</b></p><p>Payment Method: <b>'+esc($('#visitMethod').value)+'</b></p><p class="ue-balance">Remaining Balance: <strong>'+money(left)+'</strong></p></div></section><section class="ue-panel"><h3>▤ &nbsp; Notes</h3><div class="ue-print-notes">'+(extra?esc(extra).replace(/\n/g,'<br>'):'No additional notes')+'</div><div class="ue-stamp">Doctor Stamp (Optional)</div></section></div><div class="ue-thanks"><span></span><em>Thank you for choosing Ultimate Esthetics.</em><span></span></div><footer class="ue-invoice-footer"><span>⌖ &nbsp; Al-ain Arcade, Old Airport Road, Rawalpindi 46000</span><i></i><span>☎ &nbsp; 0334 0005909</span><i></i><span>◷ &nbsp; Mon to Sat, 11:00 AM – 08:00 PM</span></footer></article>';};
+ const print=()=>{if(form.dataset.saved!=='1'){toast('Save the visit first to generate the permanent invoice number.');return;}if(!form.dataset.saved||form.dataset.saved!=='1'){toast('Save the visit first. The invoice will be generated and uploaded to Google Drive only after Save succeeds.');return;}const markup=invoice();const popup=window.open('','_blank','width=1000,height=800');if(!popup){toast('Print window was blocked. Allow pop-ups for this clinic site, then try Print Invoice again.');return;}const styles=[...document.querySelectorAll('style,link[rel="stylesheet"]')].map(x=>x.outerHTML).join('');popup.document.open();popup.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Invoice '+esc(form.dataset.invoiceNumber||a.invoice_number||'')+'</title>'+styles+'<style>html,body{margin:0;padding:12px;background:#fff;font-family:Arial,sans-serif}.ue-print-invoice{display:block!important;max-width:100%;margin:0 auto;background:#fffaf2;color:#24180e;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ue-print-invoice .ue-panel>h3,.ue-print-invoice .ue-invoice-meta b{background:#4b3016!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:5mm}@media print{html,body{padding:0;margin:0}body{zoom:.78}.ue-print-invoice{border:0!important;box-shadow:none!important}.ue-invoice-header,.ue-detail-grid,.ue-panel,.ue-bottom-grid,.ue-thanks,.ue-invoice-footer{break-inside:avoid}}</style></head><body><div id="visitInvoicePrint">'+markup+'</div></body></html>');let didPrint=false;const doPrint=()=>{if(didPrint)return;didPrint=true;popup.focus();popup.print();};popup.onload=doPrint;popup.document.close();setTimeout(doPrint,700);};
+ $('#visitModal').dataset.printReady='1'; $('#visitModal')._renderInvoice=()=>{$('#visitInvoicePrint').innerHTML=invoice();}; $('#visitModal')._printInvoice=print;
 }
+
+function openPatientEditor(patientId){
+ const p=state.patients.find(x=>Number(x.id)===Number(patientId));if(!p){toast('Patient could not be found.');return;}
+ const latest=state.visits.filter(x=>Number(x.patient_id)===Number(patientId)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)))[0];
+ if(latest){openInvoiceEditor(latest.id);return;}
+ const modal='<div class="visit-modal" id="patientEditModal"><section class="visit-card"><div class="card-head"><h2>Edit patient #'+p.id+'</h2><button class="btn sm" type="button" data-close-patient-edit>Close</button></div><form id="patientEditForm" data-pid="'+p.id+'" class="col"><div class="field"><label>Patient name</label><input class="inp" id="patientEditName" value="'+esc(p.name)+'" required></div><div class="field"><label>Phone number</label><input class="inp" id="patientEditPhone" type="tel" value="'+esc(p.phone||'')+'" required></div><div class="err" id="patientEditErr" hidden></div><button class="btn pri" id="patientEditSave" type="submit">Save patient details</button></form></section></div>';
+ document.body.insertAdjacentHTML('beforeend',modal);
+}
+function openInvoiceEditor(id){
+ const v=state.visits.find(x=>Number(x.id)===Number(id));if(!v){toast('Invoice could not be found.');return;}
+ // Remove the current check-in/edit modal first so duplicate #visitModal IDs cannot intercept the editor.
+ document.querySelectorAll('#visitModal').forEach(node=>node.remove());
+ let appointment=state.appts.find(x=>Number(x.id)===Number(v.appointment_id));
+ if(!appointment){
+  appointment={id:Number(v.appointment_id)||-Number(v.id),pid:Number(v.patient_id),name:v.patient_name||'',phone:v.phone||'',doc:v.doctor_name||'',date:v.visit_date||String(v.created_at||'').slice(0,10),time:v.visit_time||String(v.created_at||'').slice(11,16),proc:(v.procedures||[]).map(p=>p.procedure_name).join(', '),status:'done'};
+  state.appts.push(appointment);
+ }
+ openVisitForm(appointment.id);
+ appointment.invoice_number=v.invoice_number||'';
+ const modal=$('#visitModal'),form=$('#visitForm');
+ if(!modal||!form)return;
+ form.dataset.editVisit=String(v.id);
+ form.dataset.saved='1';
+ const editPrint=modal.querySelector('[data-act="printinvoice"]');if(editPrint){editPrint.disabled=false;editPrint.textContent='Print invoice · '+(v.invoice_number||'Saved');editPrint.title='';}
+ form.dataset.invoiceNumber=v.invoice_number||'';const invoiceBadge=modal.querySelector('.ue-invoice-meta span');if(invoiceBadge)invoiceBadge.textContent='#'+(v.invoice_number||'Existing invoice');
+ form.dataset.patientId=String(v.patient_id);
+ form.dataset.patientName=String(v.patient_name||appointment.name||'');
+ form.dataset.patientPhone=String(v.phone||appointment.phone||'');
+ const title=modal.querySelector('.card-head h2');
+ if(title)title.textContent='Edit patient visit & invoice';
+ const subtitle=modal.querySelector('.card-head small');
+ if(subtitle)subtitle.textContent=(v.invoice_number||'Existing invoice')+' · Update saved visit details';
+ const repeatNotice=modal.querySelector('.ue-repeat-banner');if(repeatNotice)repeatNotice.remove();
+ const who=modal.querySelector('.who');
+ if(who)who.innerHTML='<div class="avatar">'+initials(v.patient_name||appointment.name)+'</div><div class="two-col" style="flex:1"><div class="field"><label>Patient name</label><input class="inp" id="editVisitPatientName" maxlength="120" value="'+esc(v.patient_name||appointment.name||'')+'" required></div><div class="field"><label>Phone number</label><input class="inp" id="editVisitPatientPhone" type="tel" maxlength="24" value="'+esc(v.phone||appointment.phone||'')+'" required></div></div>';
+ const procBox=$('#visitProcedures');
+ procBox.innerHTML='';
+ (v.procedures&&v.procedures.length?v.procedures:[{procedure_name:appointment.proc||'Treatment',fee:0}]).forEach((p,index)=>{
+  const name=String(p.procedure_name||p.name||'Treatment'),fee=Number(p.fee||0);
+  const row=document.createElement('div');row.className='proc-line';
+  row.innerHTML='<select class="inp" name="procedure" required></select><input class="inp" name="fee" type="number" min="0" step="1" inputmode="numeric" required><button class="btn bad sm remove-procedure" type="button" aria-label="Remove treatment">×</button>';
+  const select=row.querySelector('[name=procedure]');
+  select.innerHTML=procedureSelectOptions(name);
+  if(![...select.options].some(o=>o.value===name)){const opt=document.createElement('option');opt.value=name;opt.textContent=name;select.add(opt);}
+  select.value=name;row.querySelector('[name=fee]').value=String(fee);procBox.appendChild(row);
+ });
+ $('#visitTotal').value=String(Number(v.subtotal_amount??v.total_amount??0));
+ $('#visitDiscountType').value=v.discount_type||'none';
+ $('#visitDiscountValue').value=String(Number(v.discount_value||0));
+ $('#visitNotes').value=String(v.notes||'').split('\n\nAdditional notes:\n')[0];$('#visitExtraNotes').value=String(v.notes||'').includes('\n\nAdditional notes:\n')?String(v.notes).split('\n\nAdditional notes:\n').slice(1).join('\n\nAdditional notes:\n'):'';
+ $('#visitFollow').value=v.follow_up_date||'';
+ const alreadyPaid=Number(v.received||0);
+ $('#visitReceived').value=String(alreadyPaid);$('#visitReceived').disabled=false;
+ const lastPayment=(v.payments||[]).slice(-1)[0];
+ $('#visitMethod').value=lastPayment?.method||'cash';$('#visitMethod').disabled=false;
+ const fp=state.financialPatients.find(p=>Number(p.id)===Number(v.patient_id));
+ const outstanding=Math.max(0,Number(v.total_amount||0)-alreadyPaid);
+ const previous=Math.max(0,Number(fp?.balance||0)-outstanding);
+ $('#visitPrevValue').textContent=previous.toLocaleString('en-PK');
+ if($('#visitPrevCard'))$('#visitPrevCard').textContent='Rs '+previous.toLocaleString('en-PK');
+ const recalc=()=>{
+  const subtotal=Number($('#visitTotal').value||0),type=$('#visitDiscountType').value,value=Number($('#visitDiscountValue').value||0);
+  const discount=type==='percentage'?Math.round(subtotal*Math.min(value,100)/100):type==='fixed'?Math.min(subtotal,value):0;
+  const net=subtotal-discount,due=previous+net;
+  $('#visitNetTotal').textContent='Rs '+net.toLocaleString('en-PK');
+  $('#visitDiscountDisplay').textContent='-Rs '+discount.toLocaleString('en-PK');
+  $('#visitDue').textContent='Rs '+due.toLocaleString('en-PK');
+  $('#visitRemaining').textContent='Rs '+Math.max(0,due-Number($('#visitReceived').value||0)).toLocaleString('en-PK');
+ };
+ $('#visitTotal').addEventListener('input',recalc);$('#visitReceived').addEventListener('input',recalc);$('#visitDiscountType').addEventListener('change',recalc);$('#visitDiscountValue').addEventListener('input',recalc);
+ recalc();
+ const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Editing '+(v.invoice_number||'saved invoice')+'. Existing payments (Rs '+alreadyPaid.toLocaleString('en-PK')+') are preserved and will not be charged again.';
+ const save=$('#visitSave');if(save){save.textContent='Save visit changes';save.disabled=false;}
+ modal._renderInvoice?.();
+}
+
+
 function renderNav() {
   const n = pending().length;
   const nav = $('#nav');
@@ -834,13 +1150,173 @@ function renderNav() {
   }
 }
 
-async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
+let driveAutoRefreshTimer=null;
+async function loadDriveSettings(redraw=true){
+ state.driveLoading=true;
+ if(redraw)render();
+ try{
+  const r=await api('/api/admin/drive');
+  state.driveAllowed=r.status!==403;
+  state.driveData=r.data||{};
+  if(!r.ok&&r.status>=500)state.driveData.migration_required=true;
+  if(r.ok&&state.driveData.connected){
+   const q=await api('/api/admin/drive/sync');
+   state.driveJobs=q.ok?(q.data.jobs||[]):[];
+   state.driveFiles=q.ok?(q.data.files||[]):[];
+   state.driveBackups=q.ok?(q.data.backups||[]):[];
+   const folders=await api('/api/admin/drive?parent=root');
+   state.driveFolders=folders.ok?(folders.data.folders||[]):[];
+   if(!driveAutoRefreshTimer&&state.driveAllowed){
+    driveAutoRefreshTimer=setInterval(()=>{if(!document.hidden&&state.driveAllowed&&state.driveData?.connected)loadDriveSettings(false).catch(()=>{});},45000);
+   }
+  }else{
+   state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
+  }
+ }catch(e){
+  if(e&&e.message==='unauthorized')throw e;
+  state.driveAllowed=true;state.driveData={migration_required:true};state.driveJobs=[];state.driveFiles=[];state.driveBackups=[];state.driveFolders=[];
+ }
+ state.driveLoading=false;
+ if(redraw)render();
+}
+async function loadGooglePickerLibrary(){
+ await new Promise((resolve,reject)=>{
+  const load=()=>{try{window.gapi.load('picker',{callback:resolve,onerror:()=>reject(new Error('Google Picker could not load.'))});}catch(error){reject(error);}};
+  if(window.gapi){load();return;}
+  const script=document.createElement('script');script.src='https://apis.google.com/js/api.js';script.async=true;
+  script.onload=load;script.onerror=()=>reject(new Error('Could not load Google Picker from Google.'));
+  document.head.appendChild(script);
+ });
+}
+async function openGoogleDrivePicker(){
+ const response=await api('/api/admin/drive/picker');
+ if(!response.ok)throw new Error(response.data.error||'Google Drive Picker is not configured.');
+ const config=response.data;
+ await loadGooglePickerLibrary();
+ const picker=window.google.picker;
+ const folders=new picker.DocsView(picker.ViewId.FOLDERS);
+ folders.setIncludeFolders(true);
+ folders.setSelectFolderEnabled(true);
+ folders.setMimeTypes('application/vnd.google-apps.folder');
+ const dialog=new picker.PickerBuilder()
+  .setAppId(String(config.app_id))
+  .setDeveloperKey(config.developer_key)
+  .setOAuthToken(config.access_token)
+  .setOrigin(window.location.protocol+'//'+window.location.host)
+  .enableFeature(picker.Feature.SUPPORT_DRIVES)
+  .addView(folders)
+  .setTitle('Choose the clinic Google Drive folder')
+  .setCallback(async data=>{
+   if(data[picker.Response.ACTION]!==picker.Action.PICKED)return;
+   const selected=(data[picker.Response.DOCUMENTS]||[])[0];
+   if(!selected?.id){toast('No folder was selected.');return;}
+   try{
+    const saved=await api('/api/admin/drive',{method:'POST',body:{action:'select_root',folder_id:selected.id}});
+    if(!saved.ok)throw new Error(saved.data.error||'Could not select this Drive folder.');
+    toast('Clinic Drive folder selected: '+(selected.name||'Google Drive folder')+'. Preparing existing records…');
+    await runDriveBackfill(false);
+    await loadDriveSettings(true);
+   }catch(error){toast(error.message||'Could not save selected Drive folder.');}
+  }).build();
+ dialog.setVisible(true);
+}
+async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw','driveRootName'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
-function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(state.page==='security')loadSecurity();},5000);}
+function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(!document.hidden&&state.page==='security')loadSecurity();},5000);}
 function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
 function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
+async function runDriveBackfill(showToast=true){
+ let cursor=state.driveBackfill||{after_visit_id:0,after_patient_id:0,has_more:true};
+ let totalVisits=0,totalPatients=0,rounds=0,hasMore=true;
+ while(hasMore&&rounds<25){
+  const result=await api('/api/admin/drive/sync',{method:'POST',body:{action:'backfill',after_visit_id:cursor.after_visit_id,after_patient_id:cursor.after_patient_id}});
+  if(!result.ok)throw new Error(result.data.error||'Could not start Drive backfill.');
+  totalVisits+=Number(result.data.scheduled_visits||0);
+  totalPatients+=Number(result.data.scheduled_patients||0);
+  cursor={after_visit_id:result.data.next_after_visit_id,after_patient_id:result.data.next_after_patient_id,has_more:!!result.data.has_more};
+  hasMore=cursor.has_more;rounds++;
+  if(hasMore)await new Promise(resolve=>setTimeout(resolve,900));
+ }
+ state.driveBackfill=hasMore?cursor:{after_visit_id:0,after_patient_id:0,has_more:false};
+ if(showToast)toast('Scheduled '+totalVisits+' invoice records for the shared Patients (Overall) folder.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
+ return {totalVisits,totalPatients,hasMore};
+}
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('[data-drive-action]');if(!b)return;
+ const action=b.dataset.driveAction;
+ if(action==='disconnect'&&!confirm('Disconnect Google Drive? Existing clinic records and saved Drive references will be retained.'))return;
+ b.disabled=true;
+ try{
+  if(action==='refresh'){await loadDriveSettings(true);return;}
+  if(action==='browse-root'){await openGoogleDrivePicker();return;}
+  if(action==='backfill'){
+   await runDriveBackfill(true);
+   await loadDriveSettings(true);
+   return;
+  }
+  const path=action==='retry'||action==='backup-now'?'/api/admin/drive/sync':'/api/admin/drive';
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}
+   :action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}
+   :action==='retry'?{job_id:Number(b.dataset.job)}
+   :action==='backup-now'?{action:'backup'}
+   :action==='test'?{action:'test_connection'}
+   :{action:'disconnect'};
+  const result=await api(path,{method:'POST',body});
+  if(!result.ok)throw new Error(result.data.error||'Google Drive action failed.');
+  if(action==='create-root'||action==='select-root'){
+   toast('Clinic Drive folder selected. Preparing existing clinic records…');
+   await runDriveBackfill(false);
+   toast('Drive folder ready. Existing clinic records have been queued for upload.');
+  }else{
+   toast(action==='test'?'Google Drive connection verified for '+(result.data.email||'your Google account')+'.':action==='backup-now'?'Clinic data backup started. Refresh the backup history in a moment.':(result.data.message||'Google Drive settings updated.'));
+  }
+  await loadDriveSettings(true);
+ }catch(error){if(error.message!=='unauthorized')toast(error.message||'Google Drive action failed.');}
+ finally{b.disabled=false;}
+});
+
+function patientSearchResults(query, targetId, hiddenId, mode){
+ const box=document.getElementById(targetId),hidden=document.getElementById(hiddenId);if(!box||!hidden)return;
+ const q=String(query||'').trim().toLowerCase(),digits=q.replace(/\D/g,'');
+ if(!q){box.innerHTML='';hidden.value='';return;}
+ const found=state.patients.filter(p=>p.name.toLowerCase().includes(q)||String(p.phone||'').toLowerCase().includes(q)||(digits.length>=4&&last10(p.phone).includes(digits.slice(-10)))).slice(0,8);
+ box.innerHTML=found.length?found.map(p=>'<button type="button" class="search-result" data-patient-pick="'+p.id+'" data-pick-mode="'+mode+'"><b>'+esc(p.name)+'</b><small>'+esc(prettyPhone(p.phone))+' · Patient #'+p.id+'</small></button>').join(''):'<div class="search-empty">No matching patient found.</div>';
+}
+function applyManualPhoneMatch(){
+ const phone=last10($('#mPhone')?.value||'');if(phone.length!==10)return;
+ const patient=state.patients.find(p=>last10(p.phone)===phone);const hint=$('#mDup');if(!hint)return;
+ if(!patient){hint.textContent='New patient — no previous record found for this phone number.';hint.className='hint';$('#mExistingPatient').value='';return;}
+ $('#mExistingPatient').value=String(patient.id);$('#mName').value=patient.name;$('#mExistingSearch').value=patient.name+' · '+prettyPhone(patient.phone);
+ const visits=state.visits.filter(v=>Number(v.patient_id)===Number(patient.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+ const last=visits[0],sameDoctor=last&&Number(last.doctor_id)===Number($('#mDoc').value);
+ hint.textContent=(sameDoctor?'FOLLOW-UP CLIENT · Same doctor':'REPEATED CLIENT · '+(last?'Previous doctor: '+(last.doctor_name||'another doctor'):'Previous patient record'))+(last?' · Previous procedure: '+(last.procedures||[]).map(x=>x.procedure_name).join(', '):'');
+ hint.className='hint repeated-client-hint';
+ if(last&&last.follow_up_date&&!$('#mFollow').value)$('#mFollow').value=last.follow_up_date;
+}
+document.addEventListener('input',e=>{
+ if(e.target.id==='mExistingSearch')patientSearchResults(e.target.value,'mExistingResults','mExistingPatient','existing');
+ if(e.target.id==='mReferralSearch')patientSearchResults(e.target.value,'mReferralResults','mReferral','referral');
+ if(e.target.id==='mPhone')applyManualPhoneMatch();
+});
+document.addEventListener('change',e=>{if(e.target.id==='mDoc')applyManualPhoneMatch();});
+document.addEventListener('click',e=>{
+ const pick=e.target.closest('[data-patient-pick]');if(pick){
+  const p=state.patients.find(x=>Number(x.id)===Number(pick.dataset.patientPick));if(!p)return;
+  const mode=pick.dataset.pickMode,search=document.getElementById(mode==='existing'?'mExistingSearch':'mReferralSearch'),hidden=document.getElementById(mode==='existing'?'mExistingPatient':'mReferral'),results=document.getElementById(mode==='existing'?'mExistingResults':'mReferralResults');
+  hidden.value=String(p.id);search.value=p.name+' · '+prettyPhone(p.phone);results.innerHTML='';
+  if(mode==='existing'){$('#mPhone').value=p.phone||'';$('#mName').value=p.name;applyManualPhoneMatch();}
+ }
+});
+
+document.addEventListener('input',e=>{if(e.target.id==='driveRootName')state.driveRootName=e.target.value;});
+document.addEventListener('change',async e=>{
+ const key=e.target.dataset.driveSetting;if(!key)return;
+ const body={action:'settings',[key]:e.target.checked};
+ try{const r=await api('/api/admin/drive',{method:'POST',body});if(!r.ok)throw new Error(r.data.error||'Could not save setting.');state.driveData={...(state.driveData||{}),[key]:e.target.checked};toast('Saving preference updated.');}
+ catch(x){e.target.checked=!e.target.checked;toast(x.message||'Could not save setting.');}
+});
 document.addEventListener('click', async e => {
  if(e.target.id!=='forgotBtn' && e.target.id!=='sendReset') return;
  const b=e.target, old=b.textContent; b.disabled=true; b.textContent='Sending…';
@@ -852,9 +1328,9 @@ document.addEventListener('submit',async e=>{
  if(e.target.id==='profileVerifyForm'){
   e.preventDefault();const btn=$('#profileVerifyBtn'),err=$('#profileVerifyErr');err.hidden=true;btn.disabled=true;btn.textContent='Verifying…';
   try{const r=await api('/api/admin/profile',{method:'POST',body:{action:'verify',username:$('#profileLoginId').value.trim(),password:$('#profileLoginPassword').value}});
-   if(!r.ok){err.textContent=r.data.error||'Verification failed.';err.hidden=false;btn.disabled=false;btn.textContent='Verify and open profile';return;}
+   if(!r.ok){err.textContent=r.data.error||'Verification failed.';err.hidden=false;btn.disabled=false;btn.textContent='Verify Owner account';return;}
    state.profile=r.data.profile;state.profileUnlocked=true;render();
-  }catch(x){if(x.message!=='unauthorized'){err.textContent='Unable to verify your account.';err.hidden=false;}btn.disabled=false;btn.textContent='Verify and open profile';}return;
+  }catch(x){if(x.message!=='unauthorized'){err.textContent='Unable to verify your account.';err.hidden=false;}btn.disabled=false;btn.textContent='Verify Owner account';}return;
  }
  if(e.target.id==='profileEmailForm'){
   e.preventDefault();const btn=$('#profileEmailSave'),err=$('#profileEmailErr');err.hidden=true;btn.disabled=true;btn.textContent='Requesting…';
@@ -880,7 +1356,7 @@ document.addEventListener('submit',async e=>{
  err.hidden=true;btn.disabled=true;btn.textContent='Updating…';
  try{const r=await api('/api/admin/password',{method:'POST',body:{target_username:$('#staffTarget').value,owner_password:owner,new_password:n}});
  if(!r.ok){err.textContent=r.data.error||'Password update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Update staff password';return;}
- toast(r.data.message||'Staff password updated.');await loadSecurity();
+ toast(r.data.message||'Staff password updated.');$('#staffOwnerPw').value='';$('#staffNewPw').value='';$('#staffAgainPw').value='';btn.disabled=false;btn.textContent='Update staff password';await loadSecurity();
  }catch(x){if(x.message!=='unauthorized'){err.textContent='Password update failed.';err.hidden=false;}btn.disabled=false;btn.textContent='Update staff password';}
 });
 document.addEventListener('submit',async e=>{
@@ -894,20 +1370,25 @@ document.addEventListener('submit',async e=>{
 });
 
 document.addEventListener('click', async e => {
-  const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const driveToggle=e.target.closest('[data-security-drive-toggle]');if(driveToggle){state.securityDriveOpen=!state.securityDriveOpen;if(state.securityDriveOpen){state.driveLoading=true;render();loadDriveSettings(true).catch(()=>{});}else render();return;} const expand=e.target.closest('[data-expand-log]');if(expand){const key=expand.dataset.expandLog;securityShowAll[key]=!securityShowAll[key];render();return;} const revoke=e.target.closest('[data-revoke-session]');if(revoke){revoke.disabled=true;const rr=await api('/api/admin/security',{method:'DELETE',body:{session_id:Number(revoke.dataset.revokeSession)}});if(rr.ok){toast('Session ended.');await loadSecurity();}else{toast(rr.data.error||'Could not end session.');revoke.disabled=false;}return;} const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
   const t = e.target.closest('[data-tab]'); if (t) { state.tab = t.dataset.tab; render(); return; }
   const f = e.target.closest('[data-filter]'); if (f) { state.filter = f.dataset.filter; render(); return; }
   const calPrev=e.target.closest('[data-cal-prev]'); if(calPrev){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m-2,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
   const calNext=e.target.closest('[data-cal-next]'); if(calNext){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
   if(e.target.closest('[data-cal-today]')){state.patientDate=todayStr();state.calendarMonth=todayStr().slice(0,7);render();return;}
-  if(e.target.closest('[data-date-all]')){state.patientDate=null;render();return;}
-  const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
+  if(e.target.closest('[data-date-all]')){state.patientShowOverall=false;state.patientDate=null;render();return;}
+  const overallPatients=e.target.closest('[data-overall-patients]');if(overallPatients){state.patientShowOverall=!state.patientShowOverall;render();return;} const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientShowOverall=false;state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
+  const editPatientBtn=e.target.closest('[data-act="editpatient"]');if(editPatientBtn){openPatientEditor(Number(editPatientBtn.dataset.p));return;}
   const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
+  const removeProcedure=e.target.closest('.remove-procedure');if(removeProcedure){const box=$('#visitProcedures');removeProcedure.closest('.proc-line').remove();const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));return;}
+  if(e.target.closest('[data-close-patient-edit]')){document.getElementById('patientEditModal')?.remove();return;}
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = Number(b.dataset.id); b.disabled = true;
   switch (b.dataset.act) {
     case 'visit': b.disabled=false; openVisitForm(id); break;
-    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){toast('Patient checked in. Select Open form to record the visit.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
+    case 'editinvoice': b.disabled=false; openInvoiceEditor(id); break;
+    case 'editpatient': b.disabled=false; openPatientEditor(Number(b.dataset.p)); break;
+    case 'checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:true}}).then(async r=>{if(r.ok){playInvoiceReminder();toast('Patient checked in. Invoice is pending — open the form and generate the invoice.');await loadData();}else toast(r.data.error||'Check-in failed');}); break;
     case 'undo_checkin': await api('/api/admin/appointments',{method:'PATCH',body:{id,check_in:false}}).then(async r=>{if(r.ok){toast('Check-in reversed.');await loadData();}else toast(r.data.error||'Update failed');}); break;
     case 'closevisit': document.querySelector('#visitModal')?.remove(); break;
     case 'printinvoice': document.querySelector('#visitModal')?._printInvoice?.(); b.disabled=false; break;
@@ -921,26 +1402,58 @@ document.addEventListener('click', async e => {
     case 'hist': state.histSel = Number(b.dataset.p); b.disabled = false; go('history'); break;
   }
 });
+document.addEventListener('change',e=>{
+ if(e.target.id==='mExistingPatient'){
+  const p=state.patients.find(x=>Number(x.id)===Number(e.target.value));if(p){$('#mName').value=p.name;$('#mPhone').value=p.phone;$('#mDup').textContent='Selected existing patient #'+p.id+'. New appointment and payment will be attached to this record.';$('#mDup').className='hint ok';}
+ }
+});
 document.addEventListener('input', e => {
   const t = e.target;
+  if(t instanceof HTMLInputElement&&t.type==='number'&&t.value){const clean=t.value.replace(/^0+(?=\d)/,'');if(clean!==t.value)t.value=clean;}
   if (t.id === 'hq') { state.histQ = t.value; $('#plist').innerHTML = histList(); return; }
-  if (t.id === 'mPhone') {
-    const d = last10(t.value), m = d.length >= 10 && state.patients.find(p => last10(p.phone) === d), h = $('#mDup');
-    if (m) { h.textContent = 'Existing patient: ' + m.name + ' (#' + m.id + '). The existing patient ID will be reused.'; h.className = 'hint ok'; }
-    else { h.textContent = 'Returning visits will be linked to this patient record.'; h.className = 'hint'; }
-  }
+  if (t.id === 'mPhone') { applyManualPhoneMatch(); return; }
 });
 
 document.addEventListener('click',e=>{
- if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><input class="inp" name="procedure" placeholder="Procedure / treatment" required><input class="inp" name="fee" type="number" min="0" step="1" placeholder="Fee (Rs)" value="0" required></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
+ if(e.target.id==='addProcedure'){const box=$('#visitProcedures');box.insertAdjacentHTML('beforeend','<div class="proc-line"><select class="inp" name="procedure" required>'+procedureSelectOptions('')+'</select><input class="inp" name="fee" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 2999" value="0" required><button class="btn bad sm remove-procedure" type="button" aria-label="Remove treatment">×</button></div>');const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));}
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='patientEditForm')return;e.preventDefault();
+ const form=e.target,err=$('#patientEditErr'),btn=$('#patientEditSave');btn.disabled=true;btn.textContent='Saving…';
+ try{const r=await api('/api/admin/visits',{method:'PATCH',body:{patient_id:Number(form.dataset.pid),patient_name:$('#patientEditName').value.trim(),patient_phone:$('#patientEditPhone').value.trim()}});
+ if(!r.ok){err.textContent=r.data.error||'Patient update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save patient details';return;}
+ document.getElementById('patientEditModal').remove();toast('Patient details updated across profile and booking history.');await loadData();if(state.page==='history')render();
+ }catch(x){err.textContent='Unable to update patient details.';err.hidden=false;btn.disabled=false;btn.textContent='Save patient details';}
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!=='invoiceEditForm')return;e.preventDefault();
+ const form=e.target,err=$('#editInvoiceErr'),btn=$('#saveInvoiceEdit'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=editProcedure]').value.trim(),fee:Number(row.querySelector('[name=editFee]').value)})),subtotal=Number($('#editInvoiceSubtotal').value),discountType=$('#editInvoiceDiscountType').value,discountValue=Number($('#editInvoiceDiscountValue').value||0);
+ if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(subtotal)||subtotal<0||procedures.reduce((n,p)=>n+p.fee,0)!==subtotal){err.textContent='Check treatments and ensure their amounts add up to the subtotal.';err.hidden=false;return;}
+ btn.disabled=true;btn.textContent='Saving…';
+ try{const r=await api('/api/admin/visits',{method:'PATCH',body:{visit_id:Number(form.dataset.id),patient_id:Number(form.dataset.pid),patient_name:$('#editPatientName').value.trim(),patient_phone:$('#editPatientPhone').value.trim(),procedures,subtotal_amount:subtotal,discount_type:discountType,discount_value:discountValue,notes:$('#editInvoiceNotes').value}});if(!r.ok){err.textContent=r.data.error||'Invoice update failed.';err.hidden=false;btn.disabled=false;btn.textContent='Save invoice changes';return;}document.getElementById('invoiceEditModal').remove();toast('Invoice '+(r.data.invoice_number||'')+' updated. Balance Rs '+r.data.balance+'.');await loadData();if(state.page==='history')render();}catch(x){err.textContent='Unable to update invoice. Please try again.';err.hidden=false;btn.disabled=false;btn.textContent='Save invoice changes';}
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!=='visitForm')return;e.preventDefault();
  const form=e.target,err=$('#visitErr'),btn=$('#visitSave'),procedures=[...form.querySelectorAll('.proc-line')].map(row=>({name:row.querySelector('[name=procedure]').value.trim(),fee:Number(row.querySelector('[name=fee]').value)}));
- const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value);
- if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+total){err.textContent='Please check the procedure, fee, total, and amount received.';err.hidden=false;return;}
+ if(form.dataset.editVisit){/* Existing visit is updated through PATCH below; payments are never re-created. */}else if(form.dataset.saved==='1'){err.textContent='This visit has already been saved. The invoice number is '+(form.dataset.invoiceNumber||'assigned')+'.';err.hidden=false;return;}
+  const total=Number($('#visitTotal').value),received=Number($('#visitReceived').value),discountType=$('#visitDiscountType').value,discountValue=Number($('#visitDiscountValue').value||0),discountAmount=discountType==='percentage'?Math.round(total*Math.min(discountValue,100)/100):discountType==='fixed'?Math.min(total,discountValue):0,netTotal=total-discountAmount;
+ if(!procedures.length||procedures.some(p=>!p.name||!Number.isSafeInteger(p.fee)||p.fee<0)||!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(received)||received<0||received>Number($('#visitPrevValue').textContent.replace(/,/g,''))+netTotal){err.textContent='Please check the procedure, fee, total, and amount received.';err.hidden=false;return;}
  btn.disabled=true;btn.textContent='Saving…';
- try{const r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,total_amount:total,received_now:received,payment_method:$('#visitMethod').value,notes:$('#visitNotes').value,follow_up_date:$('#visitFollow').value||null}});if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}$('#visitModal').remove();toast('Visit/payment saved. Remaining balance Rs '+r.data.balance+'.');await loadData();}
+ try{
+ let r;
+ if(form.dataset.editVisit){
+  const editName=$('#editVisitPatientName').value.trim(),editPhone=$('#editVisitPatientPhone').value.trim();
+  if(editName.length<2||editPhone.replace(/\\D/g,'').length<10){err.textContent='Enter a valid patient name and phone number.';err.hidden=false;return;}
+  r=await api('/api/admin/visits',{method:'PATCH',body:{visit_id:Number(form.dataset.editVisit),patient_id:Number(form.dataset.patientId||form.dataset.pid),patient_name:editName,patient_phone:editPhone,procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_amount:received,payment_method:$('#visitMethod').value,notes:[$('#visitNotes').value.trim(),$('#visitExtraNotes').value.trim()?('Additional notes:\n'+$('#visitExtraNotes').value.trim()):''].filter(Boolean).join('\n\n'),follow_up_date:$('#visitFollow').value||null}});
+  if(!r.ok){err.textContent=r.data.error||'Unable to update the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit changes';return;}
+  form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+(r.data.invoice_number||form.dataset.invoiceNumber);const readyPrint=modal.querySelector('[data-act="printinvoice"]');if(readyPrint){readyPrint.disabled=false;readyPrint.textContent='Print invoice · '+(r.data.invoice_number||form.dataset.invoiceNumber);}
+  toast('Invoice '+(r.data.invoice_number||form.dataset.invoiceNumber)+' updated. Existing payments preserved.');$('#visitModal').remove();await loadData();if(state.page==='history')render();return;
+ }else{
+  r=await api('/api/admin/visits',{method:'POST',body:{appointment_id:Number(form.dataset.id),procedures,subtotal_amount:total,discount_type:discountType,discount_value:discountValue,received_now:received,payment_method:$('#visitMethod').value,notes:[$('#visitNotes').value.trim(),$('#visitExtraNotes').value.trim()?('Additional notes:\n'+$('#visitExtraNotes').value.trim()):''].filter(Boolean).join('\n\n'),follow_up_date:$('#visitFollow').value||null}});
+  if(!r.ok){err.textContent=r.data.error||'Unable to save the visit.';err.hidden=false;btn.disabled=false;btn.textContent='Save visit & payment';return;}
+  a.invoice_number=r.data.invoice_number;form.dataset.invoiceNumber=r.data.invoice_number;form.dataset.saved='1';btn.disabled=true;btn.textContent='Saved · '+r.data.invoice_number;const notice=$('#visitInvoiceNumberNotice');if(notice)notice.textContent='Permanent invoice number: '+r.data.invoice_number;const modal=$('#visitModal');if(modal&&modal._renderInvoice)modal._renderInvoice();const printBtn=document.querySelector('#visitModal [data-act="printinvoice"]');if(printBtn){printBtn.disabled=false;printBtn.title='';printBtn.textContent='Print invoice · '+r.data.invoice_number;}toast('Invoice '+r.data.invoice_number+' saved. Remaining balance Rs '+r.data.balance+'.');await loadData();
+ }
+}
  catch(x){if(x.message!=='unauthorized'){err.textContent='Server connection error.';err.hidden=false;}btn.disabled=false;btn.textContent='Save visit & payment';}
 });
 
@@ -948,18 +1461,18 @@ document.addEventListener('submit', async e => {
   if (e.target.id !== 'manualForm') return;
   e.preventDefault();
   const err = $('#mErr'), btn = $('#mBtn'); err.hidden = true;
-  const name = $('#mName').value.trim(), ph = last10($('#mPhone').value), did = Number($('#mDoc').value), date = $('#mDate').value, time = $('#mTime').value, proc = $('#mProc').value.trim();
+  const name = $('#mName').value.trim(), ph = last10($('#mPhone').value), did = Number($('#mDoc').value), date = $('#mDate').value, time = $('#mTime').value, proc = $('#mProc').value.trim(), manualSubtotal = $('#mSubtotal').value.trim(), manualReceived = Number($('#mReceived').value||0), discountType=$('#mDiscountType').value, discountValue=Number($('#mDiscountValue').value||0), referredBy=$('#mReferral').value, referralNotes=$('#mReferralNotes').value.trim();
   const fail = m => { err.textContent = m; err.hidden = false; };
   if (!name) return fail('Enter the patient name.');
   if (ph.length < 10) return fail('Enter a valid 10-digit Pakistani mobile number.');
   if (!did) return fail('Select a doctor.');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const r = await api('/api/admin/manual', { method: 'POST', body: { name, phone: ph, doctor_id: did, date, time, treatment: proc || null } });
+    const r = await api('/api/admin/manual', { method: 'POST', body: { name, phone: ph, doctor_id: did, date, time, treatment: proc || null, manual_subtotal: manualSubtotal===''?undefined:Number(manualSubtotal), received_now: manualReceived, discount_type: discountType, discount_value: discountValue, payment_method: $('#mPaymentMethod').value, follow_up_date: $('#mFollow').value||null, referred_by_patient_id: referredBy?Number(referredBy):null } });
     if (!r.ok) { fail(r.data.error || 'Unable to save the appointment (' + r.status + ').'); }
     else {
       await loadData();
-      toast('Walk-in patient added (#' + r.data.patient_id + ').');
+      toast('Walk-in patient added (#' + r.data.patient_id + ').' + (r.data.invoice?(r.data.invoice.payment_only?'Payment received; remaining balance Rs '+r.data.invoice.balance+'.':'Invoice '+r.data.invoice.invoice_number+' saved; balance Rs '+r.data.invoice.balance+'.'):''));
       state.tab = 'accepted'; state.filter = 'all'; go(date === todayStr() ? 'today' : 'requests');
       return;
     }
@@ -1017,7 +1530,7 @@ document.addEventListener('click', e => {
   }
 });
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
+  (async () => {
     try {
       const reg = await navigator.serviceWorker.register("/admin/sw.js", {scope:"/admin/"});
       if (reg.waiting && navigator.serviceWorker.controller) showClinicUpdateNotice(reg);
@@ -1030,8 +1543,8 @@ if ("serviceWorker" in navigator) {
       });
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
       reg.update().catch(() => {});
-    } catch(e) {}
-  });
+    } catch(e) { console.error('Clinic service worker registration failed',e); }
+  })();
 }
 boot();
 </script>

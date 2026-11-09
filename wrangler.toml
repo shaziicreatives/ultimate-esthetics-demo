@@ -8,9 +8,15 @@ binding = "DB"
 database_name = "ultimate-esthetics-db-preview"
 database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
 
-# Preview deployments use the previous production database
+# Preview uses an isolated database. SOURCE_DB is temporary and read-only
+# from the one-time Preview data seeding function; it is removed after seeding.
 [env.preview]
 [[env.preview.d1_databases]]
 binding = "DB"
-database_name = "ultimate-esthetics-db"
-database_id = "be467d91-4908-40bf-b34b-132466e6d343"
+database_name = "ultimate-esthetics-preview-isolated"
+database_id = "c1434008-abf9-4d9d-8ee7-430e7320e795"
+
+[[env.preview.d1_databases]]
+binding = "SOURCE_DB"
+database_name = "ultimate-esthetics-db-preview"
+database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"

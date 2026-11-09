@@ -1,3 +1,5 @@
+import { notifyClinicStaff } from "../_shared/web-push.js";
+import { syncPatientToDrive } from "../_shared/google-drive-sync.js";
 export async function onRequestPost(context) {
     try {
         const { env, request } = context;
@@ -45,13 +47,39 @@ export async function onRequestPost(context) {
             patient_id = insertPatient.meta.last_row_id;
         }
 
+        const referralSource = String(data.referral_source || "").trim().slice(0,80);
+        const referredByName = String(data.referred_by_name || "").trim().slice(0,120);
+        if (referralSource || referredByName) {
+            const referralNotes = [referralSource ? "Source: " + referralSource : "", referredByName ? "Referred by: " + referredByName : ""].filter(Boolean).join(" · ");
+            await env.DB.prepare("UPDATE patients SET referral_notes=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(referralNotes, patient_id).run();
+        }
+
         // Ensure time is formatted correctly as string (e.g., '14:00')
         const timeStr = String(hourNum).padStart(2, '0') + ':00';
 
         // Insert appointment with pending status
-        await env.DB.prepare(
+        const inserted = await env.DB.prepare(
             "INSERT INTO appointments (doctor_id, patient_id, date, time, treatment, status, source) VALUES (?, ?, ?, ?, ?, 'pending', 'website')"
         ).bind(doctor_id, patient_id, date, timeStr, treatment || null).run();
+        // Keep the app-created patient record current in Drive when the Owner has connected it.
+        const driveSync = syncPatientToDrive(env, patient_id);
+        if (context.waitUntil) context.waitUntil(driveSync); else await driveSync;
+        // Await the push attempt before returning success. This makes delivery
+        // diagnostics deterministic instead of relying on a background waitUntil task.
+        const pushResult = await notifyClinicStaff(env, {
+            title: "New appointment request",
+            body: "A new website booking is waiting for review in Clinic Desk.",
+            tag: "appointment-request-" + inserted.meta.last_row_id,
+            url: "/admin/index.html"
+        });
+        console.log("Website booking push result", JSON.stringify({
+            appointmentId: inserted.meta.last_row_id,
+            attempted: pushResult?.attempted ?? 0,
+            sent: pushResult?.sent ?? 0,
+            failed: pushResult?.failed ?? 0,
+            expired: pushResult?.expired ?? 0,
+            skipped: Boolean(pushResult?.skipped)
+        }));
 
         return new Response(JSON.stringify({ 
             success: true, 
