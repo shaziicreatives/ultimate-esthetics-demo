@@ -8,6 +8,8 @@ ON google_drive_files(google_email, updated_at);
 
 ALTER TABLE google_drive_connections
 ADD COLUMN auto_backup_daily INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE google_drive_connections
+ADD COLUMN auto_save_visit_pdf INTEGER NOT NULL DEFAULT 1;
 
 CREATE TABLE IF NOT EXISTS google_drive_backups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
