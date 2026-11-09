@@ -6,7 +6,9 @@ export async function onRequestGet({request,env}){
  const user=await ownerSession(request,env);if(!user)return json({error:"Owner access required"},403);
  try{
   const c=await getConnection(env);
-  if(!c)return json({connected:false,configured:!!(env.GOOGLE_CLIENT_ID&&env.GOOGLE_CLIENT_SECRET&&env.GOOGLE_DRIVE_TOKEN_KEY),message:"Connect a Google account to continue."});
+  const missing_config=["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_DRIVE_TOKEN_KEY"].filter(key=>!env[key]);
+  const picker_missing=["GOOGLE_API_KEY","GOOGLE_APP_ID"].filter(key=>!env[key]);
+  if(!c)return json({connected:false,configured:missing_config.length===0,missing_config,picker_configured:picker_missing.length===0,picker_missing,message:"Connect a Google account to continue."});
   const url=new URL(request.url),parent=url.searchParams.get("parent");
   if(parent){
    if(parent!=="root"&&!c.root_folder_id)return json({error:"Choose a clinic root folder first."},409);
@@ -15,7 +17,7 @@ export async function onRequestGet({request,env}){
    const result=await googleRequest(env,tokens,"/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name,mimeType,parents)",pageSize:"100",orderBy:"name",supportsAllDrives:"true",includeItemsFromAllDrives:"true"}).toString());
    return json({connected:true,folders:result.data.files||[]});
   }
-  return json({connected:true,email:c.google_email,root_folder_id:c.root_folder_id,root_folder_name:c.root_folder_name,selected_drive_id:c.selected_drive_id,selected_drive_name:c.selected_drive_name,auto_save_invoice_pdf:!!c.auto_save_invoice_pdf,auto_save_patient_record:!!c.auto_save_patient_record,auto_save_visit_record:!!c.auto_save_visit_record,last_sync_at:c.last_sync_at,connected_at:c.connected_at});
+  return json({connected:true,configured:missing_config.length===0,missing_config,picker_configured:picker_missing.length===0,picker_missing,email:c.google_email,root_folder_id:c.root_folder_id,root_folder_name:c.root_folder_name,selected_drive_id:c.selected_drive_id,selected_drive_name:c.selected_drive_name,auto_save_invoice_pdf:!!c.auto_save_invoice_pdf,auto_save_patient_record:!!c.auto_save_patient_record,auto_save_visit_record:!!c.auto_save_visit_record,last_sync_at:c.last_sync_at,connected_at:c.connected_at});
  }catch(e){return json({error:String(e.message||"Google Drive status unavailable")},500);}
 }
 export async function onRequestPost({request,env}){
@@ -29,6 +31,10 @@ export async function onRequestPost({request,env}){
   }
   if(!c)return json({error:"Connect Google Drive first."},409);
   if(c.owner_user_id!==user.user_id)return json({error:"This Drive connection belongs to another Owner account."},403);
+  if(action==="test_connection"){
+   const check=await googleRequest(env,tokens,"/drive/v3/about?"+new URLSearchParams({fields:"user"}).toString());
+   return json({success:true,email:check.data.user?.emailAddress||c.google_email});
+  }
   if(action==="settings"){
    const invoice=b.auto_save_invoice_pdf===undefined?c.auto_save_invoice_pdf:(b.auto_save_invoice_pdf?1:0);
    const patient=b.auto_save_patient_record===undefined?c.auto_save_patient_record:(b.auto_save_patient_record?1:0);
