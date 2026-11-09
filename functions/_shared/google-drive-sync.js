@@ -5,45 +5,64 @@ const jsonBytes=value=>enc.encode(JSON.stringify(value,null,2));
 const clean=value=>String(value??"").normalize("NFKD").replace(/[^\x20-\x7E]/g," ").replace(/\s+/g," ").trim();
 const pdfEscape=value=>clean(value).replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
 
-function makePdf(lines){
- const rows=lines.flatMap(line=>{
-  const value=clean(line)||" ";
-  const out=[];
-  for(let i=0;i<value.length;i+=88)out.push(value.slice(i,i+88));
-  return out;
- });
- const pages=[];
- for(let i=0;i<rows.length;i+=48)pages.push(rows.slice(i,i+48));
- if(!pages.length)pages.push(["Ultimate Esthetics Clinic"]);
- const objects=[];
- const pageRefs=pages.map((_,i)=>3+i*2);
- const fontRef=3+pages.length*2;
- objects.push("<< /Type /Catalog /Pages 2 0 R >>");
- objects.push("<< /Type /Pages /Kids ["+pageRefs.map(n=>n+" 0 R").join(" ")+"] /Count "+pages.length+" >>");
- for(let i=0;i<pages.length;i++){
-  const pageRef=pageRefs[i], streamRef=pageRef+1;
-  objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 "+fontRef+" 0 R >> >> /Contents "+streamRef+" 0 R >>");
-  const commands=["BT","/F1 11 Tf","50 790 Td","15 TL",...pages[i].map((line,index)=>(index?"T* ":"")+"("+pdfEscape(line)+") Tj"),"ET"].join("\n");
-  const length=enc.encode(commands).length;
-  objects.push("<< /Length "+length+" >>\nstream\n"+commands+"\nendstream");
+function makeInvoicePdf(data){
+ const W=595,H=842,ops=[];
+ const esc=value=>pdfEscape(value);
+ const money=value=>"Rs "+Number(value||0).toLocaleString("en-PK");
+ const rect=(x,y,w,h,color)=>ops.push(color+" rg "+x+" "+y+" "+w+" "+h+" re f");
+ const line=(x1,y1,x2,y2,color="#E8D4B8",width=1)=>ops.push(color+" RG "+width+" w "+x1+" "+y1+" m "+x2+" "+y2+" l S");
+ const txt=(x,y,value,size=10,color="#24180E",font="F1")=>ops.push(color+" rg BT /"+font+" "+size+" Tf "+x+" "+y+" Td ("+esc(value)+") Tj ET");
+ const wrap=(value,max=74)=>{const words=String(value??"").split(/\s+/),out=[];let row="";for(const word of words){if((row+" "+word).trim().length>max&&row){out.push(row);row=word;}else row=(row+" "+word).trim();}if(row)out.push(row);return out;};
+ const dark="#4B3016",gold="#D6A85F",cream="#FFF5E6",ink="#24180E",muted="#6F6254";
+ rect(0,0,W,H,"#FFFCF7");rect(0,744,W,98,cream);rect(24,744,4,80,gold);
+ txt(42,802,"ULTIMATE ESTHETICS",25,dark,"F2");
+ txt(42,781,"Skin, Hair & Body Clinic",12,ink);
+ txt(42,761,"Al-ain Arcade, Old Airport Road, Rawalpindi 46000",9,muted);
+ txt(42,747,"0334 0005909  |  Mon to Sat, 11:00 AM - 08:00 PM",8,muted);
+ rect(408,774,163,52,dark);txt(435,801,"INVOICE",21,"#FFFFFF","F2");
+ txt(420,782,String(data.invoice_number||"INVOICE"),10,"#FFFFFF");
+ rect(408,731,163,34,"#F8EBD8");txt(420,750,"Date: "+(data.date||"—"),9,ink);txt(420,738,"Time: "+(data.time||"—"),8,muted);
+ let y=710;
+ const section=(label)=>{rect(24,y-5,547,24,dark);txt(38,y+3,label,12,"#FFFFFF","F2");y-=34;};
+ section("PATIENT DETAILS");
+ txt(34,y,"Name: "+(data.patient_name||"—"),10);txt(310,y,"Patient ID: "+(data.patient_id??"—"),10);y-=19;
+ txt(34,y,"Phone: "+(data.patient_phone||"—"),10);txt(310,y,"Doctor: "+(data.doctor_name||"—"),10);y-=29;
+ section("TREATMENT / PROCEDURES");
+ rect(24,y-4,547,21,"#F8EBD8");txt(34,y+3,"#",9,dark);txt(62,y+3,"Procedure",9,dark);txt(430,y+3,"Unit Price (Rs)",9,dark);txt(520,y+3,"Total (Rs)",9,dark);y-=20;
+ const procs=data.procedures||[];
+ for(let i=0;i<procs.length;i++){
+  const p=procs[i],fee=Number(p.fee||0);
+  txt(34,y,String(i+1),9);txt(62,y,wrap(p.procedure_name||"Treatment",48)[0],9);txt(448,y,fee.toLocaleString("en-PK"),9);txt(528,y,fee.toLocaleString("en-PK"),9);
+  line(24,y-6,571,y-6);y-=20;
  }
- objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+ y-=6;txt(350,y,"Total Treatment Amount:",10,dark,"F2");txt(510,y,money(data.subtotal_amount??data.total_amount),10,dark,"F2");y-=30;
+ section("PRESCRIPTION / NOTES");
+ const notes=wrap(data.notes||"No additional notes",95);
+ for(const row of notes.slice(0,4)){txt(34,y,row,9,ink);y-=14;}
+ if(data.follow_up_date){y-=3;txt(34,y,"Follow-up date: "+data.follow_up_date,9,muted);y-=18;}
+ y-=8;
+ section("PAYMENT DETAILS");
+ txt(34,y,"Previous Balance:",10);txt(200,y,money(data.previous_balance),10);txt(310,y,"Total Amount:",10);txt(475,y,money(data.total_amount),10);y-=21;
+ txt(34,y,"Amount Received:",10);txt(200,y,money(data.paid_amount),10);txt(310,y,"Payment Method:",10);txt(430,y,(data.payment_methods||"—").slice(0,22),9);y-=24;
+ rect(24,y-7,547,30,"#EEF2D8");txt(38,y+4,"REMAINING BALANCE",11,"#21451D","F2");txt(460,y+2,money(data.remaining_balance),14,"#21451D","F2");
+ y-=57;
+ if(data.payment_entries?.length){txt(34,y,"Payment entries:",9,dark,"F2");y-=15;for(const p of data.payment_entries.slice(0,3)){txt(40,y,money(p.amount)+"  "+(p.method||"")+"  "+(p.received_by||"Staff"),8,muted);y-=12;}}
+ line(24,74,571,74,gold,1.2);txt(128,54,"Thank you for choosing Ultimate Esthetics.",13,dark,"F2");
+ txt(40,28,"Al-ain Arcade, Old Airport Road, Rawalpindi 46000",8,muted);txt(430,28,"0334 0005909",8,muted);
+ const stream=ops.join("\n"),bytes=enc.encode(stream);
+ const objects=[
+  "<< /Type /Catalog /Pages 2 0 R >>",
+  "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+  "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+  "<< /Length "+bytes.length+" >>\nstream\n"+stream+"\nendstream"
+ ];
  const chunks=[enc.encode("%PDF-1.4\n")],offsets=[0];let size=chunks[0].length;
- objects.forEach((object,index)=>{
-  offsets.push(size);
-  const start=enc.encode((index+1)+" 0 obj\n"),body=enc.encode(object),end=enc.encode("\nendobj\n");
-  chunks.push(start,body,end);size+=start.length+body.length+end.length;
- });
- const xrefOffset=size;
- const xref="xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n"+
-  offsets.slice(1).map(value=>String(value).padStart(10,"0")+" 00000 n \n").join("")+
-  "trailer\n<< /Size "+(objects.length+1)+" /Root 1 0 R >>\nstartxref\n"+xrefOffset+"\n%%EOF";
- chunks.push(enc.encode(xref));
- const total=chunks.reduce((sum,part)=>sum+part.length,0),out=new Uint8Array(total);let offset=0;
- for(const part of chunks){out.set(part,offset);offset+=part.length;}
- return out;
+ objects.forEach((obj,i)=>{offsets.push(size);const a=enc.encode((i+1)+" 0 obj\n"),b=enc.encode(obj),c=enc.encode("\nendobj\n");chunks.push(a,b,c);size+=a.length+b.length+c.length;});
+ const xrefOffset=size,xref="xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n"+offsets.slice(1).map(n=>String(n).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objects.length+1)+" /Root 1 0 R >>\nstartxref\n"+xrefOffset+"\n%%EOF";
+ chunks.push(enc.encode(xref));const total=chunks.reduce((n,b)=>n+b.length,0),out=new Uint8Array(total);let pos=0;for(const part of chunks){out.set(part,pos);pos+=part.length;}return out;
 }
-
 async function api(env,tokens,path,options){return googleRequest(env,tokens,path,options);}
 async function findFolder(env,tokens,parent,name){
  const q="'"+parent.replace(/'/g,"\\'")+"' in parents and name='"+name.replace(/'/g,"\\'")+"' and mimeType='application/vnd.google-apps.folder' and trashed=false";
