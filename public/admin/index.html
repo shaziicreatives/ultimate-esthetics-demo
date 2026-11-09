@@ -1142,6 +1142,22 @@ function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(
 function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
+async function runDriveBackfill(showToast=true){
+ let cursor=state.driveBackfill||{after_visit_id:0,after_patient_id:0,has_more:true};
+ let totalVisits=0,totalPatients=0,rounds=0,hasMore=true;
+ while(hasMore&&rounds<25){
+  const result=await api('/api/admin/drive/sync',{method:'POST',body:{action:'backfill',after_visit_id:cursor.after_visit_id,after_patient_id:cursor.after_patient_id}});
+  if(!result.ok)throw new Error(result.data.error||'Could not start Drive backfill.');
+  totalVisits+=Number(result.data.scheduled_visits||0);
+  totalPatients+=Number(result.data.scheduled_patients||0);
+  cursor={after_visit_id:result.data.next_after_visit_id,after_patient_id:result.data.next_after_patient_id,has_more:!!result.data.has_more};
+  hasMore=cursor.has_more;rounds++;
+  if(hasMore)await new Promise(resolve=>setTimeout(resolve,900));
+ }
+ state.driveBackfill=hasMore?cursor:{after_visit_id:0,after_patient_id:0,has_more:false};
+ if(showToast)toast('Scheduled '+totalVisits+' visits and '+totalPatients+' patient records for Drive.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
+ return {totalVisits,totalPatients,hasMore};
+}
 document.addEventListener('click',async e=>{
  const b=e.target.closest('[data-drive-action]');if(!b)return;
  const action=b.dataset.driveAction;
@@ -1150,30 +1166,25 @@ document.addEventListener('click',async e=>{
  try{
   if(action==='refresh'){await loadDriveSettings(true);return;}
   if(action==='browse-root'){await openGoogleDrivePicker();return;}
-  const path=(action==='retry'||action==='backfill'||action==='backup-now')?'/api/admin/drive/sync':'/api/admin/drive';
   if(action==='backfill'){
-   let cursor=state.driveBackfill||{after_visit_id:0,after_patient_id:0,has_more:true};
-   let totalVisits=0,totalPatients=0,rounds=0,hasMore=true;
-   while(hasMore&&rounds<25){
-    const result=await api(path,{method:'POST',body:{action:'backfill',after_visit_id:cursor.after_visit_id,after_patient_id:cursor.after_patient_id}});
-    if(!result.ok)throw new Error(result.data.error||'Could not start Drive backfill.');
-    totalVisits+=Number(result.data.scheduled_visits||0);
-    totalPatients+=Number(result.data.scheduled_patients||0);
-    cursor={after_visit_id:result.data.next_after_visit_id,after_patient_id:result.data.next_after_patient_id,has_more:!!result.data.has_more};
-    hasMore=cursor.has_more;rounds++;
-    if(hasMore)await new Promise(resolve=>setTimeout(resolve,900));
-   }
-   state.driveBackfill=hasMore?cursor:{after_visit_id:0,after_patient_id:0,has_more:false};
-   toast('Scheduled '+totalVisits+' visits and '+totalPatients+' patient records for Drive.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
+   await runDriveBackfill(true);
+   await loadDriveSettings(true);
+   return;
+  }
+  const path=action==='retry'||action==='backup-now'?'/api/admin/drive/sync':'/api/admin/drive';
+  const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}
+   :action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}
+   :action==='retry'?{job_id:Number(b.dataset.job)}
+   :action==='backup-now'?{action:'backup'}
+   :action==='test'?{action:'test_connection'}
+   :{action:'disconnect'};
+  const result=await api(path,{method:'POST',body});
+  if(!result.ok)throw new Error(result.data.error||'Google Drive action failed.');
+  if(action==='create-root'||action==='select-root'){
+   toast('Clinic Drive folder selected. Preparing existing clinic records…');
+   await runDriveBackfill(false);
+   toast('Drive folder ready. Existing clinic records have been queued for upload.');
   }else{
-   const body=action==='create-root'?{action:'create_root',name:$('#driveRootName')?.value||'Ultimate Esthetics Clinic'}
-    :action==='select-root'?{action:'select_root',folder_id:b.dataset.folder}
-    :action==='retry'?{job_id:Number(b.dataset.job)}
-    :action==='backup-now'?{action:'backup'}
-    :action==='test'?{action:'test_connection'}
-    :{action:'disconnect'};
-   const result=await api(path,{method:'POST',body});
-   if(!result.ok)throw new Error(result.data.error||'Google Drive action failed.');
    toast(action==='test'?'Google Drive connection verified for '+(result.data.email||'your Google account')+'.':action==='backup-now'?'Clinic data backup started. Refresh the backup history in a moment.':(result.data.message||'Google Drive settings updated.'));
   }
   await loadDriveSettings(true);
