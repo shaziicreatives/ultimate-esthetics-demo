@@ -647,8 +647,30 @@ function showLogin() {
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
+let previewSeedPromise = null;
+async function ensurePreviewSeed() {
+  const host = location.hostname;
+  if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
+  if (!previewSeedPromise) {
+    const btn = $('#loginBtn');
+    if (btn && !btn.hidden) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
+    previewSeedPromise = (async () => {
+      const response = await fetch('/api/preview/seed', { credentials:'same-origin', cache:'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success !== true) throw new Error(data.error || 'Could not prepare Preview database.');
+      return data;
+    })().catch(error => {
+      previewSeedPromise = null;
+      throw error;
+    }).finally(() => {
+      if (btn && !btn.hidden) { btn.disabled = false; btn.textContent = 'Sign In'; }
+    });
+  }
+  return previewSeedPromise;
+}
 async function boot(afterLogin = false) {
   try {
+    await ensurePreviewSeed();
     const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
     if (res.status === 401) {
       showLogin();
@@ -679,7 +701,7 @@ async function boot(afterLogin = false) {
     const err = $('#loginErr');
     err.textContent = e && e.message === 'unauthorized'
       ? 'The admin session was rejected by the API. Please sign in again using the latest Preview URL.'
-      : 'Unable to connect to the server. The admin API is unavailable.';
+      : (e && e.message ? e.message : 'Unable to connect to the server. The admin API is unavailable.');
     err.hidden = false;
     return false;
   }
