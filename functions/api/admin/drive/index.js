@@ -18,7 +18,7 @@ export async function onRequestGet({request,env}){
    const result=await googleRequest(env,tokens,"/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name,mimeType,parents)",pageSize:"100",orderBy:"name",supportsAllDrives:"true",includeItemsFromAllDrives:"true"}).toString());
    return json({connected:true,folders:result.data.files||[]});
   }
-  return json({connected:true,configured:missing_config.length===0,missing_config,picker_configured:picker_missing.length===0,picker_missing,email:c.google_email,root_folder_id:c.root_folder_id,root_folder_name:c.root_folder_name,selected_drive_id:c.selected_drive_id,selected_drive_name:c.selected_drive_name,auto_save_invoice_pdf:!!c.auto_save_invoice_pdf,auto_save_patient_record:!!c.auto_save_patient_record,auto_save_visit_record:!!c.auto_save_visit_record,auto_backup_daily:!!c.auto_backup_daily,last_sync_at:c.last_sync_at,connected_at:c.connected_at});
+  return json({connected:true,configured:missing_config.length===0,missing_config,picker_configured:picker_missing.length===0,picker_missing,email:c.google_email,root_folder_id:c.root_folder_id,root_folder_name:c.root_folder_name,selected_drive_id:c.selected_drive_id,selected_drive_name:c.selected_drive_name,auto_save_invoice_pdf:!!c.auto_save_invoice_pdf,auto_save_patient_record:!!c.auto_save_patient_record,auto_save_visit_record:!!c.auto_save_visit_record,auto_backup_daily:!!c.auto_backup_daily,auto_save_visit_pdf:!!c.auto_save_visit_pdf,last_sync_at:c.last_sync_at,connected_at:c.connected_at});
  }catch(e){return json({error:String(e.message||"Google Drive status unavailable")},500);}
 }
 export async function onRequestPost({request,env}){
@@ -42,7 +42,8 @@ export async function onRequestPost({request,env}){
    const patient=b.auto_save_patient_record===undefined?c.auto_save_patient_record:(b.auto_save_patient_record?1:0);
    const visit=b.auto_save_visit_record===undefined?c.auto_save_visit_record:(b.auto_save_visit_record?1:0);
    const backup=b.auto_backup_daily===undefined?c.auto_backup_daily:(b.auto_backup_daily?1:0);
-   await env.DB.prepare("UPDATE google_drive_connections SET auto_save_invoice_pdf=?,auto_save_patient_record=?,auto_save_visit_record=?,auto_backup_daily=?,updated_at=CURRENT_TIMESTAMP WHERE id=1").bind(invoice,patient,visit,backup).run();
+   const visitPdf=b.auto_save_visit_pdf===undefined?c.auto_save_visit_pdf:(b.auto_save_visit_pdf?1:0);
+   await env.DB.prepare("UPDATE google_drive_connections SET auto_save_invoice_pdf=?,auto_save_patient_record=?,auto_save_visit_record=?,auto_backup_daily=?,auto_save_visit_pdf=?,updated_at=CURRENT_TIMESTAMP WHERE id=1").bind(invoice,patient,visit,backup,visitPdf).run();
    return json({success:true});
   }
   const tokens=await decryptTokens(c.encrypted_tokens,env);
