@@ -657,14 +657,18 @@ function showDriveOAuthResult(){
  history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
 }
 let previewSeedPromise = null;
-async function ensurePreviewSeed() {
+async function ensurePreviewSeed(username,password) {
   const host = location.hostname;
   if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
   if (!previewSeedPromise) {
-    const btn = $('#loginBtn');
-    if (btn && !btn.hidden) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
+    const btn = $('#loginBtn'),wasDisabled=!!btn?.disabled,oldText=btn?.textContent||'Sign In';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
     previewSeedPromise = (async () => {
-      const response = await fetch('/api/preview/seed', { credentials:'same-origin', cache:'no-store' });
+      const response = await fetch('/api/preview/seed', {
+        method:'POST', credentials:'same-origin', cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,password})
+      });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.success !== true) throw new Error(data.error || 'Could not prepare Preview database.');
       return data;
@@ -672,14 +676,13 @@ async function ensurePreviewSeed() {
       previewSeedPromise = null;
       throw error;
     }).finally(() => {
-      if (btn && !btn.hidden) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      if (btn) { btn.disabled = wasDisabled; btn.textContent = oldText; }
     });
   }
   return previewSeedPromise;
 }
 async function boot(afterLogin = false) {
   try {
-    await ensurePreviewSeed();
     const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
     if (res.status === 401) {
       showLogin();
@@ -733,6 +736,7 @@ $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const err = $('#loginErr'), btn = $('#loginBtn'); if(btn.hidden)return; err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
   try {
+    await ensurePreviewSeed($('#uName').value.trim(), $('#uPass').value);
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
     if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
