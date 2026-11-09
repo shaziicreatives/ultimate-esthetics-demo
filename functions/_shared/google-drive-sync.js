@@ -17,6 +17,9 @@ function makeInvoicePdf(data){
  const dark="#4B3016",gold="#D6A85F",cream="#FFF5E6",ink="#24180E",muted="#6F6254";
  rect(0,0,W,H,"#FFFCF7");rect(0,744,W,98,cream);rect(24,744,4,80,gold);
  txt(42,802,"ULTIMATE ESTHETICS",25,dark,"F2");
+ // Gold botanical clinic mark and divider echo the supplied invoice header.
+ ops.push(pdfColor(gold)+" RG 3 w 48 758 m 24 780 25 814 48 831 c 68 813 75 787 60 765 c S");
+ ops.push(pdfColor("#6B481F")+" RG 2 w 38 766 m 48 790 61 802 69 812 c S");
  txt(42,781,"Skin, Hair & Body Clinic",12,ink);
  txt(42,761,"Al-ain Arcade, Old Airport Road, Rawalpindi 46000",9,muted);
  txt(42,747,"0334 0005909  |  Mon to Sat, 11:00 AM - 08:00 PM",8,muted);
@@ -27,7 +30,8 @@ function makeInvoicePdf(data){
  const section=(label)=>{rect(24,y-5,547,24,dark);txt(38,y+3,label,12,"#FFFFFF","F2");y-=34;};
  section("PATIENT DETAILS");
  txt(34,y,"Name: "+(data.patient_name||"—"),10);txt(310,y,"Patient ID: "+(data.patient_id??"—"),10);y-=19;
- txt(34,y,"Phone: "+(data.patient_phone||"—"),10);txt(310,y,"Doctor: "+(data.doctor_name||"—"),10);y-=29;
+ txt(34,y,"Phone: "+(data.patient_phone||"—"),10);txt(310,y,"Doctor: "+(data.doctor_name||"—"),10);y-=17;
+ txt(34,y,"Appointment: "+(data.date||"—")+"  "+(data.time||"—"),9,muted);y-=20;
  section("TREATMENT / PROCEDURES");
  rect(24,y-4,547,21,"#F8EBD8");txt(34,y+3,"#",9,dark);txt(62,y+3,"Procedure",9,dark);txt(430,y+3,"Unit Price (Rs)",9,dark);txt(520,y+3,"Total (Rs)",9,dark);y-=20;
  const procs=(data.procedures||[]).slice(0,8);
@@ -37,9 +41,12 @@ function makeInvoicePdf(data){
   line(24,y-6,571,y-6);y-=20;
  }
  y-=6;txt(350,y,"Total Treatment Amount:",10,dark,"F2");txt(510,y,money(data.subtotal_amount??data.total_amount),10,dark,"F2");y-=30;
- section("PRESCRIPTION / NOTES");
- const notes=wrap(data.notes||"No additional notes",95);
- for(const row of notes.slice(0,3)){txt(34,y,row,9,ink);y-=14;}
+ section("PRESCRIPTION");
+ const notes=wrap(data.notes||"No prescription recorded",95);
+ for(const row of notes.slice(0,2)){txt(34,y,row,9,ink);y-=14;}
+ y-=5;section("NOTES");
+ const extraNotes=wrap(data.extra_notes||"No additional notes",95);
+ for(const row of extraNotes.slice(0,2)){txt(34,y,row,9,ink);y-=14;}
  if(data.follow_up_date){y-=3;txt(34,y,"Follow-up date: "+data.follow_up_date,9,muted);y-=18;}
  y-=8;
  section("PAYMENT DETAILS");
@@ -173,7 +180,9 @@ export async function syncVisitToDrive(env,visitId){
     paid_amount:paidAmount,remaining_balance:Math.max(0,previousBalance+invoiceTotal-paidAmount),
     payment_methods:[...new Set(paymentRows.map(p=>p.method).filter(Boolean))].join(", ")||"—",
     payment_entries:paymentRows,
-    notes:visit.notes||"",follow_up_date:visit.follow_up_date||""
+    notes:String(visit.notes||"").split("\\n\\nAdditional notes:\\n")[0],
+    extra_notes:String(visit.notes||"").includes("\\n\\nAdditional notes:\\n")?String(visit.notes).split("\\n\\nAdditional notes:\\n").slice(1).join("\\n\\nAdditional notes:\\n"):"",
+    follow_up_date:visit.follow_up_date||""
    };
    const invoiceLabel=clean(data.invoice_number).replace(/[^A-Za-z0-9_-]+/g,"_");
    const phoneLabel=String(patient.phone||"").replace(/\D/g,"")||("Patient-"+patient.id);
