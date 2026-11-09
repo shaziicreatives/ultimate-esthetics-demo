@@ -144,8 +144,8 @@ export async function syncVisitToDrive(env,visitId){
    (payments.results||[]).forEach(p=>lines.push("Payment: Rs "+Number(p.amount||0).toLocaleString("en-PK")+" ("+p.method+")"));
    lines.push("","Notes: "+(visit.notes||"—"),"Follow-up: "+(visit.follow_up_date||"—"));
    const invoiceLabel=clean(visit.invoice_number||("Visit-"+visit.id)).replace(/[^A-Za-z0-9_-]+/g,"_");
-   const patientLabel=clean(patient.name).replace(/[^A-Za-z0-9_-]+/g,"_").slice(0,50);
-   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,patientLabel+"_"+invoiceLabel+".pdf","application/pdf",makePdf(lines));
+   const phoneLabel=String(patient.phone||"").replace(/\\D/g,"")||("Patient-"+patient.id);
+   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,phoneLabel+"_"+invoiceLabel+".pdf","application/pdf",makePdf(lines));
   }
   await markJob(env,job.id,"saved");
   await env.DB.prepare("UPDATE google_drive_connections SET last_sync_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=1").run();
