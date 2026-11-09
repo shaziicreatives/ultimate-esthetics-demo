@@ -1,4 +1,4 @@
-import {ownerSession,json,getConnection,decryptTokens,googleRequest} from "../../../../_shared/google-drive.js";
+import {ownerSession,json,getConnection,decryptTokens,googleRequest} from "../../../_shared/google-drive.js";
 
 export async function onRequestGet({request,env}){
  const owner=await ownerSession(request,env);
