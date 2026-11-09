@@ -65,8 +65,10 @@ export async function backupClinicToDrive(env,kind="manual"){
    if(!connection.auto_backup_daily)return {success:true,skipped:true,reason:"Daily backup is disabled"};
    const recent=await env.DB.prepare("SELECT id,status,created_at FROM google_drive_backups WHERE google_email=? AND backup_kind='daily' AND backup_date=? ORDER BY id DESC LIMIT 1").bind(connection.google_email,dateStamp()).first();
    if(recent?.status==="saved")return {success:true,skipped:true,reason:"Today's daily backup already exists"};
-   if(recent?.status==="processing")return {success:true,skipped:true,reason:"Today's backup is already running"};
-   if(recent?.status==="failed"&&Date.now()-new Date(recent.created_at+"Z").getTime()<5*60*1000)return {success:true,skipped:true,reason:"Daily backup retry is cooling down"};
+   const lastUpdate=Date.parse(String(recent?.updated_at||recent?.created_at||"").replace(" ","T")+"Z");
+   const age=Number.isFinite(lastUpdate)?Date.now()-lastUpdate:Infinity;
+   if(recent?.status==="processing"&&age<15*60*1000)return {success:true,skipped:true,reason:"Today's backup is already running"};
+   if(recent?.status==="failed"&&age<5*60*1000)return {success:true,skipped:true,reason:"Daily backup retry is cooling down"};
    if(recent?.id){
     backupId=recent.id;
     await env.DB.prepare("UPDATE google_drive_backups SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(backupId).run();
