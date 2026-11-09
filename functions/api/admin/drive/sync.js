@@ -1,12 +1,13 @@
 import {ownerSession,json} from "../../../_shared/google-drive.js";
 import {syncVisitToDrive,syncPatientToDrive} from "../../../_shared/google-drive-sync.js";
+import {backupClinicToDrive} from "../../../_shared/google-drive-backup.js";
 
 export async function onRequestGet(context){
  const {request,env}=context;
  const owner=await ownerSession(request,env);if(!owner)return json({error:"Owner access required"},403);
  try{
-  const connection=await env.DB.prepare("SELECT root_folder_id,google_email FROM google_drive_connections WHERE id=1 AND owner_user_id=?").bind(owner.user_id).first();
-  let autoScheduled=0;
+  const connection=await env.DB.prepare("SELECT root_folder_id,google_email,auto_backup_daily FROM google_drive_connections WHERE id=1 AND owner_user_id=?").bind(owner.user_id).first();
+  let autoScheduled=0,backupScheduled=false;
   if(connection?.root_folder_id){
    const retryable=await env.DB.prepare("SELECT id,visit_id,patient_id,job_kind FROM google_drive_sync_jobs WHERE status IN ('pending','failed') AND attempts<6 AND updated_at<=datetime('now','-1 minute') ORDER BY created_at LIMIT 3").all();
    for(const job of retryable.results||[]){
@@ -14,18 +15,33 @@ export async function onRequestGet(context){
     if(context.waitUntil)context.waitUntil(run);else await run;
     autoScheduled++;
    }
+   if(connection.auto_backup_daily){
+    const run=backupClinicToDrive(env,"daily");
+    if(context.waitUntil)context.waitUntil(run);else await run;
+    backupScheduled=true;
+   }
   }
-  const [jobs,files]=await Promise.all([
+  const [jobs,files,backups]=await Promise.all([
    env.DB.prepare("SELECT j.id,j.patient_id,j.visit_id,j.status,j.attempts,j.last_error,j.created_at,j.updated_at,p.name patient_name,v.invoice_number FROM google_drive_sync_jobs j JOIN patients p ON p.id=j.patient_id LEFT JOIN visits v ON v.id=j.visit_id ORDER BY j.updated_at DESC LIMIT 100").all(),
-   env.DB.prepare("SELECT f.id,f.patient_id,f.visit_id,f.file_kind,f.file_name,f.web_view_link,f.updated_at,p.name patient_name,v.invoice_number FROM google_drive_files f JOIN patients p ON p.id=f.patient_id LEFT JOIN visits v ON v.id=f.visit_id WHERE f.google_email=? ORDER BY f.updated_at DESC,f.id DESC LIMIT 100").bind(connection?.google_email||"").all()
+   env.DB.prepare("SELECT f.id,f.patient_id,f.visit_id,f.file_kind,f.file_name,f.web_view_link,f.updated_at,p.name patient_name,v.invoice_number FROM google_drive_files f JOIN patients p ON p.id=f.patient_id LEFT JOIN visits v ON v.id=f.visit_id WHERE f.google_email=? ORDER BY f.updated_at DESC,f.id DESC LIMIT 100").bind(connection?.google_email||"").all(),
+   env.DB.prepare("SELECT id,backup_kind,backup_date,file_name,web_view_link,size_bytes,status,last_error,created_at,updated_at FROM google_drive_backups WHERE google_email=? ORDER BY id DESC LIMIT 30").bind(connection?.google_email||"").all()
   ]);
-  return json({jobs:jobs.results||[],files:files.results||[],auto_retry_scheduled:autoScheduled});
+  return json({jobs:jobs.results||[],files:files.results||[],backups:backups.results||[],auto_retry_scheduled:autoScheduled,auto_backup_scheduled:backupScheduled});
  }catch(e){return json({error:"Drive sync queue is not available. Apply the Preview Google Drive migration first."},503);}
 }
+
 export async function onRequestPost(context){
  const {request,env}=context,owner=await ownerSession(request,env);if(!owner)return json({error:"Owner access required"},403);
  try{
   const b=await request.json();
+  if(b.action==="backup"){
+   const connection=await env.DB.prepare("SELECT root_folder_id FROM google_drive_connections WHERE id=1 AND owner_user_id=?").bind(owner.user_id).first();
+   if(!connection?.root_folder_id)return json({error:"Select the clinic Drive folder before making a backup."},409);
+   const task=backupClinicToDrive(env,"manual");
+   if(context.waitUntil){context.waitUntil(task);return json({success:true,message:"Clinic data backup has started. Refresh to see its status."},202);}
+   const result=await task;
+   return result.success?json(result,201):json({error:result.error||"Clinic backup failed."},500);
+  }
   if(b.action==="backfill"){
    const connection=await env.DB.prepare("SELECT root_folder_id FROM google_drive_connections WHERE id=1 AND owner_user_id=?").bind(owner.user_id).first();
    if(!connection?.root_folder_id)return json({error:"Connect Google Drive and select the clinic folder first."},409);
