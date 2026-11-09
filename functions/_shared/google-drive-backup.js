@@ -27,10 +27,8 @@ async function uploadBackup(env,tokens,parent,name,bytes){
  return result.data;
 }
 async function updateBackupFile(env,tokens,fileId,bytes){
- const boundary="ue_backup_update_"+crypto.randomUUID().replace(/-/g,"");
- const body=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n",bytes,"\r\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
- const result=await googleRequest(env,tokens,"/upload/drive/v3/files/"+encodeURIComponent(fileId)+"?uploadType=multipart&supportsAllDrives=true&fields=id,name,mimeType,webViewLink",{
-  method:"PATCH",headers:{"Content-Type":"multipart/related; boundary="+boundary},body
+ const result=await googleRequest(env,tokens,"/upload/drive/v3/files/"+encodeURIComponent(fileId)+"?uploadType=media&supportsAllDrives=true&fields=id,name,mimeType,webViewLink",{
+  method:"PATCH",headers:{"Content-Type":"application/json"},body:bytes
  });
  return result.data;
 }
