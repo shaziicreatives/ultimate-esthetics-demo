@@ -7,7 +7,7 @@ export async function onRequestGet({request,env}){
  await env.DB.prepare("DELETE FROM google_drive_oauth_states WHERE expires_at<?").bind(Math.floor(Date.now()/1000)).run();
  await env.DB.prepare("INSERT INTO google_drive_oauth_states(state_hash,owner_user_id,expires_at) VALUES(?,?,?)").bind(hash,user.user_id,expiry).run();
  const url=new URL("https://accounts.google.com/o/oauth2/v2/auth");
- url.search=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:oauthRedirect(request),response_type:"code",scope:"openid email https://www.googleapis.com/auth/drive.file",access_type:"offline",prompt:"consent",include_granted_scopes:"true",state}).toString();
+ url.search=new URLSearchParams({client_id:env.GOOGLE_CLIENT_ID,redirect_uri:oauthRedirect(request),response_type:"code",scope:"openid email https://www.googleapis.com/auth/drive.file",access_type:"offline",prompt:"select_account consent",include_granted_scopes:"true",state}).toString();
  return Response.redirect(url.toString(),302);
 }
 export async function onRequestPost(){return json({error:"Method not allowed"},405);}
