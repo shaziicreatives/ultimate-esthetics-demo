@@ -10,11 +10,14 @@ export async function onRequestGet(context){
   let autoScheduled=0,backupScheduled=false;
   if(connection?.root_folder_id){
    const retryable=await env.DB.prepare("SELECT id,visit_id,patient_id,job_kind FROM google_drive_sync_jobs WHERE status IN ('pending','failed') AND attempts<6 AND updated_at<=datetime('now','-1 minute') ORDER BY created_at LIMIT 3").all();
-   for(const job of retryable.results||[]){
-    const run=job.job_kind==="patient"?syncPatientToDrive(env,job.patient_id):syncVisitToDrive(env,job.visit_id);
-    if(context.waitUntil)context.waitUntil(run);else await run;
-    autoScheduled++;
-   }
+   const retryTask=(async()=>{
+    for(const job of retryable.results||[]){
+     if(job.job_kind==="patient")await syncPatientToDrive(env,job.patient_id);
+     else await syncVisitToDrive(env,job.visit_id);
+    }
+   })();
+   if(context.waitUntil)context.waitUntil(retryTask);else await retryTask;
+   autoScheduled=retryable.results?.length||0;
    if(connection.auto_backup_daily){
     const run=backupClinicToDrive(env,"daily");
     if(context.waitUntil)context.waitUntil(run);else await run;
@@ -48,14 +51,11 @@ export async function onRequestPost(context){
    const afterVisit=Math.max(0,Number(b.after_visit_id)||0),afterPatient=Math.max(0,Number(b.after_patient_id)||0);
    const visits=await env.DB.prepare("SELECT id FROM visits WHERE id>? ORDER BY id LIMIT 5").bind(afterVisit).all();
    const patients=await env.DB.prepare("SELECT p.id FROM patients p WHERE p.id>? AND NOT EXISTS(SELECT 1 FROM visits v WHERE v.patient_id=p.id) ORDER BY p.id LIMIT 5").bind(afterPatient).all();
-   for(const v of visits.results||[]){
-    const run=syncVisitToDrive(env,v.id);
-    if(context.waitUntil)context.waitUntil(run);else await run;
-   }
-   for(const p of patients.results||[]){
-    const run=syncPatientToDrive(env,p.id);
-    if(context.waitUntil)context.waitUntil(run);else await run;
-   }
+   const backfillTask=(async()=>{
+    for(const v of visits.results||[])await syncVisitToDrive(env,v.id);
+    for(const p of patients.results||[])await syncPatientToDrive(env,p.id);
+   })();
+   if(context.waitUntil)context.waitUntil(backfillTask);else await backfillTask;
    const nextVisit=visits.results?.length?visits.results[visits.results.length-1].id:afterVisit;
    const nextPatient=patients.results?.length?patients.results[patients.results.length-1].id:afterPatient;
    const moreV=await env.DB.prepare("SELECT 1 FROM visits WHERE id>? LIMIT 1").bind(nextVisit).first();
