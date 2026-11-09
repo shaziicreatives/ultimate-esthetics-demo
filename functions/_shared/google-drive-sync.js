@@ -89,39 +89,8 @@ async function storeFile(env,tokens,googleEmail,patientId,visitId,kind,parent,na
   .bind(patientId,visitId,kind,saved.id,name,mime,saved.webViewLink||null,googleEmail).run();
  return saved;
 }
-async function patientFolder(env,tokens,connection,patient){
- const collection=await ensureFolder(env,tokens,connection.root_folder_id,"Patients");
- const old=await env.DB.prepare("SELECT folder_id,folder_name FROM google_drive_patient_folders WHERE patient_id=?").bind(patient.id).first();
- if(old){
-  try{
-   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed,parents&supportsAllDrives=true");
-   if(!existing.data.trashed&&(existing.data.parents||[]).includes(collection.id))return {id:existing.data.id,name:existing.data.name};
-  }catch{}
-  await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,folder_id,folder_name) SELECT google_email,'patient',?,?,? FROM google_drive_connections WHERE id=1")
-   .bind(patient.id,old.folder_id,old.folder_name).run().catch(()=>{});
- }
- const made=await ensureFolder(env,tokens,collection.id,clean(patient.name)+" - Patient "+patient.id);
- await env.DB.prepare("INSERT INTO google_drive_patient_folders(patient_id,folder_id,folder_name,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(patient_id) DO UPDATE SET folder_id=excluded.folder_id,folder_name=excluded.folder_name,updated_at=CURRENT_TIMESTAMP")
-  .bind(patient.id,made.id,made.name).run();
- return made;
-}
-async function visitFolder(env,tokens,patientFolderInfo,visit){
- const visits=await ensureFolder(env,tokens,patientFolderInfo.id,"Visits");
- const old=await env.DB.prepare("SELECT folder_id,folder_name FROM google_drive_visit_folders WHERE visit_id=?").bind(visit.id).first();
- if(old){
-  try{
-   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed,parents&supportsAllDrives=true");
-   if(!existing.data.trashed&&(existing.data.parents||[]).includes(visits.id))return {id:existing.data.id,name:existing.data.name};
-  }catch{}
-  await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,visit_id,folder_id,folder_name) SELECT google_email,'visit',?,?,?,? FROM google_drive_connections WHERE id=1")
-   .bind(visit.patient_id,visit.id,old.folder_id,old.folder_name).run().catch(()=>{});
- }
- const date=String(visit.visit_date||visit.created_at||"").slice(0,10)||"Undated";
- const name="Visit "+visit.id+" - "+date+" - "+(visit.invoice_number||"Invoice");
- const made=await ensureFolder(env,tokens,visits.id,name);
- await env.DB.prepare("INSERT INTO google_drive_visit_folders(visit_id,patient_id,folder_id,folder_name,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(visit_id) DO UPDATE SET folder_id=excluded.folder_id,folder_name=excluded.folder_name,updated_at=CURRENT_TIMESTAMP")
-  .bind(visit.id,visit.patient_id,made.id,made.name).run();
- return made;
+async function invoiceCollection(env,tokens,connection){
+ return ensureFolder(env,tokens,connection.root_folder_id,"Patients (Overall)");
 }
 async function patientRecord(env,patientId){
  const patient=await env.DB.prepare("SELECT p.*,r.name referred_by_name FROM patients p LEFT JOIN patients r ON r.id=p.referred_by_patient_id WHERE p.id=?").bind(patientId).first();
@@ -145,26 +114,9 @@ async function markJob(env,jobId,status,error=null){
 async function loadTokens(env,connection){return decryptTokens(connection.encrypted_tokens,env);}
 
 export async function syncPatientToDrive(env,patientId){
- let job=null;
- try{
-  const connection=await getConnection(env);if(!connection?.root_folder_id)return {success:false,skipped:true,reason:"Drive folder is not configured"};
-  const record=await patientRecord(env,patientId);if(!record)return {success:false,skipped:true,reason:"Patient not found"};
-  job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
-  if(job)await env.DB.prepare("UPDATE google_drive_sync_jobs SET status='processing',last_error=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(job.id).run();
-  else{
-   await env.DB.prepare("INSERT OR IGNORE INTO google_drive_sync_jobs(patient_id,visit_id,job_kind,status) VALUES(?,NULL,'patient','processing')").bind(patientId).run();
-   job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='patient' AND patient_id=? ORDER BY id DESC LIMIT 1").bind(patientId).first();
-  }
-  const tokens=await loadTokens(env,connection);
-  const folder=await patientFolder(env,tokens,connection,{id:patientId,name:record.name});
-  if(connection.auto_save_patient_record)await storeFile(env,tokens,connection.google_email,patientId,null,"patient_record_json",folder.id,"Patient Record.json","application/json",jsonBytes(record));
-  await markJob(env,job.id,"saved");
-  await env.DB.prepare("UPDATE google_drive_connections SET last_sync_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=1").run();
-  return {success:true};
- }catch(error){
-  if(job?.id)await markJob(env,job.id,"failed",error).catch(()=>{});
-  return {success:false,error:String(error?.message||"Drive sync failed")};
- }
+ // Patient profile/history files are intentionally not exported to Drive.
+ // The shared Patients (Overall) folder contains invoice PDFs only.
+ return {success:true,skipped:true,reason:"Only invoice PDFs are stored in the shared Patients (Overall) folder."};
 }
 
 export async function syncVisitToDrive(env,visitId){
@@ -178,24 +130,11 @@ export async function syncVisitToDrive(env,visitId){
   job=await env.DB.prepare("SELECT id FROM google_drive_sync_jobs WHERE job_kind='visit' AND visit_id=? AND patient_id=?").bind(visit.id,visit.patient_id).first();
   const tokens=await loadTokens(env,connection);
   const patient={id:visit.patient_id,name:visit.patient_name,phone:visit.patient_phone};
-  const folder=await patientFolder(env,tokens,connection,patient);
-  const visitFolderInfo=await visitFolder(env,tokens,folder,visit);
-  const [record,procedures,payments]=await Promise.all([
-   patientRecord(env,visit.patient_id),
+  const folder=await invoiceCollection(env,tokens,connection);
+  const [procedures,payments]=await Promise.all([
    env.DB.prepare("SELECT procedure_name,fee FROM visit_procedures WHERE visit_id=? ORDER BY id").bind(visit.id).all(),
    env.DB.prepare("SELECT amount,method,reference,created_at FROM payments WHERE visit_id=? ORDER BY created_at,id").bind(visit.id).all()
   ]);
-  const visitRecord={
-   clinic:"Ultimate Esthetics",visit_id:visit.id,patient_id:visit.patient_id,
-   patient:{name:patient.name,phone:patient.phone},invoice_number:visit.invoice_number,
-   visit_date:visit.visit_date||visit.created_at,doctor:visit.doctor_name,notes:visit.notes,
-   procedures:procedures.results||[],subtotal_amount:visit.subtotal_amount,
-   discount_type:visit.discount_type,discount_value:visit.discount_value,
-   discount_amount:visit.discount_amount,total_amount:visit.total_amount,
-   payments:payments.results||[],follow_up_date:visit.follow_up_date
-  };
-  if(connection.auto_save_patient_record&&record)await storeFile(env,tokens,connection.google_email,patient.id,null,"patient_record_json",folder.id,"Patient Record.json","application/json",jsonBytes(record));
-  if(connection.auto_save_visit_record)await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"visit_record_json",visitFolderInfo.id,"Visit Record.json","application/json",jsonBytes(visitRecord));
   if(connection.auto_save_invoice_pdf){
    const lines=["ULTIMATE ESTHETICS CLINIC","PATIENT INVOICE","Invoice: "+(visit.invoice_number||"—"),"Patient: "+patient.name+"  Patient ID: "+patient.id,"Phone: "+patient.phone,"Visit date: "+(visit.visit_date||visit.created_at||"—"),"Doctor: "+(visit.doctor_name||"—"),"","Treatment / Services:"];
    (procedures.results||[]).forEach(p=>lines.push(p.procedure_name+" - Rs "+Number(p.fee||0).toLocaleString("en-PK")));
@@ -204,11 +143,9 @@ export async function syncVisitToDrive(env,visitId){
     "Total: Rs "+Number(visit.total_amount||0).toLocaleString("en-PK"));
    (payments.results||[]).forEach(p=>lines.push("Payment: Rs "+Number(p.amount||0).toLocaleString("en-PK")+" ("+p.method+")"));
    lines.push("","Notes: "+(visit.notes||"—"),"Follow-up: "+(visit.follow_up_date||"—"));
-   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",visitFolderInfo.id,"Invoice.pdf","application/pdf",makePdf(lines));
-  }
-  if(connection.auto_save_visit_pdf){
-   const visitPdf=["ULTIMATE ESTHETICS CLINIC","VISIT SUMMARY","Patient: "+patient.name+" (#"+patient.id+")","Visit: #"+visit.id,"Date: "+(visit.visit_date||visit.created_at||"—"),"Doctor: "+(visit.doctor_name||"—"),"Notes: "+(visit.notes||"—"),"","Treatments:",...(procedures.results||[]).map(p=>p.procedure_name+" - Rs "+Number(p.fee||0).toLocaleString("en-PK")),"","Follow-up: "+(visit.follow_up_date||"—")];
-   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"visit_details_pdf",visitFolderInfo.id,"Visit Summary.pdf","application/pdf",makePdf(visitPdf));
+   const invoiceLabel=clean(visit.invoice_number||("Visit-"+visit.id)).replace(/[^A-Za-z0-9_-]+/g,"_");
+   const patientLabel=clean(patient.name).replace(/[^A-Za-z0-9_-]+/g,"_").slice(0,50);
+   await storeFile(env,tokens,connection.google_email,patient.id,visit.id,"invoice_pdf",folder.id,patientLabel+"_"+invoiceLabel+".pdf","application/pdf",makePdf(lines));
   }
   await markJob(env,job.id,"saved");
   await env.DB.prepare("UPDATE google_drive_connections SET last_sync_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=1").run();
