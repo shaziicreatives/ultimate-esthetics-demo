@@ -47,12 +47,12 @@ function makePdf(lines){
 async function api(env,tokens,path,options){return googleRequest(env,tokens,path,options);}
 async function findFolder(env,tokens,parent,name){
  const q="'"+parent.replace(/'/g,"\\'")+"' in parents and name='"+name.replace(/'/g,"\\'")+"' and mimeType='application/vnd.google-apps.folder' and trashed=false";
- const r=await api(env,tokens,"/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name)",pageSize:"10"}).toString());
+ const r=await api(env,tokens,"/drive/v3/files?"+new URLSearchParams({q,fields:"files(id,name)",pageSize:"10",supportsAllDrives:"true",includeItemsFromAllDrives:"true"}).toString());
  return r.data.files?.[0]||null;
 }
 async function ensureFolder(env,tokens,parent,name){
  const found=await findFolder(env,tokens,parent,name);if(found)return found;
- const r=await api(env,tokens,"/drive/v3/files",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/vnd.google-apps.folder",parents:[parent]})});
+ const r=await api(env,tokens,"/drive/v3/files?supportsAllDrives=true",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,mimeType:"application/vnd.google-apps.folder",parents:[parent]})});
  return r.data;
 }
 async function upload(env,tokens,parent,name,mime,bytes,existingId){
@@ -60,7 +60,7 @@ async function upload(env,tokens,parent,name,mime,bytes,existingId){
  const meta=JSON.stringify({name,mimeType:mime,...(existingId?{}:{parents:[parent]})});
  const body=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+meta+"\r\n--"+boundary+"\r\nContent-Type: "+mime+"\r\n\r\n",bytes,"\r\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
  const path=existingId
-  ?"/upload/drive/v3/files/"+encodeURIComponent(existingId)+"?uploadType=multipart&fields=id,name,mimeType,webViewLink"
+  ?"/upload/drive/v3/files/"+encodeURIComponent(existingId)+"?uploadType=multipart&fields=id,name,mimeType,webViewLink&supportsAllDrives=true"
   :"/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink";
  const result=await api(env,tokens,path,{method:existingId?"PATCH":"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
  return result.data;
@@ -82,7 +82,7 @@ async function patientFolder(env,tokens,connection,patient){
  if(old){
   let recover=false;
   try{
-   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed");
+   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed&supportsAllDrives=true");
    if(!existing.data.trashed)return {id:existing.data.id,name:existing.data.name};
    recover=true;
   }catch{recover=true;}
