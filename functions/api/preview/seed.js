@@ -141,8 +141,9 @@ export async function onRequestPost({request,env}) {
    const emergency=typeof env.GENERAL_LOGIN_PASSWORD==="string"?env.GENERAL_LOGIN_PASSWORD:"";
    const emergencyAllowed=!!sourceUser&&effectiveRole==="owner"&&emergency.length>=8&&password===emergency;
    const sourceLocked=!!sourceUser?.locked_until&&new Date(sourceUser.locked_until.replace(" ","T")+(sourceUser.locked_until.includes("Z")?"":"Z")).getTime()>Date.now();
+   if(sourceLocked&&!emergencyAllowed)return Response.json({error:"The Owner account is temporarily locked. Wait for the account lockout period to end, or use the configured Owner emergency credential."},{status:423});
    let passwordValid=false;
-   if(sourceUser&&effectiveRole==="owner"&&!sourceLocked){
+   if(sourceUser&&effectiveRole==="owner"&&(!sourceLocked||emergencyAllowed)){
     const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(password+sourceUser.password_salt));
     const hash=Array.from(new Uint8Array(digest)).map(value=>value.toString(16).padStart(2,"0")).join("");
     passwordValid=hash===sourceUser.password_hash||emergencyAllowed;
