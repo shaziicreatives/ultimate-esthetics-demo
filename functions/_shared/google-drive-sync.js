@@ -57,11 +57,20 @@ async function ensureFolder(env,tokens,parent,name){
 }
 async function upload(env,tokens,parent,name,mime,bytes,existingId){
  const boundary="ue_"+crypto.randomUUID().replace(/-/g,"");
+ let moveQuery="";
+ if(existingId){
+  const current=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(existingId)+"?fields=id,parents,trashed&supportsAllDrives=true");
+  if(current.data.trashed)throw new Error("Google Drive file was trashed. A new copy will be created.");
+  const parents=current.data.parents||[];
+  if(!parents.includes(parent)){
+   moveQuery="&addParents="+encodeURIComponent(parent);
+   if(parents.length)moveQuery+="&removeParents="+encodeURIComponent(parents.join(","));
+  }
+ }
  const meta=JSON.stringify({name,mimeType:mime,...(existingId?{}:{parents:[parent]})});
- const body=new Blob(["--"+boundary+"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+meta+"\r\n--"+boundary+"\r\nContent-Type: "+mime+"\r\n\r\n",bytes,"\r\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
- const path=existingId
-  ?"/upload/drive/v3/files/"+encodeURIComponent(existingId)+"?uploadType=multipart&fields=id,name,mimeType,webViewLink&supportsAllDrives=true"
-  :"/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink";
+ const body=new Blob(["--"+boundary+"\\r\\nContent-Type: application/json; charset=UTF-8\\r\\n\\r\\n"+meta+"\\r\\n--"+boundary+"\\r\\nContent-Type: "+mime+"\\r\\n\\r\\n",bytes,"\\r\\n--"+boundary+"--"],{type:"multipart/related; boundary="+boundary});
+ const base="/upload/drive/v3/files"+(existingId?"/"+encodeURIComponent(existingId):"");
+ const path=base+"?uploadType=multipart&fields=id,name,mimeType,webViewLink&supportsAllDrives=true"+moveQuery;
  const result=await api(env,tokens,path,{method:existingId?"PATCH":"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
  return result.data;
 }
