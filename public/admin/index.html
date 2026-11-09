@@ -1405,11 +1405,7 @@ document.addEventListener('input', e => {
   const t = e.target;
   if(t instanceof HTMLInputElement&&t.type==='number'&&t.value){const clean=t.value.replace(/^0+(?=\d)/,'');if(clean!==t.value)t.value=clean;}
   if (t.id === 'hq') { state.histQ = t.value; $('#plist').innerHTML = histList(); return; }
-  if (t.id === 'mPhone') {
-    const d = last10(t.value), m = d.length >= 10 && state.patients.find(p => last10(p.phone) === d), h = $('#mDup');
-    if (m) { h.textContent = 'Existing patient: ' + m.name + ' (#' + m.id + '). The existing patient ID will be reused.'; h.className = 'hint ok'; }
-    else { h.textContent = 'Returning visits will be linked to this patient record.'; h.className = 'hint'; }
-  }
+  if (t.id === 'mPhone') { applyManualPhoneMatch(); return; }
 });
 
 document.addEventListener('click',e=>{
