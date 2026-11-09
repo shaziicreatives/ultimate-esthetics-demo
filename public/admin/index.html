@@ -940,7 +940,7 @@ function viewDrive(){
  '<section class="card"><div class="card-head"><h2>Automatic saving</h2></div>'+
   (!d.root_folder_id?'<div class="alert-item warn" style="margin-bottom:10px">Select a clinic folder first. No patient or invoice files can be saved until a folder is selected.</div>':'')+
  '<div class="alert-item info">Invoice PDFs only are saved in one shared folder named <b>Patients (Overall)</b>. No separate folder is created per patient. Patient JSON, visit JSON and visit-summary PDFs are not uploaded.</div></section>'+
- '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync all existing records</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
+ '<section class="card"><div class="card-head"><h2>Sync queue</h2><div class="actions"><button class="btn sm" type="button" data-drive-action="backfill">Sync existing invoices</button><button class="btn sm" type="button" data-drive-action="refresh">Refresh</button></div></div>'+
  (jobRows||'<div class="empty">No synchronization jobs yet.</div>')+
  '<p class="hint" style="margin-top:10px">Failed jobs retry automatically while the Owner admin panel is open. You can also retry an individual job.</p></section>'+
  '<section class="card"><div class="card-head"><h2>Clinic data backup</h2><button class="btn pri sm" type="button" data-drive-action="backup-now">Back up now</button></div>'+
@@ -1179,7 +1179,7 @@ async function runDriveBackfill(showToast=true){
   if(hasMore)await new Promise(resolve=>setTimeout(resolve,900));
  }
  state.driveBackfill=hasMore?cursor:{after_visit_id:0,after_patient_id:0,has_more:false};
- if(showToast)toast('Scheduled '+totalVisits+' visits and '+totalPatients+' patient records for Drive.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
+ if(showToast)toast('Scheduled '+totalVisits+' invoice records for the shared Patients (Overall) folder.'+(hasMore?' More records remain; click Sync all existing records again.':' Existing records backfill has been queued.'));
  return {totalVisits,totalPatients,hasMore};
 }
 document.addEventListener('click',async e=>{
