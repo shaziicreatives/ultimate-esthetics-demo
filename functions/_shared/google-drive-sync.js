@@ -78,36 +78,32 @@ async function storeFile(env,tokens,googleEmail,patientId,visitId,kind,parent,na
  return saved;
 }
 async function patientFolder(env,tokens,connection,patient){
+ const collection=await ensureFolder(env,tokens,connection.root_folder_id,"Patients");
  const old=await env.DB.prepare("SELECT folder_id,folder_name FROM google_drive_patient_folders WHERE patient_id=?").bind(patient.id).first();
  if(old){
-  let recover=false;
   try{
-   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed&supportsAllDrives=true");
-   if(!existing.data.trashed)return {id:existing.data.id,name:existing.data.name};
-   recover=true;
-  }catch{recover=true;}
-  if(recover)await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,folder_id,folder_name) SELECT google_email,'patient',?,?,? FROM google_drive_connections WHERE id=1")
+   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed,parents&supportsAllDrives=true");
+   if(!existing.data.trashed&&(existing.data.parents||[]).includes(collection.id))return {id:existing.data.id,name:existing.data.name};
+  }catch{}
+  await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,folder_id,folder_name) SELECT google_email,'patient',?,?,? FROM google_drive_connections WHERE id=1")
    .bind(patient.id,old.folder_id,old.folder_name).run().catch(()=>{});
  }
- const collection=await ensureFolder(env,tokens,connection.root_folder_id,"Patients");
  const made=await ensureFolder(env,tokens,collection.id,clean(patient.name)+" - Patient "+patient.id);
  await env.DB.prepare("INSERT INTO google_drive_patient_folders(patient_id,folder_id,folder_name,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(patient_id) DO UPDATE SET folder_id=excluded.folder_id,folder_name=excluded.folder_name,updated_at=CURRENT_TIMESTAMP")
   .bind(patient.id,made.id,made.name).run();
  return made;
 }
 async function visitFolder(env,tokens,patientFolderInfo,visit){
+ const visits=await ensureFolder(env,tokens,patientFolderInfo.id,"Visits");
  const old=await env.DB.prepare("SELECT folder_id,folder_name FROM google_drive_visit_folders WHERE visit_id=?").bind(visit.id).first();
  if(old){
-  let recover=false;
   try{
-   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed");
-   if(!existing.data.trashed)return {id:existing.data.id,name:existing.data.name};
-   recover=true;
-  }catch{recover=true;}
-  if(recover)await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,visit_id,folder_id,folder_name) SELECT google_email,'visit',?,?,?,? FROM google_drive_connections WHERE id=1")
+   const existing=await api(env,tokens,"/drive/v3/files/"+encodeURIComponent(old.folder_id)+"?fields=id,name,trashed,parents&supportsAllDrives=true");
+   if(!existing.data.trashed&&(existing.data.parents||[]).includes(visits.id))return {id:existing.data.id,name:existing.data.name};
+  }catch{}
+  await env.DB.prepare("INSERT INTO google_drive_folder_history(google_email,folder_kind,patient_id,visit_id,folder_id,folder_name) SELECT google_email,'visit',?,?,?,? FROM google_drive_connections WHERE id=1")
    .bind(visit.patient_id,visit.id,old.folder_id,old.folder_name).run().catch(()=>{});
  }
- const visits=await ensureFolder(env,tokens,patientFolderInfo.id,"Visits");
  const date=String(visit.visit_date||visit.created_at||"").slice(0,10)||"Undated";
  const name="Visit "+visit.id+" - "+date+" - "+(visit.invoice_number||"Invoice");
  const made=await ensureFolder(env,tokens,visits.id,name);
