@@ -15,8 +15,11 @@ export async function onRequestGet(context){
     autoScheduled++;
    }
   }
-  const jobs=await env.DB.prepare("SELECT j.id,j.patient_id,j.visit_id,j.status,j.attempts,j.last_error,j.created_at,j.updated_at,p.name patient_name,v.invoice_number FROM google_drive_sync_jobs j JOIN patients p ON p.id=j.patient_id LEFT JOIN visits v ON v.id=j.visit_id ORDER BY j.updated_at DESC LIMIT 100").all();
-  return json({jobs:jobs.results||[],auto_retry_scheduled:autoScheduled});
+  const [jobs,files]=await Promise.all([
+   env.DB.prepare("SELECT j.id,j.patient_id,j.visit_id,j.status,j.attempts,j.last_error,j.created_at,j.updated_at,p.name patient_name,v.invoice_number FROM google_drive_sync_jobs j JOIN patients p ON p.id=j.patient_id LEFT JOIN visits v ON v.id=j.visit_id ORDER BY j.updated_at DESC LIMIT 100").all(),
+   env.DB.prepare("SELECT f.id,f.patient_id,f.visit_id,f.file_kind,f.file_name,f.web_view_link,f.updated_at,p.name patient_name,v.invoice_number FROM google_drive_files f JOIN patients p ON p.id=f.patient_id LEFT JOIN visits v ON v.id=f.visit_id ORDER BY f.updated_at DESC,f.id DESC LIMIT 100").all()
+  ]);
+  return json({jobs:jobs.results||[],files:files.results||[],auto_retry_scheduled:autoScheduled});
  }catch(e){return json({error:"Drive sync queue is not available. Apply the Preview Google Drive migration first."},503);}
 }
 export async function onRequestPost(context){
