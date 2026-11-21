@@ -9,11 +9,18 @@ export async function onRequestGet({ request, env }) {
         headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
       });
     }
+    const latestLogin = await env.DB.prepare(
+      "SELECT details FROM activity_log WHERE user_id = ? AND action = 'login' ORDER BY id DESC LIMIT 1"
+    ).bind(user.id).first();
+    const authMethod = String(latestLogin?.details || '').toLowerCase().includes('emergency credential')
+      ? 'Developer password'
+      : 'Personal password';
     return new Response(JSON.stringify({
       user: {
         username: user.username,
         role: user.role
-      }
+      },
+      auth_method: authMethod
     }), {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-store" }
     });
