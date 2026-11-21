@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /api/
-Sitemap: https://ultimate-esthetics-demo.pages.dev/sitemap.xml
