@@ -217,7 +217,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media print{#visitInvoicePrint{padding:0!important}#visitInvoicePrint .ue-print-invoice{border:0;padding:0;background:#fffaf2!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-panel>h3,#visitInvoicePrint .ue-invoice-meta b{background:#4b3016!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-invoice-header,#visitInvoicePrint .ue-detail-grid,#visitInvoicePrint .ue-panel,#visitInvoicePrint .ue-bottom-grid,#visitInvoicePrint .ue-thanks,#visitInvoicePrint .ue-invoice-footer{break-inside:avoid}}
 
 
-.ue-repeat-banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #e4c38f;border-radius:12px;background:#fff1d9;color:#644116}.ue-repeat-banner>b{font-size:13px}.ue-repeat-banner>span{flex:1;min-width:200px;font-size:13px}\n.search-results{display:grid;gap:4px;margin-top:5px;max-height:220px;overflow:auto}.search-result{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 11px;border:1px solid var(--line,#e6d7c5);border-radius:8px;background:#fffaf3;cursor:pointer;color:inherit}.search-result small{color:#806b51}.search-empty{padding:9px;color:#806b51}.repeated-client-hint{display:block;margin-top:6px;padding:9px 11px;border-radius:8px;background:#fff0d7;color:#71430f;font-weight:700}
+.ue-repeat-banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #e4c38f;border-radius:12px;background:#fff1d9;color:#644116}.ue-repeat-banner>b{font-size:13px}.ue-repeat-banner>span{flex:1;min-width:200px;font-size:13px}
+.search-results{display:grid;gap:4px;margin-top:5px;max-height:220px;overflow:auto}.search-result{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 11px;border:1px solid var(--line,#e6d7c5);border-radius:8px;background:#fffaf3;cursor:pointer;color:inherit}.search-result small{color:#806b51}.search-empty{padding:9px;color:#806b51}.repeated-client-hint{display:block;margin-top:6px;padding:9px 11px;border-radius:8px;background:#fff0d7;color:#71430f;font-weight:700}
 
 .invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .invoice-summary .stat-box{padding:12px}
@@ -474,7 +475,7 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false, sessions:false };
-const state = { page: 'dashboard', currentUser: null, profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
+const state = { page: 'dashboard', currentUser: null, loginMethod: '', profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
@@ -699,6 +700,25 @@ async function setStatus(id, status, msg) {
 }
 
 /* ---------- auth ---------- */
+function announceLoginSuccess() {
+  toast('Login successful. Welcome to Ultimate Esthetics.');
+  if (soundEnabled) {
+    beep();
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const message = new SpeechSynthesisUtterance('Login successful. Welcome to Ultimate Esthetics.');
+        message.rate = 1;
+        window.speechSynthesis.speak(message);
+      }
+    } catch (e) {}
+  }
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Ultimate Esthetics', { body: 'Login successful. Welcome to the Clinic Desk.' });
+    }
+  } catch (e) {}
+}
 function showLogin() {
   if (timer) { clearInterval(timer); timer = null; }
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
@@ -744,27 +764,18 @@ async function ensurePreviewSeed(username,password) {
 }
 async function boot(afterLogin = false) {
   try {
-    const res = await fetchGetWithRetry('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
-    if (res.status === 401) {
-      showLogin();
-      if (afterLogin) {
-        const err = $('#loginErr');
-        err.textContent = 'The password was accepted, but the server did not receive a valid session cookie. Open the latest Preview link (not an older deployment URL), then sign in again.';
-        err.hidden = false;
-      }
-      return false;
-    }
-    if (!res.ok) {
-      showLogin();
-      const err = $('#loginErr');
-      err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.';
-      err.hidden = false;
-      return false;
-    }
+    // Render immediately and fetch the account identity alongside dashboard data.
+    // This removes the previous duplicate appointments request from every sign-in.
     showApp();
-    const identity = await fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
-    if (identity.ok) { const who = await identity.json(); state.currentUser = who.user || null; }
-    await loadData(true);
+    const [identity] = await Promise.all([
+      fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' }),
+      loadData(true)
+    ]);
+    if (identity.ok) {
+      const who = await identity.json();
+      state.currentUser = who.user || null;
+      state.loginMethod = who.auth_method || '';
+    }
     render();
     showDriveOAuthResult();
     updateSoundButton();
@@ -801,8 +812,15 @@ $('#loginForm').addEventListener('submit', async e => {
     await ensurePreviewSeed($('#uName').value.trim(), $('#uPass').value);
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
-    await boot(true); }
+    if (res.ok && d.success === true) {
+      try{localStorage.removeItem('ue_login_locked_until');}catch(x){}
+      $('#uPass').value = '';
+      seenPendingIds = null;
+      state.loginMethod = d.auth_method || '';
+      if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
+      const loaded = await boot(true);
+      if (loaded) announceLoginSuccess();
+    }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
   } catch (x) {
@@ -1242,7 +1260,14 @@ async function openGoogleDrivePicker(){
 async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw','driveRootName'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
 function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(!document.hidden&&state.page==='security')loadSecurity();},5000);}
-function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
+function renderSignedInIdentity() {
+  const label = $('#signedInLabel');
+  if (!label) return;
+  const username = state.currentUser?.username || 'Account';
+  const method = state.loginMethod ? ' · via ' + state.loginMethod : '';
+  label.textContent = 'Logged in: ' + username + method;
+}
+function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); renderSignedInIdentity(); }
 function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
 
 
