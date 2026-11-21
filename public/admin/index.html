@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="/admin/manifest.webmanifest">
-<meta name="theme-color" content="#3E3325">\n<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#3E3325">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ultimate Clinic">
@@ -477,28 +477,10 @@ const state = { page: 'dashboard', currentUser: null, profile: null, profileUnlo
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
-// Cloudflare Pages can briefly fail a cold first GET while an edge isolate starts.
-// Retry only safe GET requests; never replay a booking, payment, or other write.
-async function fetchGetWithRetry(path, opts, attempts = 3) {
-  let lastError;
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    try {
-      const response = await fetch(path, Object.assign({ credentials: 'same-origin', cache: 'no-store' }, opts || {}));
-      if (![502, 503, 504].includes(response.status) || attempt === attempts - 1) return response;
-      lastError = new Error('Temporary server response (' + response.status + ')');
-    } catch (error) {
-      lastError = error;
-      if (!(error instanceof TypeError) || attempt === attempts - 1) throw error;
-    }
-    await new Promise(resolve => setTimeout(resolve, 300 * Math.pow(2, attempt)));
-  }
-  throw lastError || new Error('Unable to connect to the server.');
-}
 async function api(path, opts) {
   const o = Object.assign({ credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' } }, opts || {});
   if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
-  const method = String(o.method || 'GET').toUpperCase();
-  const res = method === 'GET' ? await fetchGetWithRetry(path, o) : await fetch(path, o);
+  const res = await fetch(path, o);
   if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
   let data = null; try { data = await res.json(); } catch (e) { }
   return { ok: res.ok, status: res.status, data: data || {} };
@@ -677,7 +659,7 @@ async function loadData(first) {
 async function loadDoctors() {
   let list = [];
   try {
-    const r = await fetchGetWithRetry('/api/doctors', { credentials: 'same-origin' });
+    const r = await fetch('/api/doctors', { credentials: 'same-origin' });
     if (r.ok) { const d = await r.json(); list = (Array.isArray(d) ? d : (d.doctors || [])).filter(x => x.is_active !== 0).map(x => ({ id: x.id, name: x.name })); }
   } catch (e) { }
   if (!list.length) {
@@ -743,7 +725,7 @@ async function ensurePreviewSeed(username,password) {
 }
 async function boot(afterLogin = false) {
   try {
-    const res = await fetchGetWithRetry('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
+    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
     if (res.status === 401) {
       showLogin();
       if (afterLogin) {
@@ -761,7 +743,7 @@ async function boot(afterLogin = false) {
       return false;
     }
     showApp();
-    const identity = await fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
+    const identity = await fetch('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
     if (identity.ok) { const who = await identity.json(); state.currentUser = who.user || null; }
     await loadData(true);
     render();
