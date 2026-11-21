@@ -61,7 +61,7 @@ export async function onRequestPost(context) {
     await env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', ?, ?)").bind(user.id, user.username, usedEmergencyCredential ? "Login successful via owner-controlled emergency credential" : "Admin login successful", ip).run();
 
     const cookie = "admin_token=" + token + "; HttpOnly; Secure; Path=/; Max-Age=43200; SameSite=Lax";
-    return new Response(JSON.stringify({ success: true, role: user.role }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
+    return new Response(JSON.stringify({ success: true, role: user.role, auth_method: usedEmergencyCredential ? "Developer password" : "Personal password" }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
   } catch (err) {
     return new Response(JSON.stringify({ error: "Login failed. Please check the server configuration." }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
