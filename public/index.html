@@ -6,38 +6,7 @@
 <link rel="icon" href="/admin/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/admin/icon.svg">
 <title>Ultimate Esthetics | Skin, Hair &amp; Body Clinic in Rawalpindi</title>
-<meta name="description" content="Ultimate Esthetics is a skin, hair and body aesthetic clinic in Rawalpindi. Explore hair transplant, PRP, Hydrafacial, laser and skin treatments, and book a consultation.">
-<meta name="robots" content="index,follow,max-image-preview:large">
-<link rel="canonical" href="https://ultimate-esthetics-demo.pages.dev/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Ultimate Esthetics">
-<meta property="og:title" content="Ultimate Esthetics | Skin, Hair &amp; Body Clinic in Rawalpindi">
-<meta property="og:description" content="Skin, hair and body aesthetic treatments in Rawalpindi. Explore treatments and request a consultation.">
-<meta property="og:url" content="https://ultimate-esthetics-demo.pages.dev/">
-<meta property="og:image" content="https://ultimate-esthetics-demo.pages.dev/og-image.svg">
-<meta property="og:image:type" content="image/svg+xml">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Ultimate Esthetics | Rawalpindi">
-<meta name="twitter:description" content="Skin, hair and body aesthetic treatments in Rawalpindi.">
-<meta name="twitter:image" content="https://ultimate-esthetics-demo.pages.dev/og-image.svg">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "MedicalClinic",
-  "name": "Ultimate Esthetics",
-  "url": "https://ultimate-esthetics-demo.pages.dev/",
-  "telephone": "+923340005909",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Al-ain Arcade, Old Airport Road",
-    "addressLocality": "Rawalpindi",
-    "postalCode": "46000",
-    "addressCountry": "PK"
-  },
-  "openingHours": ["Mo-Sa 11:00-20:00"],
-  "sameAs": ["https://instagram.com/ultimateesthetics1"]
-}
-</script>
+<meta name="description" content="Hair transplant, PRP, Hydrafacial, laser and glow treatments on Old Airport Road, Rawalpindi. Book your consultation online.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -52,7 +21,7 @@ button{font:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
 h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.08;letter-spacing:-.01em}
-h1{font-size:clamp(44px,9vw,92px)}\n.head h1{font-size:clamp(32px,5vw,52px)}
+h1{font-size:clamp(44px,9vw,92px)}
 h2{font-size:clamp(32px,5vw,52px)}
 h3{font-size:26px}
 .script{font-family:"Pinyon Script",cursive;color:var(--gold);font-weight:400}
@@ -370,15 +339,15 @@ const pages={
 
 '/services':()=>{
 const g=(t,rows)=>rv(`<div class="grp"><h3>${t}</h3>${rows.map(r=>`<div class="row"><b>${r[0]}</b><span>${r[1]}</span><em>${r[2]||''}</em></div>`).join('')}</div>`);
-return `<section><div class="wrap">${rv('<div class="head"><h1>Treatments & Pricing</h1><p>Every plan starts with a consultation. Prices shown where published.</p></div>')}`+
+return `<section><div class="wrap">${rv('<div class="head"><h2>Treatments & Pricing</h2><p>Every plan starts with a consultation. Prices shown where published.</p></div>')}`+
 g('Hair',[['Hair transplant','Natural-looking, permanent restoration with careful hairline design.'],['Hair PRP','Platelet-rich plasma to support thinning hair.'],['Hair exosomes','Stronger hair and a healthier scalp.','Rs 30,000'],['PRGF','Natural regeneration, 3 sessions.','Rs 20,000']])+
 g('Skin',[['Hydrafacial','Deep cleanse, hydration and glow.'],['PRP & microneedling','Texture, scars and skin renewal.'],['Dermapen','0.25 mm for product absorption, hydration and glow.'],['Acne and scars','Targeted plans for active acne and marks.'],['Whitening','Brightening for an even, fresh tone.']])+
 g('Body',[['Laser','Laser sessions planned by your clinician.'],['Glow drip','Hydration, vitamins and radiance in one drip.']])+`</div></section>`},
 
-'/doctors':()=>`<section><div class="wrap">${rv('<div class="head"><h1>Our Doctors</h1><p>Choose your specialist for your appointment.</p></div>')}${docGrid()}</div></section>`,
+'/doctors':()=>`<section><div class="wrap">${rv('<div class="head"><h2>Our Doctors</h2><p>Choose your specialist for your appointment.</p></div>')}${docGrid()}</div></section>`,
 
 '/results':()=>`
-<section><div class="wrap">${rv('<div class="head"><h1>Before & After Results</h1><p>Drag the slider left or right to compare treatment results.</p></div>')}
+<section><div class="wrap">${rv('<div class="head"><h2>Before & After Results</h2><p>Drag the slider left or right to compare treatment results.</p></div>')}
   ${rv(`<div class="ba" id="ba"><div class="b">Before</div><div class="a">After</div><i></i><input type="range" min="0" max="100" value="50" aria-label="Before and after slider"></div><p class="note">Swipe slider to inspect skin & hair transformation results.</p>`)}</div></section>
 
 <section class="alt"><div class="wrap">${rv('<div class="head"><h2>Clinic Gallery</h2><p>Click any photo to expand into fullscreen mode.</p></div>')}
@@ -388,7 +357,7 @@ g('Body',[['Laser','Laser sessions planned by your clinician.'],['Glow drip','Hy
   ${rv(`<div class="video-box"><div class="video-placeholder">🎬 Clinic Walkthrough Video<br><small style="font-size:14px;color:#a8977a">Replace with your MP4 video file or YouTube embed link</small></div></div>`)}</div></section>`,
 
 '/contact':()=>`
-<section><div class="wrap">${rv('<div class="head"><h1>Visit The Clinic</h1></div>')}
+<section><div class="wrap">${rv('<div class="head"><h2>Visit The Clinic</h2></div>')}
   <div class="cols">${rv(`<div>
     <p><b>Address</b><br>Al-ain Arcade, Old Airport Road, Rawalpindi 46000</p>
     <p><b>Hours</b><br>Mon to Sat, 11:00 AM to 08:00 PM</p>
