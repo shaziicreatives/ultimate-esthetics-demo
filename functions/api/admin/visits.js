@@ -7,11 +7,10 @@ export async function onRequestGet({request,env}) {
  const url=new URL(request.url),patientId=Number(url.searchParams.get("patient_id")||0);
  if(url.searchParams.has("patient_id")&&(!Number.isSafeInteger(patientId)||patientId<1))return json({error:"Invalid patient ID"},400);
  // Load only the latest 100 invoices for the dashboard. Full history is fetched on demand per patient.
- const visitSql=`SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE(pay.received,0) received
+ const visitSql=`SELECT v.*,p.name patient_name,p.phone,d.name doctor_name
   FROM visits v
   JOIN patients p ON p.id=v.patient_id
   JOIN doctors d ON d.id=v.doctor_id
-  LEFT JOIN (SELECT visit_id,SUM(amount) received FROM payments GROUP BY visit_id) pay ON pay.visit_id=v.id
   ${patientId?"WHERE v.patient_id=?":""}
   ORDER BY v.created_at DESC ${patientId?"":"LIMIT 100"}`;
  const visitStmt=env.DB.prepare(visitSql);
@@ -29,7 +28,11 @@ export async function onRequestGet({request,env}) {
    for(const item of pr.results||[]){if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});}
    for(const item of pa.results||[]){if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});}
   }));
-  for(const row of visitRows)visits.push({...row,procedures:proceduresByVisit.get(row.id)||[],payments:paymentsByVisit.get(row.id)||[]});
+  for(const row of visitRows){
+   const paymentList=paymentsByVisit.get(row.id)||[];
+   const received=paymentList.reduce((sum,p)=>sum+Number(p.amount||0),0);
+   visits.push({...row,received,procedures:proceduresByVisit.get(row.id)||[],payments:paymentList});
+  }
  }
  if(patientId)return json({visits});
  // Aggregate each table once instead of running multiple correlated subqueries for every patient.
