@@ -750,6 +750,7 @@ let previewSeedPromise = null;
 async function ensurePreviewSeed(username,password) {
   const host = location.hostname;
   if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
+  try{ if(localStorage.getItem('ue_preview_seeded')==='1') return null; }catch(e){}
   if (!previewSeedPromise) {
     const btn = $('#loginBtn'),wasDisabled=!!btn?.disabled,oldText=btn?.textContent||'Sign In';
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
@@ -765,6 +766,7 @@ async function ensurePreviewSeed(username,password) {
         error.status=response.status;
         throw error;
       }
+      try{localStorage.setItem('ue_preview_seeded','1');}catch(e){}
       return data;
     })().catch(error => {
       previewSeedPromise = null;
@@ -781,10 +783,10 @@ async function boot(afterLogin = false) {
     // This removes the previous duplicate appointments request from every sign-in.
     showApp();
     const [identity] = await Promise.all([
-      fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' }),
+      (afterLogin && state.currentUser) ? null : fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' }),
       loadData(true)
     ]);
-    if (identity.ok) {
+    if (identity && identity.ok) {
       const who = await identity.json();
       state.currentUser = who.user || null;
       state.loginMethod = who.auth_method || '';
@@ -793,7 +795,7 @@ async function boot(afterLogin = false) {
     showDriveOAuthResult();
     updateSoundButton();
     refreshNotificationAccessButton().catch(() => {});
-    if (!timer) timer = setInterval(() => loadData(false), 8000);
+    if (!timer) timer = setInterval(() => { if (!document.hidden) loadData(false); }, 15000);
     return true;
   } catch (e) {
     showLogin();
@@ -830,6 +832,7 @@ $('#loginForm').addEventListener('submit', async e => {
       $('#uPass').value = '';
       seenPendingIds = null;
       state.loginMethod = d.auth_method || '';
+      state.currentUser = { username: d.username, role: d.role };
       if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
       const loaded = await boot(true);
       if (loaded) announceLoginSuccess();
