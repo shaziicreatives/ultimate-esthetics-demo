@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="/admin/manifest.webmanifest">
 <meta name="theme-color" content="#3E3325">
+<meta name="robots" content="noindex,nofollow">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ultimate Clinic">
@@ -216,7 +217,8 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media print{#visitInvoicePrint{padding:0!important}#visitInvoicePrint .ue-print-invoice{border:0;padding:0;background:#fffaf2!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-panel>h3,#visitInvoicePrint .ue-invoice-meta b{background:#4b3016!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}#visitInvoicePrint .ue-invoice-header,#visitInvoicePrint .ue-detail-grid,#visitInvoicePrint .ue-panel,#visitInvoicePrint .ue-bottom-grid,#visitInvoicePrint .ue-thanks,#visitInvoicePrint .ue-invoice-footer{break-inside:avoid}}
 
 
-.ue-repeat-banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #e4c38f;border-radius:12px;background:#fff1d9;color:#644116}.ue-repeat-banner>b{font-size:13px}.ue-repeat-banner>span{flex:1;min-width:200px;font-size:13px}\n.search-results{display:grid;gap:4px;margin-top:5px;max-height:220px;overflow:auto}.search-result{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 11px;border:1px solid var(--line,#e6d7c5);border-radius:8px;background:#fffaf3;cursor:pointer;color:inherit}.search-result small{color:#806b51}.search-empty{padding:9px;color:#806b51}.repeated-client-hint{display:block;margin-top:6px;padding:9px 11px;border-radius:8px;background:#fff0d7;color:#71430f;font-weight:700}
+.ue-repeat-banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0;padding:12px 14px;border:1px solid #e4c38f;border-radius:12px;background:#fff1d9;color:#644116}.ue-repeat-banner>b{font-size:13px}.ue-repeat-banner>span{flex:1;min-width:200px;font-size:13px}
+.search-results{display:grid;gap:4px;margin-top:5px;max-height:220px;overflow:auto}.search-result{display:flex;justify-content:space-between;gap:12px;text-align:left;padding:9px 11px;border:1px solid var(--line,#e6d7c5);border-radius:8px;background:#fffaf3;cursor:pointer;color:inherit}.search-result small{color:#806b51}.search-empty{padding:9px;color:#806b51}.repeated-client-hint{display:block;margin-top:6px;padding:9px 11px;border-radius:8px;background:#fff0d7;color:#71430f;font-weight:700}
 
 .invoice-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
 .invoice-summary .stat-box{padding:12px}
@@ -473,14 +475,32 @@ const toast = m => { toastEl.textContent = m; toastEl.hidden = false; clearTimeo
 
 /* ---------- state ---------- */
 const securityShowAll = { logins:false, activity:false, sessions:false };
-const state = { page: 'dashboard', currentUser: null, profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true} };
+const state = { page: 'dashboard', currentUser: null, loginMethod: '', profile: null, profileUnlocked: false, securityDriveOpen:false, tab: 'pending', filter: 'all', patientDate: null, patientShowOverall: false, calendarMonth: todayStr().slice(0,7), histSel: null, histQ: '', appts: [], patients: [], doctors: [], visits: [], financialPatients: [], financialById:new Map(), overallPage:0, sig: '', driveAllowed:false, driveData:null, driveLoading:false, driveRootName:'Ultimate Esthetics Clinic', driveJobs:[], driveFolders:[], driveBackfill:{after_visit_id:0,after_patient_id:0,has_more:true}, historyLoaded:{} };
 const PAGES = [['dashboard', 'Dashboard'], ['requests', 'Requests'], ['today', 'Patients'], ['manual', 'Manual Patient'], ['history', 'Patient History'], ['security', 'Security']];
 
 /* ---------- api ---------- */
+// Cloudflare Pages can briefly fail a cold first GET while an edge isolate starts.
+// Retry only safe GET requests; never replay a booking, payment, or other write.
+async function fetchGetWithRetry(path, opts, attempts = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await fetch(path, Object.assign({ credentials: 'same-origin', cache: 'no-store' }, opts || {}));
+      if (![502, 503, 504].includes(response.status) || attempt === attempts - 1) return response;
+      lastError = new Error('Temporary server response (' + response.status + ')');
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof TypeError) || attempt === attempts - 1) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, 300 * Math.pow(2, attempt)));
+  }
+  throw lastError || new Error('Unable to connect to the server.');
+}
 async function api(path, opts) {
   const o = Object.assign({ credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' } }, opts || {});
   if (o.body && typeof o.body !== 'string') o.body = JSON.stringify(o.body);
-  const res = await fetch(path, o);
+  const method = String(o.method || 'GET').toUpperCase();
+  const res = method === 'GET' ? await fetchGetWithRetry(path, o) : await fetch(path, o);
   if (res.status === 401) { showLogin(); throw new Error('unauthorized'); }
   let data = null; try { data = await res.json(); } catch (e) { }
   return { ok: res.ok, status: res.status, data: data || {} };
@@ -626,7 +646,12 @@ async function loadData(first) {
  if(loadingData)return;
  loadingData=true;
  try {
-  const [r,vr]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits')]);
+  const doctorsPromise=(first||!state.doctors.length)?fetchGetWithRetry('/api/doctors',{credentials:'same-origin'}).then(async response=>{
+   if(!response.ok)return [];
+   const data=await response.json();
+   return (Array.isArray(data)?data:(data.doctors||[])).filter(x=>x.is_active!==0).map(x=>({id:x.id,name:x.name}));
+  }).catch(()=>[]):Promise.resolve(null);
+  const [r,vr,doctorList]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits'),doctorsPromise]);
   if(!r.ok){if(first)toast('Unable to load data ('+r.status+')');return;}
   const raw=Array.isArray(r.data)?r.data:(r.data.appointments||[]);
   const appts=raw.map(a=>({
@@ -637,20 +662,28 @@ async function loadData(first) {
   const pendingIds=appts.filter(a=>a.status==='pending').map(a=>String(a.id));
   if(seenPendingIds!==null&&pendingIds.some(id=>!seenPendingIds.has(id))){playAppointmentAlert();toast('New website booking request!');}
   seenPendingIds=new Set(pendingIds);
-  if(vr.ok){state.visits=vr.data.visits||[];state.financialPatients=vr.data.patients||[];}
-  const sig=JSON.stringify(appts)+JSON.stringify(state.visits),changed=sig!==state.sig;
+  if(vr.ok){const cachedHistory=state.visits.filter(v=>state.historyLoaded[Number(v.patient_id)]);const combined=new Map((vr.data.visits||[]).concat(cachedHistory).map(v=>[Number(v.id),v]));state.visits=[...combined.values()];state.financialPatients=vr.data.patients||[];state.financialById=new Map(state.financialPatients.map(p=>[Number(p.id),p]));}
+  const sig=JSON.stringify(appts)+JSON.stringify(vr.ok?(vr.data.visits||[]):[]),changed=sig!==state.sig;
   state.sig=sig;state.appts=appts;
   const pm={};
   appts.forEach(a=>{(pm[a.pid]=pm[a.pid]||{id:a.pid,name:a.name,phone:a.phone,appts:[]}).appts.push(a);});
+  const cachedHistoryAppointments=new Map(state.patients.filter(p=>state.historyLoaded[Number(p.id)]).map(p=>[Number(p.id),p.appts||[]]));
   const merged=new Map(Object.values(pm).map(p=>[Number(p.id),p]));
   (state.financialPatients||[]).forEach(p=>{
    const id=Number(p.id),existing=merged.get(id);
    if(existing){existing.name=p.name||existing.name;existing.phone=p.phone||existing.phone;}
    else merged.set(id,{id,name:p.name||'Unknown',phone:p.phone||'',appts:[]});
   });
+  for(const [id,historyAppts] of cachedHistoryAppointments){
+   const patient=merged.get(id);
+   if(patient){const combinedAppts=new Map(patient.appts.concat(historyAppts).map(a=>[Number(a.id),a]));patient.appts=[...combinedAppts.values()];}
+  }
   state.patients=[...merged.values()].sort((x,y)=>x.id-y.id);
   if(!state.histSel&&state.patients.length)state.histSel=state.patients[0].id;
-  if(first||!state.doctors.length)await loadDoctors();
+  if(doctorList!==null){
+   state.doctors=doctorList;
+   if(!state.doctors.length){const fallback={};appts.forEach(a=>{if(a.did&&a.doc)fallback[a.did]=a.doc;});state.doctors=Object.keys(fallback).map(id=>({id:Number(id),name:fallback[id]}));}
+  }
   const ae=document.activeElement,typing=ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&$('#appView').contains(ae);
   if(first||(changed&&!typing))render();else renderNav();
  }catch(e){if(e&&e.message==='unauthorized')throw e;if(first)toast('Unable to load clinic data. Please try again.');}
@@ -659,7 +692,7 @@ async function loadData(first) {
 async function loadDoctors() {
   let list = [];
   try {
-    const r = await fetch('/api/doctors', { credentials: 'same-origin' });
+    const r = await fetchGetWithRetry('/api/doctors', { credentials: 'same-origin' });
     if (r.ok) { const d = await r.json(); list = (Array.isArray(d) ? d : (d.doctors || [])).filter(x => x.is_active !== 0).map(x => ({ id: x.id, name: x.name })); }
   } catch (e) { }
   if (!list.length) {
@@ -680,6 +713,25 @@ async function setStatus(id, status, msg) {
 }
 
 /* ---------- auth ---------- */
+function announceLoginSuccess() {
+  toast('Login successful. Welcome to Ultimate Esthetics.');
+  if (soundEnabled) {
+    beep();
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const message = new SpeechSynthesisUtterance('Login successful. Welcome to Ultimate Esthetics.');
+        message.rate = 1;
+        window.speechSynthesis.speak(message);
+      }
+    } catch (e) {}
+  }
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Ultimate Esthetics', { body: 'Login successful. Welcome to the Clinic Desk.' });
+    }
+  } catch (e) {}
+}
 function showLogin() {
   if (timer) { clearInterval(timer); timer = null; }
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
@@ -698,6 +750,7 @@ let previewSeedPromise = null;
 async function ensurePreviewSeed(username,password) {
   const host = location.hostname;
   if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
+  try{ if(localStorage.getItem('ue_preview_seeded')==='1') return null; }catch(e){}
   if (!previewSeedPromise) {
     const btn = $('#loginBtn'),wasDisabled=!!btn?.disabled,oldText=btn?.textContent||'Sign In';
     if (btn) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
@@ -713,6 +766,7 @@ async function ensurePreviewSeed(username,password) {
         error.status=response.status;
         throw error;
       }
+      try{localStorage.setItem('ue_preview_seeded','1');}catch(e){}
       return data;
     })().catch(error => {
       previewSeedPromise = null;
@@ -725,32 +779,23 @@ async function ensurePreviewSeed(username,password) {
 }
 async function boot(afterLogin = false) {
   try {
-    const res = await fetch('/api/admin/appointments', { credentials: 'same-origin', cache: 'no-store' });
-    if (res.status === 401) {
-      showLogin();
-      if (afterLogin) {
-        const err = $('#loginErr');
-        err.textContent = 'The password was accepted, but the server did not receive a valid session cookie. Open the latest Preview link (not an older deployment URL), then sign in again.';
-        err.hidden = false;
-      }
-      return false;
-    }
-    if (!res.ok) {
-      showLogin();
-      const err = $('#loginErr');
-      err.textContent = 'Server API error (' + res.status + '). Please check the deployment configuration.';
-      err.hidden = false;
-      return false;
-    }
+    // Render immediately and fetch the account identity alongside dashboard data.
+    // This removes the previous duplicate appointments request from every sign-in.
     showApp();
-    const identity = await fetch('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' });
-    if (identity.ok) { const who = await identity.json(); state.currentUser = who.user || null; }
-    await loadData(true);
+    const [identity] = await Promise.all([
+      (afterLogin && state.currentUser) ? null : fetchGetWithRetry('/api/admin/me', { credentials: 'same-origin', cache: 'no-store' }),
+      loadData(true)
+    ]);
+    if (identity && identity.ok) {
+      const who = await identity.json();
+      state.currentUser = who.user || null;
+      state.loginMethod = who.auth_method || '';
+    }
     render();
     showDriveOAuthResult();
     updateSoundButton();
     refreshNotificationAccessButton().catch(() => {});
-    if (!timer) timer = setInterval(() => loadData(false), 8000);
+    if (!timer) timer = setInterval(() => { if (!document.hidden) loadData(false); }, 15000);
     return true;
   } catch (e) {
     showLogin();
@@ -782,8 +827,16 @@ $('#loginForm').addEventListener('submit', async e => {
     await ensurePreviewSeed($('#uName').value.trim(), $('#uPass').value);
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
-    if (res.ok && d.success === true) { try{localStorage.removeItem('ue_login_locked_until');}catch(x){} $('#uPass').value = ''; seenPendingIds = null; if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
-    await boot(true); }
+    if (res.ok && d.success === true) {
+      try{localStorage.removeItem('ue_login_locked_until');}catch(x){}
+      $('#uPass').value = '';
+      seenPendingIds = null;
+      state.loginMethod = d.auth_method || '';
+      state.currentUser = { username: d.username, role: d.role };
+      if (beepCtx && beepCtx.state === 'suspended') beepCtx.resume();
+      const loaded = await boot(true);
+      if (loaded) announceLoginSuccess();
+    }
     else if (res.status === 423 || d.locked) { showLoginLocked(); }
     else { playWrongPasswordAlert(); err.textContent = d.error || 'Invalid username or password.'; err.hidden = false; toast('Wrong username or password.'); }
   } catch (x) {
@@ -892,7 +945,7 @@ function viewToday() {
       :a.status==='in_room'?'<button class="btn pri sm" data-act="visit" data-id="'+a.id+'">Open form</button> <button class="btn sm" data-act="done" data-id="'+a.id+'">Mark completed</button>'
       :a.status==='no_show'?'<a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(a.phone,'Hello '+a.name+', we missed you today. Would you like to reschedule? Ultimate Esthetics.')+'">New time</a> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>'
       :'<button class="btn sm" data-act="hist" data-p="'+a.pid+'">History</button> <button class="btn sm" data-act="undo" data-id="'+a.id+'">Undo</button>';
-    const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)),bal=Number(fp?.balance||0),invoice=state.visits.find(v=>Number(v.appointment_id)===Number(a.id));
+    const fp=state.financialById.get(Number(a.pid)),bal=Number(fp?.balance||0),invoice=state.visits.find(v=>Number(v.appointment_id)===Number(a.id));
     if(invoice)act+=' <button class="btn sm" data-act="editinvoice" data-id="'+invoice.id+'" aria-label="Edit invoice">✎</button>';
     return '<tr><td class="num nowrap"><b>'+nice(a.date)+'</b><small class="muted" style="display:block">'+t12(a.time)+'</small></td><td class="id">#'+a.pid+(a.token?'<small class="muted" style="display:block">Token #'+a.token+'</small>':'')+'</td><td><div class="who"><div class="avatar">'+initials(a.name)+'</div><div><b>'+esc(a.name)+'</b><small class="num">'+esc(prettyPhone(a.phone))+'</small></div></div></td><td>'+esc(procName(a))+'<small class="muted" style="display:block">'+esc(a.doc)+'</small></td><td>'+stPill(a.status)+'</td><td class="num" style="color:'+(bal?'var(--bad)':'var(--ok)')+'">'+(bal?'Rs '+bal.toLocaleString('en-PK'):'Clear')+'</td><td class="right nowrap">'+act+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="empty">No patients scheduled for this date or month.</td></tr>';
@@ -901,18 +954,17 @@ function viewToday() {
   const selectedCount=all.filter(a=>a.date===selectedDate).length;
   const overallCount=state.patients.length;
   const summary='<div class="patient-summary"><div class="stat-box"><div class="lbl">Selected Date Patients</div><div class="val num">'+selectedCount+'</div><div class="sub">'+nice(selectedDate)+'</div></div><div class="stat-box"><div class="lbl">Overall Patients</div><div class="val num">'+overallCount.toLocaleString('en-PK')+'</div><div class="sub">Unique patient records</div><button class="btn sm" type="button" data-overall-patients style="margin-top:8px">View all patients</button></div></div>';
-  const overallRows=state.patients.map(p=>{const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{};return '<tr><td class="id">#'+p.id+'</td><td><b>'+esc(p.name)+'</b><small class="muted" style="display:block">'+esc(prettyPhone(p.phone))+'</small></td><td class="num">'+Number(fp.visit_count||0)+'</td><td class="num">'+(Number(fp.balance||0)?'Rs '+Number(fp.balance).toLocaleString('en-PK'):'Clear')+'</td><td><button class="btn sm" data-act="hist" data-p="'+p.id+'">History</button> <button class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</button></td></tr>';}).join('')||'<tr><td colspan="5" class="empty">No patient records yet.</td></tr>';
-  const list=state.patientShowOverall?'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">Overall Patients</h2><small class="muted">'+overallCount.toLocaleString('en-PK')+' unique patient records · permanent patient numbers</small></div><button class="btn sm" type="button" data-overall-patients>Back to date-wise</button></div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:600px"><thead><tr><th>Overall No.</th><th>Patient</th><th>Visits</th><th>Balance</th><th></th></tr></thead><tbody>'+overallRows+'</tbody></table></div></div></div>':'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">'+title+'</h2><small class="muted">'+scoped.length+' scheduled patient'+(scoped.length===1?'':'s')+'</small></div><button class="btn pri sm" data-go="manual">Add walk-in</button></div><div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
+  const overallPageSize=100,overallStart=state.overallPage*overallPageSize,overallSlice=state.patientShowOverall?state.patients.slice(overallStart,overallStart+overallPageSize):[];
+  const overallRows=state.patientShowOverall?overallSlice.map(p=>{const fp=state.financialById.get(Number(p.id))||{};return '<tr><td class="id">#'+p.id+'</td><td><b>'+esc(p.name)+'</b><small class="muted" style="display:block">'+esc(prettyPhone(p.phone))+'</small></td><td class="num">'+Number(fp.visit_count||0)+'</td><td class="num">'+(Number(fp.balance||0)?'Rs '+Number(fp.balance).toLocaleString('en-PK'):'Clear')+'</td><td><button class="btn sm" data-act="hist" data-p="'+p.id+'">History</button> <button class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</button></td></tr>';}).join('')||'<tr><td colspan="5" class="empty">No patient records yet.</td></tr>':'<tr><td colspan="5" class="empty">Open Overall Patients to view records.</td></tr>';
+  const overallPager='<div class="row-between" style="padding:12px;align-items:center"><small class="muted">Showing '+(state.patients.length?overallStart+1:0)+'–'+Math.min(overallStart+overallPageSize,state.patients.length)+' of '+state.patients.length+'</small><div class="row" style="gap:8px"><button class="btn sm" data-overall-page="-1" '+(state.overallPage===0?'disabled':'')+'>Previous</button><button class="btn sm" data-overall-page="1" '+(overallStart+overallPageSize>=state.patients.length?'disabled':'')+'>Next</button></div></div>';
+  const list=state.patientShowOverall?'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">Overall Patients</h2><small class="muted">'+overallCount.toLocaleString('en-PK')+' unique patient records · permanent patient numbers</small></div><button class="btn sm" type="button" data-overall-patients>Back to date-wise</button></div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:600px"><thead><tr><th>Overall No.</th><th>Patient</th><th>Visits</th><th>Balance</th><th></th></tr></thead><tbody>'+overallRows+'</tbody></table></div>'+overallPager+'</div></div>':'<div class="patient-list-panel"><div class="card-head"><div><h2 style="font-size:17px">'+title+'</h2><small class="muted">'+scoped.length+' scheduled patient'+(scoped.length===1?'':'s')+'</small></div><button class="btn pri sm" data-go="manual">Add walk-in</button></div><div class="tabs">'+fl.map(f=>'<button class="'+(state.filter===f[0]?'on':'')+'" data-filter="'+f[0]+'">'+f[1]+'<span class="n num">'+(f[0]==='all'?scoped.length:scoped.filter(a=>a.status===f[0]).length)+'</span></button>').join('')+'</div><div class="card"><div class="tbl-wrap"><table class="tbl" style="min-width:700px"><thead><tr><th>Date &amp; time</th><th>ID</th><th>Patient</th><th>Procedure</th><th>Status</th><th>Balance</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div></div>';
   return head('Patients','All accepted appointments and walk-in patients. Choose a date to view that day’s schedule.','')+'<div class="patient-workspace">'+summary+calendar+list+'</div>';
 }
 
 function viewManual() {
   const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
   const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
-  const nextId = state.patients.length ? Math.max(...state.patients.map(p => p.id)) + 1 : 1;
-  const referralOptions = '<option value="">No referral / Other source</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+'</option>').join('');
-  const existingPatientOptions = '<option value="">New patient / Search by phone</option>' + state.patients.map(p => '<option value="'+p.id+'">'+esc(p.name)+' · #'+p.id+' · '+esc(prettyPhone(p.phone))+'</option>').join('');
-  return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
+    return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
     '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
     '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
     '<div class="field"><label for="mExistingSearch">Select existing patient (optional)</label><input class="inp" id="mExistingSearch" placeholder="Search patient by name or phone number..." autocomplete="off"><input type="hidden" id="mExistingPatient"><div class="search-results" id="mExistingResults"></div><small class="hint">Search by name or phone to reuse the same patient ID and payment history.</small></div>' +
@@ -933,15 +985,16 @@ function histList() {
   const q = state.histQ.trim().toLowerCase(), qd = q.replace(/\D/g, '');
   const l = state.patients.filter(p => !q || p.name.toLowerCase().includes(q) || String(p.id) === q.replace('#', '') || (qd.length > 2 && last10(p.phone).includes(qd)));
   if (!l.length) return '<div class="empty">No patients found.</div>';
-  return l.map(p => {const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span><span class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</span></button>';}).join('');
+  return l.map(p => {const fp=state.financialById.get(Number(p.id));return '<button class="pitem' + (p.id === state.histSel ? ' on' : '') + '" data-hp="' + p.id + '"><div class="avatar">' + initials(p.name) + '</div><div><b>' + esc(p.name) + '</b><small><span class="id">#' + p.id + '</span> · ' + Number(fp?.visit_count||0) + ' visits</small></div><span class="pill '+(Number(fp?.balance||0)>0?'bad':'ok')+'">Rs '+Number(fp?.balance||0).toLocaleString('en-PK')+'</span><span class="btn sm" data-act="editpatient" data-p="'+p.id+'" aria-label="Edit patient">✎</span></button>';}).join('');
 }
 function histDetail() {
   const p=state.patients.find(x=>x.id===state.histSel); if(!p)return '<div class="card"><div class="empty">Select a patient.</div></div>';
-  const fp=state.financialPatients.find(x=>Number(x.id)===Number(p.id))||{visit_count:0,billed:0,received:0,balance:0};
+  if(!state.historyLoaded[p.id])return '<div class="card"><div class="empty">Loading this patient’s complete history…</div></div>';
+  const fp=state.financialById.get(Number(p.id))||{visit_count:0,billed:0,received:0,balance:0};
   const list=state.visits.filter(v=>Number(v.patient_id)===Number(p.id)).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   const appt=p.appts.slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
   const fu=fp.follow_up_date;
-  const tl=list.map(v=>'<div class="tl"><div class="d">'+esc(pkDateTime(v.created_at))+'</div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">'+esc(v.invoice_number||'Invoice pending')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span><button class="btn sm" type="button" data-act="editinvoice" data-id="'+v.id+'" aria-label="Edit invoice">✎ Edit invoice</button></div></div></div>').join('');
+  const tl=list.map(v=>'<div class="tl"><div class="d">'+esc(pkDateTime(v.created_at))+'</div><div><b>'+esc((v.procedures||[]).map(x=>x.procedure_name).join(', ')||'Visit')+'</b><p class="muted" style="margin:4px 0;white-space:pre-line">'+esc(v.notes||'')+'</p><div class="req-meta"><span class="chip">'+esc(v.doctor_name||'')+'</span><span class="chip">'+esc(v.invoice_number||'Invoice pending')+'</span><span class="chip">Total Rs '+Number(v.total_amount||0).toLocaleString('en-PK')+'</span><span class="chip">Paid Rs '+Number(v.received||0).toLocaleString('en-PK')+'</span><span class="pill '+(Number(v.total_amount||0)<=Number(v.received||0)?'ok':'bad')+'">Rs '+Math.max(0,Number(v.total_amount||0)-Number(v.received||0)).toLocaleString('en-PK')+' visit due</span><button class="btn sm" type="button" data-act="editinvoice" data-id="'+v.id+'" aria-label="Edit invoice">✎ Edit invoice</button></div></div></div>').join('');
   const bookings=appt.map(a=>'<div class="tl"><div class="d">'+nice(a.date)+'<small>'+t12(a.time)+'</small></div><div><b>'+esc(procName(a))+'</b><div class="req-meta"><span class="chip">'+esc(a.doc)+'</span>'+stPill(a.status)+'</div></div></div>').join('');
   return '<div class="card"><div class="card-head"><div class="who" style="gap:14px"><div class="avatar" style="width:50px;height:50px;font-size:15px">'+initials(p.name)+'</div><div><b style="font-size:18px">'+esc(p.name)+'</b><small class="num"><span class="id">#'+p.id+'</span> · '+esc(prettyPhone(p.phone))+'</small></div></div><a class="btn wa sm" target="_blank" rel="noopener" href="'+waLink(p.phone,'Hello '+p.name+', thank you for contacting Ultimate Esthetics. ')+'">WhatsApp</a></div>'+
   '<div class="stats-grid" style="margin:14px 0;grid-template-columns:repeat(4,minmax(0,1fr))"><div class="stat-box"><div class="lbl">Visits</div><div class="val num">'+Number(fp.visit_count||0)+'</div></div><div class="stat-box"><div class="lbl">Billed</div><div class="val num">Rs '+Number(fp.billed||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Received</div><div class="val num">Rs '+Number(fp.received||0).toLocaleString('en-PK')+'</div></div><div class="stat-box"><div class="lbl">Balance</div><div class="val num" style="color:var(--bad)">Rs '+Number(fp.balance||0).toLocaleString('en-PK')+'</div></div></div>'+
@@ -1014,6 +1067,27 @@ function viewHistory() {
   return head('Patient History', 'Search by name, phone number, or patient ID.', '') +
     '<div class="hist"><div class="card"><div class="field" style="margin-bottom:12px"><label for="hq">Search</label><input class="inp" id="hq" placeholder="Name, phone or #ID" value="' + esc(state.histQ) + '" autocomplete="off"></div><div class="plist" id="plist">' + histList() + '</div></div><div id="hdetail">' + histDetail() + '</div></div>';
 }
+async function loadHistoryForPatient(patientId) {
+ const id=Number(patientId);if(!id||state.historyLoaded[id]||state.historyLoading===id)return;
+ state.historyLoading=id;
+ const detail=$('#hdetail');if(detail&&state.histSel===id)detail.innerHTML='<div class="card"><div class="empty">Loading complete patient history…</div></div>';
+ try{
+  const [result,appointmentResult]=await Promise.all([
+   api('/api/admin/visits?patient_id='+encodeURIComponent(id)),
+   api('/api/admin/appointments?patient_id='+encodeURIComponent(id))
+  ]);
+  if(!result.ok)throw new Error(result.data.error||'Could not load patient history.');
+  if(!appointmentResult.ok)throw new Error(appointmentResult.data.error||'Could not load appointment history.');
+  state.visits=state.visits.filter(v=>Number(v.patient_id)!==id).concat(result.data.visits||[]);
+  const raw=Array.isArray(appointmentResult.data)?appointmentResult.data:(appointmentResult.data.appointments||[]);
+  const patientAppointments=raw.map(a=>({id:a.id,pid:a.patient_id,name:a.patient_name||'Unknown',phone:a.patient_phone||'',did:a.doctor_id,doc:a.doctor_name||'',date:a.date||'',time:String(a.time||'').slice(0,5),proc:a.treatment||'',token:a.daily_token||null,status:a.checked_in_at&&a.status==='confirmed'?'in_room':(a.status==='noshow'?'no_show':a.status),source:a.source||'',fu:a.follow_up_date||''}));
+  state.appts=state.appts.filter(a=>Number(a.pid)!==id).concat(patientAppointments);
+  const patient=state.patients.find(p=>Number(p.id)===id);if(patient)patient.appts=patientAppointments;
+  state.historyLoaded[id]=true;
+  if(state.histSel===id){const node=$('#hdetail');if(node)node.innerHTML=histDetail();}
+ }catch(error){if(error.message!=='unauthorized')toast(error.message||'Patient history could not be loaded.');}
+ finally{state.historyLoading=0;}
+}
 
 
 /* ---------- render + events ---------- */
@@ -1032,7 +1106,7 @@ const INVOICE_TREATMENTS=['Hair transplant','Hair PRP','Hair exosomes','PRGF (3 
 function procedureSelectOptions(selected){const values=[...INVOICE_TREATMENTS];if(selected&&!values.some(x=>x.toLowerCase()===String(selected).toLowerCase()))values.unshift(String(selected));return '<option value="">Select treatment</option>'+values.map(x=>'<option value="'+esc(x)+'"'+(x.toLowerCase()===String(selected||'').toLowerCase()?' selected':'')+'>'+esc(x)+'</option>').join('');}
 function openVisitForm(id) {
  const a=state.appts.find(x=>Number(x.id)===Number(id)); if(!a){toast('Appointment details could not be loaded.');return;}
- const fp=state.financialPatients.find(p=>Number(p.id)===Number(a.pid)); const prev=Number(fp?.balance||0);
+ const fp=state.financialById.get(Number(a.pid)); const prev=Number(fp?.balance||0);
  const previousVisits=state.visits.filter(v=>Number(v.patient_id)===Number(a.pid)).sort((x,y)=>String(y.created_at).localeCompare(String(x.created_at)));
  const previousVisit=previousVisits[0]||null, repeated=previousVisits.length>0;
  const sameDoctor=previousVisit&&String(previousVisit.doctor_name||'').trim().toLowerCase()===String(a.doc||'').trim().toLowerCase();
@@ -1115,7 +1189,7 @@ function openInvoiceEditor(id){
  $('#visitReceived').value=String(alreadyPaid);$('#visitReceived').disabled=false;
  const lastPayment=(v.payments||[]).slice(-1)[0];
  $('#visitMethod').value=lastPayment?.method||'cash';$('#visitMethod').disabled=false;
- const fp=state.financialPatients.find(p=>Number(p.id)===Number(v.patient_id));
+ const fp=state.financialById.get(Number(v.patient_id));
  const outstanding=Math.max(0,Number(v.total_amount||0)-alreadyPaid);
  const previous=Math.max(0,Number(fp?.balance||0)-outstanding);
  $('#visitPrevValue').textContent=previous.toLocaleString('en-PK');
@@ -1223,8 +1297,15 @@ async function openGoogleDrivePicker(){
 async function loadSecurity(){try{const r=await api('/api/admin/security');if(r.ok){state.security=r.data;if(state.page==='security'){const values={};['pwCurrent','pwNew','pwAgain','staffOwnerPw','staffNewPw','staffAgainPw','driveRootName'].forEach(id=>{const el=$('#'+id);if(el)values[id]=el.value;});const focused=document.activeElement&&document.activeElement.id;render();Object.entries(values).forEach(([id,value])=>{const el=$('#'+id);if(el)el.value=value;});if(focused){const el=$('#'+focused);if(el)el.focus({preventScroll:true});}}}else if(r.status!==401)toast(r.data.error||'Security data load failed.');}catch(e){}}
 let securityAutoRefresh=null;
 function startSecurityAutoRefresh(){if(securityAutoRefresh)clearInterval(securityAutoRefresh);securityAutoRefresh=setInterval(()=>{if(!document.hidden&&state.page==='security')loadSecurity();},5000);}
-function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); }
-function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); window.scrollTo(0, 0); }
+function renderSignedInIdentity() {
+  const label = $('#signedInLabel');
+  if (!label) return;
+  const username = state.currentUser?.username || 'Account';
+  const method = state.loginMethod ? ' · via ' + state.loginMethod : '';
+  label.textContent = 'Logged in: ' + username + method;
+}
+function render() { $('#view').innerHTML = (VIEWS[state.page] || viewDashboard)(); renderNav(); renderSignedInIdentity(); }
+function go(p) { state.page = p; if(p==='profile'){state.profileUnlocked=false;state.profile=null;} render(); if(p==='security') loadSecurity(); if(p==='history'&&state.histSel)loadHistoryForPatient(state.histSel); window.scrollTo(0, 0); }
 
 
 async function runDriveBackfill(showToast=true){
@@ -1377,9 +1458,9 @@ document.addEventListener('click', async e => {
   const calNext=e.target.closest('[data-cal-next]'); if(calNext){const [y,m]=state.calendarMonth.split('-').map(Number),d=new Date(Date.UTC(y,m,1));state.calendarMonth=d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1);render();return;}
   if(e.target.closest('[data-cal-today]')){state.patientDate=todayStr();state.calendarMonth=todayStr().slice(0,7);render();return;}
   if(e.target.closest('[data-date-all]')){state.patientShowOverall=false;state.patientDate=null;render();return;}
-  const overallPatients=e.target.closest('[data-overall-patients]');if(overallPatients){state.patientShowOverall=!state.patientShowOverall;render();return;} const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientShowOverall=false;state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
+  const overallPage=e.target.closest('[data-overall-page]');if(overallPage){state.overallPage=Math.max(0,Math.min(Math.ceil(state.patients.length/100)-1,state.overallPage+Number(overallPage.dataset.overallPage)));render();return;} const overallPatients=e.target.closest('[data-overall-patients]');if(overallPatients){state.patientShowOverall=!state.patientShowOverall;state.overallPage=0;render();return;} const patientDate=e.target.closest('[data-patient-date]');if(patientDate){state.patientShowOverall=false;state.patientDate=patientDate.dataset.patientDate;state.calendarMonth=state.patientDate.slice(0,7);render();return;}
   const editPatientBtn=e.target.closest('[data-act="editpatient"]');if(editPatientBtn){openPatientEditor(Number(editPatientBtn.dataset.p));return;}
-  const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); return; }
+  const hp = e.target.closest('[data-hp]'); if (hp) { state.histSel = Number(hp.dataset.hp); $('#plist').innerHTML = histList(); $('#hdetail').innerHTML = histDetail(); loadHistoryForPatient(state.histSel); return; }
   const removeProcedure=e.target.closest('.remove-procedure');if(removeProcedure){const box=$('#visitProcedures');removeProcedure.closest('.proc-line').remove();const total=$('#visitTotal');total.value=[...box.querySelectorAll('[name=fee]')].reduce((n,x)=>n+Number(x.value||0),0);total.dispatchEvent(new Event('input'));return;}
   if(e.target.closest('[data-close-patient-edit]')){document.getElementById('patientEditModal')?.remove();return;}
   const b = e.target.closest('[data-act]'); if (!b) return;

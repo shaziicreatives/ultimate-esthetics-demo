@@ -1,0 +1,33 @@
+# Ultimate Esthetics
+
+> Ultimate Esthetics is a skin, hair and body aesthetic clinic in Rawalpindi, Pakistan.
+
+## Official website
+- https://ultimate-esthetics-demo.pages.dev/
+
+## Location and contact
+- Address: Al-ain Arcade, Old Airport Road, Rawalpindi 46000, Pakistan
+- Phone: +92 312 5393234
+- Email: dreamerz2829@gmail.com
+- Instagram: https://instagram.com/ultimateesthetics1
+- Opening hours listed on the website: Monday to Saturday, 11:00 AM to 8:00 PM.
+
+## Services listed on the website
+- Hair transplant
+- Hair PRP
+- Hair exosomes
+- PRGF
+- Hydrafacial
+- PRP and microneedling
+- Dermapen microneedling
+- Acne and scar treatment
+- Laser treatment
+- Skin brightening
+- Glow drip
+
+## Booking
+Visitors can request a consultation through the booking form on the official website. Appointment requests are subject to clinic confirmation.
+
+## Notes
+- Service availability, pricing, and suitability should be confirmed directly with the clinic.
+- This file is informational and is not medical advice.

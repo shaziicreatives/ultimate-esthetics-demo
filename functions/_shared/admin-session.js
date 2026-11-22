@@ -1,6 +1,12 @@
 // Shared admin-session validation for all authenticated Pages Functions.
 const COOKIE_NAME = "admin_token";
 
+// Short-lived per-isolate cache so a burst of dashboard requests does not
+// query D1 for the same session on every API call.
+const SESSION_CACHE_TTL_MS = 20000;
+const SESSION_CACHE_MAX = 500;
+const sessionCache = new Map();
+
 function readCookie(request, name) {
   const header = request.headers.get("Cookie") || "";
   for (const part of header.split(";")) {
@@ -12,6 +18,10 @@ function readCookie(request, name) {
     try { return decodeURIComponent(raw); } catch { return raw; }
   }
   return null;
+}
+
+export function forgetAdminSession(tokenHash) {
+  if (tokenHash) sessionCache.delete(tokenHash);
 }
 
 export async function getAdminSession(request, env) {
@@ -27,6 +37,12 @@ export async function getAdminSession(request, env) {
     .map(byte => byte.toString(16).padStart(2, "0"))
     .join("");
 
+  const cached = sessionCache.get(tokenHash);
+  if (cached) {
+    if (cached.expires > Date.now()) return { ...cached.user };
+    sessionCache.delete(tokenHash);
+  }
+
   // Normalize the legacy Admin account, which older schemas stored as role='owner'.
   const user = await env.DB.prepare(
     `SELECT s.id AS session_id, s.user_id, u.username, u.email,
@@ -39,6 +55,12 @@ export async function getAdminSession(request, env) {
   ).bind(tokenHash).first();
   if (user && user.role === 'owner' && String(user.username).toLowerCase() === 'admin') {
     user.role = 'admin';
+  }
+  if (user) {
+    if (sessionCache.size >= SESSION_CACHE_MAX) {
+      sessionCache.delete(sessionCache.keys().next().value);
+    }
+    sessionCache.set(tokenHash, { user: { ...user }, expires: Date.now() + SESSION_CACHE_TTL_MS });
   }
   return user;
 }
