@@ -662,12 +662,17 @@ async function loadData(first) {
   state.sig=sig;state.appts=appts;
   const pm={};
   appts.forEach(a=>{(pm[a.pid]=pm[a.pid]||{id:a.pid,name:a.name,phone:a.phone,appts:[]}).appts.push(a);});
+  const cachedHistoryAppointments=new Map(state.patients.filter(p=>state.historyLoaded[Number(p.id)]).map(p=>[Number(p.id),p.appts||[]]));
   const merged=new Map(Object.values(pm).map(p=>[Number(p.id),p]));
   (state.financialPatients||[]).forEach(p=>{
    const id=Number(p.id),existing=merged.get(id);
    if(existing){existing.name=p.name||existing.name;existing.phone=p.phone||existing.phone;}
    else merged.set(id,{id,name:p.name||'Unknown',phone:p.phone||'',appts:[]});
   });
+  for(const [id,historyAppts] of cachedHistoryAppointments){
+   const patient=merged.get(id);
+   if(patient){const combinedAppts=new Map(patient.appts.concat(historyAppts).map(a=>[Number(a.id),a]));patient.appts=[...combinedAppts.values()];}
+  }
   state.patients=[...merged.values()].sort((x,y)=>x.id-y.id);
   if(!state.histSel&&state.patients.length)state.histSel=state.patients[0].id;
   if(first||!state.doctors.length)await loadDoctors();
