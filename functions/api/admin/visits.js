@@ -6,11 +6,27 @@ export async function onRequestGet({request,env}) {
  const u=await getAdminSession(request,env); if(!u)return json({error:"Unauthorized"},401);
  // Doctors may review prior invoices for continuity of care; all write operations remain restricted to authorized staff.
  const rows=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) received FROM visits v JOIN patients p ON p.id=v.patient_id JOIN doctors d ON d.id=v.doctor_id ORDER BY v.created_at DESC LIMIT 500").all();
+ const visitRows=rows.results||[];
  const visits=[];
- for(const row of rows.results){
-  const procedures=await env.DB.prepare("SELECT procedure_name,fee FROM visit_procedures WHERE visit_id=?").bind(row.id).all();
-  const payments=await env.DB.prepare("SELECT amount,method,reference,created_at FROM payments WHERE visit_id=? ORDER BY created_at").bind(row.id).all();
-  visits.push({...row,procedures:procedures.results,payments:payments.results});
+ if(visitRows.length){
+  const ids=visitRows.map(row=>row.id);
+  const placeholders=ids.map(()=>"?").join(",");
+  const [procedureRows,paymentRows]=await Promise.all([
+   env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+placeholders+")").bind(...ids).all(),
+   env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+placeholders+") ORDER BY created_at").bind(...ids).all()
+  ]);
+  const proceduresByVisit=new Map(),paymentsByVisit=new Map();
+  for(const item of procedureRows.results||[]){
+   if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);
+   proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});
+  }
+  for(const item of paymentRows.results||[]){
+   if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);
+   paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});
+  }
+  for(const row of visitRows){
+   visits.push({...row,procedures:proceduresByVisit.get(row.id)||[],payments:paymentsByVisit.get(row.id)||[]});
+  }
  }
  const patientRows=await env.DB.prepare("SELECT p.id,p.name,p.phone,p.referred_by_patient_id,p.referral_notes,(SELECT rp.name FROM patients rp WHERE rp.id=p.referred_by_patient_id) referred_by_name,COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=p.id),0) billed,COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=p.id),0) received,(SELECT COUNT(*) FROM visits WHERE patient_id=p.id) visit_count,MAX((SELECT MAX(follow_up_date) FROM visits WHERE patient_id=p.id AND follow_up_date IS NOT NULL),(SELECT MAX(follow_up_date) FROM appointments WHERE patient_id=p.id AND follow_up_date IS NOT NULL)) follow_up_date FROM patients p ORDER BY p.name").all();
  const patients=patientRows.results.map(p=>({...p,balance:Math.max(0,p.billed-p.received)}));
