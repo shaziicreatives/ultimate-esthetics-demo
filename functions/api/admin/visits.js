@@ -9,21 +9,25 @@ export async function onRequestGet({request,env}) {
  const visitRows=rows.results||[];
  const visits=[];
  if(visitRows.length){
-  const ids=visitRows.map(row=>row.id);
-  const placeholders=ids.map(()=>"?").join(",");
-  const [procedureRows,paymentRows]=await Promise.all([
-   env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+placeholders+")").bind(...ids).all(),
-   env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+placeholders+") ORDER BY created_at").bind(...ids).all()
-  ]);
   const proceduresByVisit=new Map(),paymentsByVisit=new Map();
-  for(const item of procedureRows.results||[]){
-   if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);
-   proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});
-  }
-  for(const item of paymentRows.results||[]){
-   if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);
-   paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});
-  }
+  // D1 allows at most 100 bound parameters per query. Keep each batch below that limit.
+  const chunks=[];
+  for(let start=0;start<visitRows.length;start+=80)chunks.push(visitRows.slice(start,start+80));
+  await Promise.all(chunks.map(async chunk=>{
+   const ids=chunk.map(row=>row.id),placeholders=ids.map(()=>"?").join(",");
+   const [procedureRows,paymentRows]=await Promise.all([
+    env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+placeholders+")").bind(...ids).all(),
+    env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+placeholders+") ORDER BY created_at").bind(...ids).all()
+   ]);
+   for(const item of procedureRows.results||[]){
+    if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);
+    proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});
+   }
+   for(const item of paymentRows.results||[]){
+    if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);
+    paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});
+   }
+  }));
   for(const row of visitRows){
    visits.push({...row,procedures:proceduresByVisit.get(row.id)||[],payments:paymentsByVisit.get(row.id)||[]});
   }
