@@ -1,3 +1,4 @@
+import { forgetAdminSession } from "../../_shared/admin-session.js";
 export async function onRequestPost(context) {
   try {
     const { env, request } = context;
@@ -7,6 +8,7 @@ export async function onRequestPost(context) {
       const token = decodeURIComponent(match[1]);
       const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
       const hash = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+      forgetAdminSession(hash);
       await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(hash).run();
     }
     return new Response(JSON.stringify({ success: true }), {
