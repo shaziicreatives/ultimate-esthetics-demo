@@ -69,10 +69,17 @@ export async function onRequestPost(context) {
       env.DB.prepare("UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login_at = CURRENT_TIMESTAMP WHERE id = ?").bind(user.id),
       env.DB.prepare("INSERT INTO activity_log (user_id, username, action, entity, details, ip) VALUES (?, ?, 'login', 'session', ?, ?)").bind(user.id, user.username, usedEmergencyCredential ? "Login successful via owner-controlled emergency credential" : "Admin login successful", ip)
     );
+    // Periodic housekeeping keeps login-attempt and expired-session tables bounded.
+    if (Math.random() < 0.05) {
+      successfulWrites.push(
+        env.DB.prepare("DELETE FROM login_attempts WHERE created_at < datetime('now', '-2 days')"),
+        env.DB.prepare("DELETE FROM sessions WHERE datetime(expires_at) < datetime('now', '-1 day')")
+      );
+    }
     await env.DB.batch(successfulWrites);
 
     const cookie = "admin_token=" + token + "; HttpOnly; Secure; Path=/; Max-Age=43200; SameSite=Lax";
-    return new Response(JSON.stringify({ success: true, role: user.role, auth_method: usedEmergencyCredential ? "Developer password" : "Personal password" }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
+    return new Response(JSON.stringify({ success: true, username: user.username, role: user.role, auth_method: usedEmergencyCredential ? "Developer password" : "Personal password" }), { headers: { "Content-Type": "application/json", "Set-Cookie": cookie, "Cache-Control": "no-store" } });
   } catch (err) {
     return new Response(JSON.stringify({ error: "Login failed. Please check the server configuration." }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
