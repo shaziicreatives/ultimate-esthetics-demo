@@ -646,7 +646,12 @@ async function loadData(first) {
  if(loadingData)return;
  loadingData=true;
  try {
-  const [r,vr]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits')]);
+  const doctorsPromise=(first||!state.doctors.length)?fetchGetWithRetry('/api/doctors',{credentials:'same-origin'}).then(async response=>{
+   if(!response.ok)return [];
+   const data=await response.json();
+   return (Array.isArray(data)?data:(data.doctors||[])).filter(x=>x.is_active!==0).map(x=>({id:x.id,name:x.name}));
+  }).catch(()=>[]):Promise.resolve(null);
+  const [r,vr,doctorList]=await Promise.all([api('/api/admin/appointments'),api('/api/admin/visits'),doctorsPromise]);
   if(!r.ok){if(first)toast('Unable to load data ('+r.status+')');return;}
   const raw=Array.isArray(r.data)?r.data:(r.data.appointments||[]);
   const appts=raw.map(a=>({
@@ -675,7 +680,10 @@ async function loadData(first) {
   }
   state.patients=[...merged.values()].sort((x,y)=>x.id-y.id);
   if(!state.histSel&&state.patients.length)state.histSel=state.patients[0].id;
-  if(first||!state.doctors.length)await loadDoctors();
+  if(doctorList!==null){
+   state.doctors=doctorList;
+   if(!state.doctors.length){const fallback={};appts.forEach(a=>{if(a.did&&a.doc)fallback[a.did]=a.doc;});state.doctors=Object.keys(fallback).map(id=>({id:Number(id),name:fallback[id]}));}
+  }
   const ae=document.activeElement,typing=ae&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&$('#appView').contains(ae);
   if(first||(changed&&!typing))render();else renderNav();
  }catch(e){if(e&&e.message==='unauthorized')throw e;if(first)toast('Unable to load clinic data. Please try again.');}
