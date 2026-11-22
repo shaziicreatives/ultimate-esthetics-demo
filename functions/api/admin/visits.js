@@ -4,36 +4,58 @@ import { syncVisitToDrive, syncPatientToDrive } from "../../_shared/google-drive
 const json=(v,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
 export async function onRequestGet({request,env}) {
  const u=await getAdminSession(request,env); if(!u)return json({error:"Unauthorized"},401);
- // Doctors may review prior invoices for continuity of care; all write operations remain restricted to authorized staff.
- const rows=await env.DB.prepare("SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE((SELECT SUM(amount) FROM payments WHERE visit_id=v.id),0) received FROM visits v JOIN patients p ON p.id=v.patient_id JOIN doctors d ON d.id=v.doctor_id ORDER BY v.created_at DESC LIMIT 500").all();
- const visitRows=rows.results||[];
- const visits=[];
+ const url=new URL(request.url),patientId=Number(url.searchParams.get("patient_id")||0);
+ if(url.searchParams.has("patient_id")&&(!Number.isSafeInteger(patientId)||patientId<1))return json({error:"Invalid patient ID"},400);
+ // Load only the latest 100 invoices for the dashboard. Full history is fetched on demand per patient.
+ const visitSql=`SELECT v.*,p.name patient_name,p.phone,d.name doctor_name,COALESCE(pay.received,0) received
+  FROM visits v
+  JOIN patients p ON p.id=v.patient_id
+  JOIN doctors d ON d.id=v.doctor_id
+  LEFT JOIN (SELECT visit_id,SUM(amount) received FROM payments GROUP BY visit_id) pay ON pay.visit_id=v.id
+  ${patientId?"WHERE v.patient_id=?":""}
+  ORDER BY v.created_at DESC ${patientId?"":"LIMIT 100"}`;
+ const visitStmt=env.DB.prepare(visitSql);
+ const rows=patientId?await visitStmt.bind(patientId).all():await visitStmt.all();
+ const visitRows=rows.results||[],visits=[];
  if(visitRows.length){
-  const proceduresByVisit=new Map(),paymentsByVisit=new Map();
-  // D1 allows at most 100 bound parameters per query. Keep each batch below that limit.
-  const chunks=[];
+  const proceduresByVisit=new Map(),paymentsByVisit=new Map(),chunks=[];
   for(let start=0;start<visitRows.length;start+=80)chunks.push(visitRows.slice(start,start+80));
   await Promise.all(chunks.map(async chunk=>{
-   const ids=chunk.map(row=>row.id),placeholders=ids.map(()=>"?").join(",");
-   const [procedureRows,paymentRows]=await Promise.all([
-    env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+placeholders+")").bind(...ids).all(),
-    env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+placeholders+") ORDER BY created_at").bind(...ids).all()
+   const ids=chunk.map(row=>row.id),marks=ids.map(()=>"?").join(",");
+   const [pr,pa]=await Promise.all([
+    env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+marks+")").bind(...ids).all(),
+    env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+marks+") ORDER BY created_at").bind(...ids).all()
    ]);
-   for(const item of procedureRows.results||[]){
-    if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);
-    proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});
-   }
-   for(const item of paymentRows.results||[]){
-    if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);
-    paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});
-   }
+   for(const item of pr.results||[]){if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});}
+   for(const item of pa.results||[]){if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});}
   }));
-  for(const row of visitRows){
-   visits.push({...row,procedures:proceduresByVisit.get(row.id)||[],payments:paymentsByVisit.get(row.id)||[]});
-  }
+  for(const row of visitRows)visits.push({...row,procedures:proceduresByVisit.get(row.id)||[],payments:paymentsByVisit.get(row.id)||[]});
  }
- const patientRows=await env.DB.prepare("SELECT p.id,p.name,p.phone,p.referred_by_patient_id,p.referral_notes,(SELECT rp.name FROM patients rp WHERE rp.id=p.referred_by_patient_id) referred_by_name,COALESCE((SELECT SUM(total_amount) FROM visits WHERE patient_id=p.id),0) billed,COALESCE((SELECT SUM(amount) FROM payments WHERE patient_id=p.id),0) received,(SELECT COUNT(*) FROM visits WHERE patient_id=p.id) visit_count,MAX((SELECT MAX(follow_up_date) FROM visits WHERE patient_id=p.id AND follow_up_date IS NOT NULL),(SELECT MAX(follow_up_date) FROM appointments WHERE patient_id=p.id AND follow_up_date IS NOT NULL)) follow_up_date FROM patients p ORDER BY p.name").all();
- const patients=patientRows.results.map(p=>({...p,balance:Math.max(0,p.billed-p.received)}));
+ if(patientId)return json({visits});
+ // Aggregate each table once instead of running multiple correlated subqueries for every patient.
+ const patientRows=await env.DB.prepare(`
+  WITH visit_totals AS (
+   SELECT patient_id,SUM(total_amount) billed,COUNT(*) visit_count,MAX(follow_up_date) visit_follow_up
+   FROM visits GROUP BY patient_id
+  ),
+  payment_totals AS (
+   SELECT patient_id,SUM(amount) received FROM payments GROUP BY patient_id
+  ),
+  appointment_followups AS (
+   SELECT patient_id,MAX(follow_up_date) appointment_follow_up
+   FROM appointments WHERE follow_up_date IS NOT NULL GROUP BY patient_id
+  )
+  SELECT p.id,p.name,p.phone,p.referred_by_patient_id,p.referral_notes,rp.name referred_by_name,
+   COALESCE(vt.billed,0) billed,COALESCE(pt.received,0) received,COALESCE(vt.visit_count,0) visit_count,
+   NULLIF(MAX(COALESCE(vt.visit_follow_up,''),COALESCE(af.appointment_follow_up,'')),'') follow_up_date
+  FROM patients p
+  LEFT JOIN patients rp ON rp.id=p.referred_by_patient_id
+  LEFT JOIN visit_totals vt ON vt.patient_id=p.id
+  LEFT JOIN payment_totals pt ON pt.patient_id=p.id
+  LEFT JOIN appointment_followups af ON af.patient_id=p.id
+  ORDER BY p.name
+ `).all();
+ const patients=(patientRows.results||[]).map(p=>({...p,balance:Math.max(0,Number(p.billed||0)-Number(p.received||0))}));
  return json({visits,patients});
 }
 export async function onRequestPost(context) {
