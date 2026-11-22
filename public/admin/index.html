@@ -657,7 +657,7 @@ async function loadData(first) {
   const pendingIds=appts.filter(a=>a.status==='pending').map(a=>String(a.id));
   if(seenPendingIds!==null&&pendingIds.some(id=>!seenPendingIds.has(id))){playAppointmentAlert();toast('New website booking request!');}
   seenPendingIds=new Set(pendingIds);
-  if(vr.ok){state.visits=vr.data.visits||[];state.financialPatients=vr.data.patients||[];}
+  if(vr.ok){const cachedHistory=state.visits.filter(v=>state.historyLoaded[Number(v.patient_id)]);const combined=new Map((vr.data.visits||[]).concat(cachedHistory).map(v=>[Number(v.id),v]));state.visits=[...combined.values()];state.financialPatients=vr.data.patients||[];}
   const sig=JSON.stringify(appts)+JSON.stringify(state.visits),changed=sig!==state.sig;
   state.sig=sig;state.appts=appts;
   const pm={};
