@@ -19,15 +19,17 @@ export async function onRequestGet({request,env}) {
  if(visitRows.length){
   const proceduresByVisit=new Map(),paymentsByVisit=new Map(),chunks=[];
   for(let start=0;start<visitRows.length;start+=80)chunks.push(visitRows.slice(start,start+80));
-  await Promise.all(chunks.map(async chunk=>{
-   const ids=chunk.map(row=>row.id),marks=ids.map(()=>"?").join(",");
-   const [pr,pa]=await Promise.all([
-    env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+marks+")").bind(...ids).all(),
-    env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+marks+") ORDER BY created_at").bind(...ids).all()
-   ]);
-   for(const item of pr.results||[]){if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});}
-   for(const item of pa.results||[]){if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});}
-  }));
+  for(let batch=0;batch<chunks.length;batch+=2){
+   await Promise.all(chunks.slice(batch,batch+2).map(async chunk=>{
+    const ids=chunk.map(row=>row.id),marks=ids.map(()=>"?").join(",");
+    const [pr,pa]=await Promise.all([
+     env.DB.prepare("SELECT visit_id,procedure_name,fee FROM visit_procedures WHERE visit_id IN ("+marks+")").bind(...ids).all(),
+     env.DB.prepare("SELECT visit_id,amount,method,reference,created_at FROM payments WHERE visit_id IN ("+marks+") ORDER BY created_at").bind(...ids).all()
+    ]);
+    for(const item of pr.results||[]){if(!proceduresByVisit.has(item.visit_id))proceduresByVisit.set(item.visit_id,[]);proceduresByVisit.get(item.visit_id).push({procedure_name:item.procedure_name,fee:item.fee});}
+    for(const item of pa.results||[]){if(!paymentsByVisit.has(item.visit_id))paymentsByVisit.set(item.visit_id,[]);paymentsByVisit.get(item.visit_id).push({amount:item.amount,method:item.method,reference:item.reference,created_at:item.created_at});}
+   }));
+  }
   for(const row of visitRows){
    const paymentList=paymentsByVisit.get(row.id)||[];
    const received=paymentList.reduce((sum,p)=>sum+Number(p.amount||0),0);
