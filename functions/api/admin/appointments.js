@@ -9,6 +9,11 @@ export async function onRequestGet(context) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
         }
 
+        const url = new URL(request.url);
+        const patientId = Number(url.searchParams.get("patient_id") || 0);
+        if (url.searchParams.has("patient_id") && (!Number.isSafeInteger(patientId) || patientId < 1)) {
+            return new Response(JSON.stringify({ error: "Invalid patient ID" }), { status: 400, headers: { "Content-Type": "application/json" } });
+        }
         let query = `
             SELECT a.*, p.name as patient_name, p.phone as patient_phone, d.name as doctor_name,
                    dt.token AS daily_token, dt.clinic_date AS token_date
@@ -17,15 +22,11 @@ export async function onRequestGet(context) {
             JOIN doctors d ON a.doctor_id = d.id
             LEFT JOIN appointment_daily_tokens dt ON dt.appointment_id = a.id
         `;
-
-        let bindings = [];
-        if (session.role === 'doctor') {
-            query += " WHERE a.doctor_id = ?";
-            bindings.push(session.doctor_id);
-        }
-
-        query += " ORDER BY a.date DESC, a.time DESC LIMIT 1000";
-
+        const conditions = [], bindings = [];
+        if (session.role === 'doctor') { conditions.push("a.doctor_id = ?"); bindings.push(session.doctor_id); }
+        if (patientId) { conditions.push("a.patient_id = ?"); bindings.push(patientId); }
+        if (conditions.length) query += " WHERE " + conditions.join(" AND ");
+        query += patientId ? " ORDER BY a.date DESC, a.time DESC" : " ORDER BY a.date DESC, a.time DESC LIMIT 1000";
         const { results } = await env.DB.prepare(query).bind(...bindings).all();
 
         return new Response(JSON.stringify({ appointments: results }), {
