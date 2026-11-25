@@ -964,6 +964,7 @@ function viewToday() {
 function viewManual() {
   const procs = [...new Set(state.appts.map(a => a.proc).filter(Boolean))];
   const docs = state.doctors.length ? state.doctors.map(d => '<option value="' + d.id + '">' + esc(d.name) + '</option>').join('') : '<option value="">No doctors available</option>';
+  const nextId = Math.max(0, ...state.patients.map(p => Number(p.id) || 0), ...state.appts.map(a => Number(a.pid) || 0)) + 1;
     return head('Manual Patient', 'Create appointments for walk-in and phone patients. Existing patients are matched by phone number.', '') +
     '<div class="two-col" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="card"><div class="card-head"><h2>Patient details</h2></div>' +
     '<form id="manualForm" style="display:flex;flex-direction:column;gap:14px" autocomplete="off">' +
