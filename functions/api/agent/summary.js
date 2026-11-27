@@ -43,12 +43,11 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: "Unauthorized." }, 401);
   }
 
-  const contentLength = Number(request.headers.get("Content-Length") || 0);
-  if (contentLength > 1024) return json({ ok: false, error: "Request is too large." }, 413);
-
   let body;
   try {
-    body = await request.json();
+    const raw = await request.arrayBuffer();
+    if (raw.byteLength > 1024) return json({ ok: false, error: "Request is too large." }, 413);
+    body = JSON.parse(new TextDecoder().decode(raw) || "{}");
   } catch {
     return json({ ok: false, error: "Invalid JSON request." }, 400);
   }
