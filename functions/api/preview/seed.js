@@ -8,6 +8,12 @@ const TABLE_ORDER = [
  "settings","user_permissions"
 ];
 const quote = value => '"' + String(value).replace(/"/g,'""') + '"';
+// Do not clone short-lived credentials or external-service secrets into Preview.
+const SKIP_TABLES = new Set([
+ "sessions","login_attempts","password_resets","email_verification_tokens",
+ "google_drive_oauth_states","google_drive_connections","google_drive_sync_jobs",
+ "push_subscriptions","email_changes"
+]);
 const migration0009 = `
 CREATE TABLE IF NOT EXISTS google_drive_connections (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -175,7 +181,7 @@ export async function onRequestPost({request,env}) {
    const schema = await env.SOURCE_DB.prepare(
      "SELECT name,sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name <> '_cf_KV' ORDER BY name"
    ).all();
-   const tables = schema.results || [];
+   const tables = (schema.results || []).filter(t => !SKIP_TABLES.has(t.name));
    const byName = new Map(tables.map(t => [t.name,t]));
    const ordered = [...TABLE_ORDER.filter(n => byName.has(n)),
                     ...tables.map(t => t.name).filter(n => !TABLE_ORDER.includes(n))];
@@ -219,9 +225,11 @@ export async function onRequestPost({request,env}) {
    }
 
    const indexes = await env.SOURCE_DB.prepare(
-     "SELECT sql FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY name"
+     "SELECT tbl_name,sql FROM sqlite_master WHERE type='index' AND sql IS NOT NULL ORDER BY name"
    ).all();
-   for (const item of indexes.results || []) await env.DB.prepare(item.sql).run();
+   for (const item of indexes.results || []) {
+     if (!SKIP_TABLES.has(item.tbl_name)) await env.DB.prepare(item.sql).run();
+   }
 
    await env.DB.exec(migration0009);
    await env.DB.exec(migration0010);
