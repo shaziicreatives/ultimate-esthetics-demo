@@ -1,6 +1,5 @@
-// Private, read-only connector endpoint for Creative Clan AI Business Agent.
-// Exposes aggregate clinic activity only. No patient names, contact details,
-// clinical notes, invoices, or individual records are returned.
+import { verifyClinicAssertion } from "../../_shared/ai-agent-assertion.js";
+
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: {
@@ -10,15 +9,6 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
     "referrer-policy": "no-referrer"
   }
 });
-
-function constantTimeEqual(a, b) {
-  const left = new TextEncoder().encode(String(a || ""));
-  const right = new TextEncoder().encode(String(b || ""));
-  let diff = left.length ^ right.length;
-  const size = Math.max(left.length, right.length);
-  for (let i = 0; i < size; i++) diff |= (left[i] || 0) ^ (right[i] || 0);
-  return diff === 0;
-}
 
 function clinicDate() {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -32,15 +22,39 @@ function clinicDate() {
 }
 
 export async function onRequestPost({ request, env }) {
-  const configuredToken = String(env.AI_AGENT_CONNECTOR_TOKEN || "");
-  if (configuredToken.length < 32) {
-    return json({ ok: false, error: "AI connector is not configured." }, 503);
+  const secret = String(env.AI_AGENT_BRIDGE_HMAC_SECRET || "");
+  const configuredBusinessId = String(env.AI_AGENT_BUSINESS_ID || "");
+  if (secret.length < 32 || !/^[0-9a-fA-F-]{36}$/.test(configuredBusinessId) || !env.DB) {
+    return json({ ok: false, error: "Secure AI connector is not configured." }, 503);
   }
 
   const authorization = request.headers.get("Authorization") || "";
-  const suppliedToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
-  if (!suppliedToken || !constantTimeEqual(suppliedToken, configuredToken)) {
-    return json({ ok: false, error: "Unauthorized." }, 401);
+  const token = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  if (!token || token.length > 4096) return json({ ok: false, error: "Unauthorized." }, 401);
+
+  let claims;
+  try {
+    claims = await verifyClinicAssertion(token, secret);
+  } catch {
+    return json({ ok: false, error: "Invalid clinic assertion." }, 401);
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (
+    claims.iss !== "ultimate-esthetics-clinic" ||
+    claims.aud !== "creative-clan-ai-agent" ||
+    claims.business_id !== configuredBusinessId ||
+    claims.scope !== "clinic:summary:read" ||
+    claims.role !== "admin" ||
+    !claims.sub ||
+    !/^[0-9a-fA-F-]{36}$/.test(String(claims.jti || "")) ||
+    !Number.isInteger(claims.iat) ||
+    !Number.isInteger(claims.exp) ||
+    claims.iat > now + 15 ||
+    claims.exp <= now ||
+    claims.exp - claims.iat > 60
+  ) {
+    return json({ ok: false, error: "Clinic assertion is expired or not authorized for this read-only scope." }, 403);
   }
 
   let body;
@@ -56,6 +70,15 @@ export async function onRequestPost({ request, env }) {
   }
 
   try {
+    await env.DB.prepare("DELETE FROM ai_agent_bridge_assertions WHERE expires_at < ?")
+      .bind(new Date().toISOString()).run();
+    const consumed = await env.DB.prepare(
+      "INSERT OR IGNORE INTO ai_agent_bridge_assertions (jti, expires_at) VALUES (?, ?)"
+    ).bind(String(claims.jti), new Date(claims.exp * 1000).toISOString()).run();
+    if (Number(consumed?.meta?.changes || 0) !== 1) {
+      return json({ ok: false, error: "This clinic assertion has already been used." }, 409);
+    }
+
     const date = clinicDate();
     const result = await env.DB.prepare(
       "SELECT status, COUNT(*) AS count, SUM(CASE WHEN checked_in_at IS NOT NULL THEN 1 ELSE 0 END) AS checked_in FROM appointments WHERE date = ? GROUP BY status"
