@@ -497,15 +497,16 @@ body:not(.ue-authenticated) #ueAgentPanel{display:none!important}
     <button class="ue-agent-close" id="ueAgentClose" type="button" aria-label="Close AI Agent">×</button>
   </header>
   <div class="ue-agent-body">
-    <div class="ue-agent-status"><i></i><span>Connection setup required</span></div>
+    <div class="ue-agent-status" id="ueAgentStatus"><i></i><span>Secure connection not verified</span></div>
     <div class="ue-agent-welcome">
       <b>Assalam-o-Alaikum! 👋</b>
-      <p>AI Agent ka chat interface tayyar hai. Clinic login aur central AI service ke darmiyan secure authentication bridge configure hone ke baad yahan Urdu, Roman Urdu aur English mein baat kar sakenge.</p>
+      <p>Clinic login ke baad yahan se secure, read-only connection test kar sakte hain. Test sirf aaj ki aggregate appointment counts verify karta hai — patient names ya clinical details nahi bhejta.</p>
     </div>
-    <p class="ue-agent-note">Abhi AI replies aur patient-data queries band hain. Yeh panel koi patient record read ya change nahi karta. Secure connection, Super Admin permission aur credit reservation complete hone ke baad hi live AI enable hoga.</p>
+    <button class="btn pri" id="ueAgentCheckConnection" type="button" style="width:100%;justify-content:center">Verify secure connection</button>
+    <div class="ue-agent-note" id="ueAgentConnectionResult" role="status" aria-live="polite">AI chat abhi disabled hai. Live AI tabhi enable hoga jab Super Admin permissions aur credit reservation bhi verify ho jayen.</div>
   </div>
   <form class="ue-agent-compose" id="ueAgentCompose">
-    <input id="ueAgentInput" type="text" placeholder="AI connection setup ke baad available hoga" disabled aria-label="Message to AI Agent">
+    <input id="ueAgentInput" type="text" placeholder="AI chat will be enabled after final security checks" disabled aria-label="Message to AI Agent">
     <button type="submit" disabled>Send</button>
   </form>
 </section>
@@ -1706,11 +1707,15 @@ if ("serviceWorker" in navigator) {
   })();
 }
 
-/* AI Agent launcher: visual shell only until the secure clinic-to-agent auth bridge is enabled. */
+/* AI Agent launcher: authenticated, one-time Preview connection verification only. */
 (() => {
   const fab = document.getElementById('ueAgentFab');
   const panel = document.getElementById('ueAgentPanel');
   const close = document.getElementById('ueAgentClose');
+  const check = document.getElementById('ueAgentCheckConnection');
+  const status = document.getElementById('ueAgentStatus');
+  const result = document.getElementById('ueAgentConnectionResult');
+  const apiBase = 'https://ai-business-agent-preview.ai-business-agent.workers.dev';
   if (!fab || !panel || fab.dataset.bound === '1') return;
   fab.dataset.bound = '1';
   const setOpen = open => {
@@ -1725,6 +1730,52 @@ if ("serviceWorker" in navigator) {
     if (event.key === 'Escape' && panel.classList.contains('open')) setOpen(false);
   });
   document.getElementById('ueAgentCompose')?.addEventListener('submit', event => event.preventDefault());
+
+  check?.addEventListener('click', async () => {
+    if (check.disabled) return;
+    check.disabled = true;
+    check.textContent = 'Verifying…';
+    if (status) status.querySelector('span').textContent = 'Checking secure bridge';
+    if (result) result.textContent = 'Authenticating your existing clinic session and checking approved read-only access…';
+    try {
+      const assertionResponse = await fetch('/api/agent/assertion', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: '{}',
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+      const assertionData = await assertionResponse.json().catch(() => ({}));
+      if (!assertionResponse.ok || !assertionData.ok || !assertionData.assertion) {
+        throw new Error(assertionData.error || 'Clinic authentication could not be verified.');
+      }
+      const bridgeResponse = await fetch(apiBase + '/v1/clinic/summary', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer ' + assertionData.assertion },
+        body: JSON.stringify({ action: 'verify_connection' }),
+        cache: 'no-store'
+      });
+      const bridgeData = await bridgeResponse.json().catch(() => ({}));
+      if (!bridgeResponse.ok || !bridgeData.ok || bridgeData.data?.connection_status !== 'active') {
+        throw new Error(bridgeData.error || 'The central AI bridge did not verify this clinic.');
+      }
+      const summary = bridgeData.data.summary || {};
+      if (status) status.querySelector('span').textContent = 'Secure connector verified · read-only';
+      if (result) {
+        const counts = summary.by_status || {};
+        result.textContent = 'Connected to Creative Clan AI Agent. Today: ' +
+          Number(summary.total_appointments || 0) + ' appointments · ' +
+          Number(summary.checked_in || 0) + ' checked in. Data scope: aggregate only. AI chat remains disabled until credit reservation and action permissions are enabled.';
+      }
+      check.textContent = 'Connection verified';
+    } catch (error) {
+      if (status) status.querySelector('span').textContent = 'Connection not verified';
+      if (result) result.textContent = error instanceof Error ? error.message : 'Secure connection check failed.';
+      check.textContent = 'Retry connection';
+    } finally {
+      check.disabled = false;
+    }
+  });
 })();
 
 boot();
