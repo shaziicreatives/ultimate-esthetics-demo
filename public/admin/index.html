@@ -401,6 +401,42 @@ button[disabled]{opacity:.5;cursor:not-allowed}
   #appView .card{padding:13px!important}
 }
 
+
+/* Creative Clan AI Agent launcher and floating assistant */
+#ueAgentFab{position:fixed;right:22px;bottom:24px;z-index:12000;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:8px 16px 8px 9px;background:var(--surface);color:var(--ink);box-shadow:0 12px 34px rgba(20,15,10,.22);font-weight:700;transition:transform .2s,box-shadow .2s}
+#ueAgentFab:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(20,15,10,.28)}
+#ueAgentOrb{width:42px;height:42px;flex:none;border-radius:50%;display:grid;place-items:center;position:relative;background:radial-gradient(circle at 34% 28%,#fff 0 7%,#e8d7b8 17%,#9b7b4d 42%,#3e3325 74%);box-shadow:inset 0 0 12px #fff9,0 0 0 3px #b99b6a55;animation:ueOrbFloat 3.2s ease-in-out infinite}
+#ueAgentOrb:before,#ueAgentOrb:after{content:"";position:absolute;inset:-5px;border:1px solid #b99b6a88;border-radius:50%;animation:ueOrbPulse 2.4s ease-out infinite}
+#ueAgentOrb:after{animation-delay:1.2s}
+#ueAgentOrb span{width:10px;height:10px;border-radius:50%;background:#fff;box-shadow:0 0 12px 5px #fff9}
+#ueAgentFab .ue-agent-label{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+#ueAgentFab .ue-agent-label b{font-size:13px}
+#ueAgentFab .ue-agent-label small{font-size:10px;color:var(--muted);font-weight:500;margin-top:4px}
+@keyframes ueOrbFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(8deg)}}
+@keyframes ueOrbPulse{0%{transform:scale(.78);opacity:.8}100%{transform:scale(1.55);opacity:0}}
+#ueAgentPanel{position:fixed;right:22px;bottom:88px;z-index:12001;width:min(390px,calc(100vw - 28px));height:min(560px,calc(100dvh - 125px));display:none;flex-direction:column;overflow:hidden;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:22px;box-shadow:0 22px 70px rgba(20,15,10,.28)}
+#ueAgentPanel.open{display:flex;animation:ueAgentPanelIn .22s ease-out}
+@keyframes ueAgentPanelIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.ue-agent-head{display:flex;align-items:center;gap:11px;padding:15px 16px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.ue-agent-head .ue-head-orb{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff,#d9c39e 30%,#79603d 66%,#30271d);box-shadow:0 0 0 3px #b99b6a44;flex:none;animation:ueOrbFloat 3.2s ease-in-out infinite}
+.ue-agent-head strong{display:block;font-size:14px}
+.ue-agent-head small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.ue-agent-close{margin-left:auto;border:0;background:transparent;color:var(--muted);font-size:24px;padding:2px 7px;border-radius:8px}
+.ue-agent-close:hover{background:var(--sand-soft);color:var(--ink)}
+.ue-agent-body{padding:18px;display:flex;flex:1;flex-direction:column;gap:14px;overflow:auto}
+.ue-agent-welcome{border:1px solid var(--line);border-radius:16px;padding:15px;background:var(--surface2)}
+.ue-agent-welcome b{display:block;font-size:14px;margin-bottom:5px}
+.ue-agent-welcome p{font-size:12.5px;line-height:1.55;color:var(--muted)}
+.ue-agent-status{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--warn);font-weight:700}
+.ue-agent-status i{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block}
+.ue-agent-note{font-size:12px;color:var(--muted);line-height:1.55}
+.ue-agent-compose{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px;background:var(--surface)}
+.ue-agent-compose input{flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--surface2);color:var(--ink)}
+.ue-agent-compose button{border:0;border-radius:12px;padding:0 14px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.ue-agent-compose input:disabled,.ue-agent-compose button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){#ueAgentFab{right:14px;bottom:16px;padding:7px 12px 7px 8px}#ueAgentOrb{width:40px;height:40px}#ueAgentPanel{right:10px;bottom:78px;width:calc(100vw - 20px);height:min(570px,calc(100dvh - 100px))}}
+@media(prefers-reduced-motion:reduce){#ueAgentOrb,#ueAgentOrb:before,#ueAgentOrb:after,.ue-agent-head .ue-head-orb{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -439,6 +475,31 @@ button[disabled]{opacity:.5;cursor:not-allowed}
     <main class="main"><div id="appUpdateNotice" role="status" aria-live="polite"><div class="update-copy">A new Clinic Desk update is ready.</div><div class="update-actions"><button class="btn pri sm" id="applyAppUpdate" type="button">Update app</button><button class="btn sm" id="dismissAppUpdate" type="button">Later</button></div></div><div id="view"></div></main>
   </div>
 </div>
+
+<button id="ueAgentFab" type="button" aria-label="Open AI Agent" aria-expanded="false" aria-controls="ueAgentPanel">
+  <span id="ueAgentOrb" aria-hidden="true"><span></span></span>
+  <span class="ue-agent-label"><b>AI Agent</b><small>Clinic assistant</small></span>
+</button>
+<section id="ueAgentPanel" role="dialog" aria-modal="false" aria-label="AI Agent assistant">
+  <header class="ue-agent-head">
+    <span class="ue-head-orb" aria-hidden="true"></span>
+    <div><strong>Creative Clan AI Agent</strong><small>Ultimate Esthetics · Clinic Desk</small></div>
+    <button class="ue-agent-close" id="ueAgentClose" type="button" aria-label="Close AI Agent">×</button>
+  </header>
+  <div class="ue-agent-body">
+    <div class="ue-agent-status"><i></i><span>Connection setup required</span></div>
+    <div class="ue-agent-welcome">
+      <b>Assalam-o-Alaikum! 👋</b>
+      <p>AI Agent ka chat interface tayyar hai. Clinic login aur central AI service ke darmiyan secure authentication bridge configure hone ke baad yahan Urdu, Roman Urdu aur English mein baat kar sakenge.</p>
+    </div>
+    <p class="ue-agent-note">Abhi AI replies aur patient-data queries band hain. Yeh panel koi patient record read ya change nahi karta. Secure connection, Super Admin permission aur credit reservation complete hone ke baad hi live AI enable hoga.</p>
+  </div>
+  <form class="ue-agent-compose" id="ueAgentCompose">
+    <input id="ueAgentInput" type="text" placeholder="AI connection setup ke baad available hoga" disabled aria-label="Message to AI Agent">
+    <button type="submit" disabled>Send</button>
+  </form>
+</section>
+
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
@@ -1628,6 +1689,28 @@ if ("serviceWorker" in navigator) {
     } catch(e) { console.error('Clinic service worker registration failed',e); }
   })();
 }
+
+/* AI Agent launcher: visual shell only until the secure clinic-to-agent auth bridge is enabled. */
+(() => {
+  const fab = document.getElementById('ueAgentFab');
+  const panel = document.getElementById('ueAgentPanel');
+  const close = document.getElementById('ueAgentClose');
+  if (!fab || !panel || fab.dataset.bound === '1') return;
+  fab.dataset.bound = '1';
+  const setOpen = open => {
+    panel.classList.toggle('open', open);
+    fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) close?.focus();
+    else fab.focus();
+  };
+  fab.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+  close?.addEventListener('click', () => setOpen(false));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && panel.classList.contains('open')) setOpen(false);
+  });
+  document.getElementById('ueAgentCompose')?.addEventListener('submit', event => event.preventDefault());
+})();
+
 boot();
 </script>
 </body>
