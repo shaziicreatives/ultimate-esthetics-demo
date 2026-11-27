@@ -13,6 +13,8 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 
 export async function onRequestPost({ request, env }) {
   try {
+    const raw = await request.arrayBuffer();
+    if (raw.byteLength > 1024) return json({ ok: false, error: "Request is too large." }, 413);
     const session = await getAdminSession(request, env);
     if (!session) return json({ ok: false, error: "Clinic admin login required." }, 401);
     if (session.role !== "admin") return json({ ok: false, error: "Only an authorized clinic administrator can connect the AI Agent." }, 403);
