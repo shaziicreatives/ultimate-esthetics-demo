@@ -437,6 +437,16 @@ button[disabled]{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){#ueAgentFab{right:14px;bottom:16px;padding:7px 12px 7px 8px}#ueAgentOrb{width:40px;height:40px}#ueAgentPanel{right:10px;bottom:78px;width:calc(100vw - 20px);height:min(570px,calc(100dvh - 100px))}}
 @media(prefers-reduced-motion:reduce){#ueAgentOrb,#ueAgentOrb:before,#ueAgentOrb:after,.ue-agent-head .ue-head-orb{animation:none!important}}
 
+/* Keep the AI launcher and chat hidden until a valid admin session is confirmed. */
+body:not(.ue-authenticated) #ueAgentFab,
+body:not(.ue-authenticated) #ueAgentPanel{display:none!important}
+/* Raise the launcher and chat so they do not sit against the phone's bottom edge. */
+#ueAgentFab{right:22px;bottom:88px}
+#ueAgentPanel{right:22px;bottom:152px}
+@media(max-width:600px){
+  #ueAgentFab{right:14px;bottom:82px}
+  #ueAgentPanel{right:14px;bottom:145px;width:calc(100vw - 28px);height:min(560px,calc(100dvh - 170px))}
+}
 </style>
 </head>
 <body>
@@ -795,6 +805,10 @@ function announceLoginSuccess() {
 }
 function showLogin() {
   if (timer) { clearInterval(timer); timer = null; }
+  document.body.classList.remove('ue-authenticated');
+  const agentPanel = $('#ueAgentPanel'), agentFab = $('#ueAgentFab');
+  agentPanel?.classList.remove('open');
+  agentFab?.setAttribute('aria-expanded', 'false');
   $('#appView').style.display = 'none'; $('#loginView').style.display = 'flex';
 }
 function showApp() { $('#loginView').style.display = 'none'; $('#appView').style.display = 'block'; }
@@ -852,6 +866,8 @@ async function boot(afterLogin = false) {
       state.currentUser = who.user || null;
       state.loginMethod = who.auth_method || '';
     }
+    if (!state.currentUser) throw new Error('unauthorized');
+    document.body.classList.add('ue-authenticated');
     render();
     showDriveOAuthResult();
     updateSoundButton();
