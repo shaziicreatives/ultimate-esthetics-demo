@@ -17,7 +17,7 @@ export async function onRequestPost({ request, env }) {
     if (raw.byteLength > 1024) return json({ ok: false, error: "Request is too large." }, 413);
     const session = await getAdminSession(request, env);
     if (!session) return json({ ok: false, error: "Clinic admin login required." }, 401);
-    if (session.role !== "admin") return json({ ok: false, error: "Only an authorized clinic administrator can connect the AI Agent." }, 403);
+    if (!["owner", "admin", "receptionist"].includes(String(session.role || "").toLowerCase())) return json({ ok: false, error: "This clinic account is not authorized to use the AI Agent connector." }, 403);
 
     const businessId = String(env.AI_AGENT_BUSINESS_ID || "");
     const secret = String(env.AI_AGENT_BRIDGE_HMAC_SECRET || "");
