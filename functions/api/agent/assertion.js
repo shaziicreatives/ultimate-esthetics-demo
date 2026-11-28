@@ -21,8 +21,30 @@ export async function onRequestPost({ request, env }) {
 
     const businessId = String(env.AI_AGENT_BUSINESS_ID || "");
     const secret = String(env.AI_AGENT_BRIDGE_HMAC_SECRET || "");
-    if (!/^[0-9a-fA-F-]{36}$/.test(businessId) || secret.length < 32) {
-      return json({ ok: false, error: "Preview bridge configuration is incomplete." }, 503);
+    const businessIdPresent = businessId.length > 0;
+    const businessIdValid = /^[0-9a-fA-F-]{36}$/.test(businessId);
+    const hmacSecretPresent = secret.length > 0;
+    const hmacSecretLengthValid = secret.length >= 32;
+
+    if (!businessIdValid || !hmacSecretLengthValid) {
+      // Safe diagnostics are returned only to Owner/Admin. Never expose the
+      // secret, fragments, hashes, tokens, assertions, or session data.
+      const role = String(session.role || "").toLowerCase();
+      const diagnostics = ["owner", "admin"].includes(role) ? {
+        diagnostics: {
+          business_id_present: businessIdPresent,
+          business_id_valid: businessIdValid,
+          hmac_secret_present: hmacSecretPresent,
+          hmac_secret_length_valid: hmacSecretLengthValid,
+          failed_checks: [
+            ...(!businessIdPresent ? ["business_id_missing"] : []),
+            ...(businessIdPresent && !businessIdValid ? ["business_id_invalid"] : []),
+            ...(!hmacSecretPresent ? ["hmac_secret_missing"] : []),
+            ...(hmacSecretPresent && !hmacSecretLengthValid ? ["hmac_secret_too_short"] : [])
+          ]
+        }
+      } : {};
+      return json({ ok: false, error: "Preview bridge configuration is incomplete.", ...diagnostics }, 503);
     }
 
     const now = Math.floor(Date.now() / 1000);
