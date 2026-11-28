@@ -841,37 +841,7 @@ function showDriveOAuthResult(){
  const query=params.toString();
  history.replaceState(null,'',location.pathname+(query?'?'+query:'')+location.hash);
 }
-let previewSeedPromise = null;
-async function ensurePreviewSeed(username,password) {
-  const host = location.hostname;
-  if (host === 'ultimate-esthetics-demo.pages.dev' || !host.endsWith('.ultimate-esthetics-demo.pages.dev')) return null;
-  try{ if(localStorage.getItem('ue_preview_seeded')==='1') return null; }catch(e){}
-  if (!previewSeedPromise) {
-    const btn = $('#loginBtn'),wasDisabled=!!btn?.disabled,oldText=btn?.textContent||'Sign In';
-    if (btn) { btn.disabled = true; btn.textContent = 'Preparing Preview...'; }
-    previewSeedPromise = (async () => {
-      const response = await fetch('/api/preview/seed', {
-        method:'POST', credentials:'same-origin', cache:'no-store',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({username,password})
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.success !== true) {
-        const error=new Error(data.error || 'Could not prepare Preview database.');
-        error.status=response.status;
-        throw error;
-      }
-      try{localStorage.setItem('ue_preview_seeded','1');}catch(e){}
-      return data;
-    })().catch(error => {
-      previewSeedPromise = null;
-      throw error;
-    }).finally(() => {
-      if (btn) { btn.disabled = wasDisabled; btn.textContent = oldText; }
-    });
-  }
-  return previewSeedPromise;
-}
+/* Preview uses its own isolated D1 database. Never seed it from production. */
 async function boot(afterLogin = false) {
   try {
     // Render immediately and fetch the account identity alongside dashboard data.
@@ -922,7 +892,6 @@ $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const err = $('#loginErr'), btn = $('#loginBtn'); if(btn.hidden)return; err.hidden = true; btn.disabled = true; btn.textContent = 'Verifying...';
   try {
-    await ensurePreviewSeed($('#uName').value.trim(), $('#uPass').value);
     const res = await fetch('/api/admin/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: $('#uName').value.trim(), password: $('#uPass').value }) });
     let d = {}; try { d = await res.json(); } catch (x) { }
     if (res.ok && d.success === true) {
