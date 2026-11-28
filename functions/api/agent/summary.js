@@ -45,7 +45,7 @@ export async function onRequestPost({ request, env }) {
     claims.aud !== "creative-clan-ai-agent" ||
     claims.business_id !== configuredBusinessId ||
     claims.scope !== "clinic:summary:read" ||
-    claims.role !== "admin" ||
+    !["owner", "admin", "receptionist"].includes(String(claims.role || "").toLowerCase()) ||
     !claims.sub ||
     !/^[0-9a-fA-F-]{36}$/.test(String(claims.jti || "")) ||
     !Number.isInteger(claims.iat) ||
