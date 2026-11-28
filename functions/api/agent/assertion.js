@@ -66,3 +66,44 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Could not issue a secure clinic assertion." }, 500);
   }
 }
+
+
+// Owner/Admin-only, read-only runtime diagnostics. This endpoint never calls
+// the central AI Worker and never returns secret material or clinic data.
+export async function onRequestGet({ request, env }) {
+  try {
+    const session = await getAdminSession(request, env);
+    if (!session) return json({ ok: false, error: "Clinic admin login required." }, 401);
+    const role = String(session.role || "").toLowerCase();
+    if (!["owner", "admin"].includes(role)) {
+      return json({ ok: false, error: "Owner/Admin access required." }, 403);
+    }
+
+    const businessId = String(env.AI_AGENT_BUSINESS_ID || "");
+    const secret = String(env.AI_AGENT_BRIDGE_HMAC_SECRET || "");
+    const businessIdPresent = businessId.length > 0;
+    const businessIdValid = /^[0-9a-fA-F-]{36}$/.test(businessId);
+    const hmacSecretPresent = secret.length > 0;
+    const hmacSecretLengthValid = secret.length >= 32;
+    const failedChecks = [
+      ...(!businessIdPresent ? ["business_id_missing"] : []),
+      ...(businessIdPresent && !businessIdValid ? ["business_id_invalid"] : []),
+      ...(!hmacSecretPresent ? ["hmac_secret_missing"] : []),
+      ...(hmacSecretPresent && !hmacSecretLengthValid ? ["hmac_secret_too_short"] : [])
+    ];
+
+    return json({
+      ok: failedChecks.length === 0,
+      environment: "preview-runtime",
+      diagnostics: {
+        business_id_present: businessIdPresent,
+        business_id_valid: businessIdValid,
+        hmac_secret_present: hmacSecretPresent,
+        hmac_secret_length_valid: hmacSecretLengthValid,
+        failed_checks: failedChecks
+      }
+    }, failedChecks.length === 0 ? 200 : 503);
+  } catch {
+    return json({ ok: false, error: "Could not inspect Preview bridge configuration." }, 500);
+  }
+}
