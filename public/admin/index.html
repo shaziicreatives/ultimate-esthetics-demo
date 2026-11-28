@@ -447,6 +447,24 @@ body:not(.ue-authenticated) #ueAgentPanel{display:none!important}
   #ueAgentFab{right:14px;bottom:82px}
   #ueAgentPanel{right:14px;bottom:145px;width:calc(100vw - 28px);height:min(560px,calc(100dvh - 170px))}
 }
+
+/* Preview login input hit-area repair: keep the credential fields above
+   decorative/floating layers and explicitly restore touch + pointer input. */
+#loginView{z-index:11010!important;pointer-events:auto!important}
+#loginView .login-card{position:relative!important;z-index:11011!important;pointer-events:auto!important}
+#loginView #loginForm,
+#loginView #loginForm .field{position:relative!important;z-index:11012!important;pointer-events:auto!important}
+#loginView #uName,
+#loginView #uPass{
+  position:relative!important;z-index:11013!important;display:block!important;
+  width:100%!important;min-height:46px!important;pointer-events:auto!important;
+  touch-action:manipulation!important;-webkit-user-select:text!important;user-select:text!important;
+  opacity:1!important;visibility:visible!important;
+}
+#loginView #uName:focus,
+#loginView #uPass:focus{outline:2px solid var(--accent)!important;outline-offset:2px}
+#loginView .field label{pointer-events:none!important}
+
 </style>
 </head>
 <body>
