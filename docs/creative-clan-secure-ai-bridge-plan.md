@@ -12,7 +12,7 @@ Connect the Ultimate Esthetics Admin Portal to the central Creative Clan AI Work
 
 ## Proposed request flow
 1. Browser sends a same-origin request to a clinic Pages Function. The browser sends only the existing session cookie and the user's message.
-2. The Pages Function calls `getAdminSession(request, env)`; reject missing/expired sessions. Only explicitly permitted clinic admin roles may use the assistant.
+2. The Pages Function calls `getAdminSession(request, env)`; reject missing/expired sessions. For the initial aggregate-only summary, allow only existing `owner`, `admin`, and `receptionist` session roles. Preserve the actual role in the assertion; never elevate roles. Any future action must be checked against that user's existing clinic-side permission before execution.
 3. The Pages Function creates a short-lived, audience-bound signed assertion using a high-entropy Preview-only HMAC secret. Claims must include issuer, audience, expiry (maximum 60 seconds), issued-at, unique jti, business binding, clinic user ID and role. Never forward the raw clinic cookie or session token.
 4. Central Worker verifies signature, issuer, audience, expiry, jti/replay protection, business ID and allowed role. It must not trust browser-supplied business IDs or roles.
 5. Worker checks the exact business is active in `authorized_businesses`, the Super Admin has enabled the AI capability, required action permissions are active, and a non-blocked credit account with positive available allowance exists.
@@ -36,20 +36,21 @@ Owner authorization alone does not bypass Super Admin approval or credits.
 
 ## Required server configuration (Preview only)
 Clinic Pages Functions:
-- `AI_AGENT_BRIDGE_SECRET`: random high-entropy secret, at least 32 bytes.
-- `AI_AGENT_WORKER_URL`: exact HTTPS Preview Worker URL.
-- `AI_AGENT_BUSINESS_ID`: exact UUID only after Super Admin approval.
+- `AI_AGENT_BRIDGE_HMAC_SECRET`: random high-entropy secret, at least 32 bytes.
+- `AI_AGENT_BUSINESS_ID`: `c55320e8-972d-48fd-be83-649c5d865df5` (approved Ultimate Esthetics business UUID).
+- `AI_AGENT_WORKER_URL`: exact HTTPS Preview Worker URL if the frontend configuration uses it.
 
 Central Preview Worker:
-- Matching `AI_AGENT_BRIDGE_SECRET`.
-- Supabase server-side credentials only if the chosen implementation requires them; never expose them to the browser.
+- `CLINIC_BRIDGE_HMAC_SECRET`: the same secret value as clinic `AI_AGENT_BRIDGE_HMAC_SECRET`.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-side secret required by the Worker; never expose it to the browser.
+- Existing `SUPABASE_URL` binding.
 - Exact approved business/domain configuration.
 
 Do not copy production secrets into Preview. Never paste secret values into GitHub, chat, source code, or browser configuration.
 
 ## Required tests
 - Missing/expired clinic session => 401.
-- Non-admin or disabled clinic user => 403.
+- Unsupported role or disabled clinic user => 403; `owner`, `admin`, and `receptionist` may obtain only the initial read-only summary assertion.
 - Invalid signature, wrong issuer/audience, expired token, replayed jti => rejected.
 - Wrong or unapproved business => rejected.
 - Super Admin AI capability disabled => rejected.
@@ -61,9 +62,10 @@ Do not copy production secrets into Preview. Never paste secret values into GitH
 - Production endpoints and databases remain unchanged.
 
 ## Current blockers
-- No matching Ultimate Esthetics row exists in Supabase `authorized_businesses` yet.
-- Super Admin approval and explicit AI capability grant are still pending.
-- Preview credit allocation is not confirmed.
+- Ultimate Esthetics exists as an active approved business (`c55320e8-972d-48fd-be83-649c5d865df5`); Access Request is approved.
+- No AI credits have been allocated and no platform connection record exists.
+- Clinic Preview is missing `AI_AGENT_BUSINESS_ID` and `AI_AGENT_BRIDGE_HMAC_SECRET`.
+- Central Preview Worker is missing `CLINIC_BRIDGE_HMAC_SECRET` and `SUPABASE_SERVICE_ROLE_KEY`.
 - The existing credit consumption RPC is not a reserve/settle/release lifecycle.
 - No bridge secret should be configured until the Preview-only implementation and security tests are ready.
 
