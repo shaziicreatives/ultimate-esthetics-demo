@@ -11,6 +11,10 @@ database_id = "751bd426-c89d-4e77-8dd8-67b2f02ec56e"
 # Preview uses only its isolated database. Never bind the production database
 # into the Preview environment.
 [env.preview]
+
+[env.preview.vars]
+AI_AGENT_BUSINESS_ID = "c55320e8-972d-48fd-be83-649c5d865df5"
+
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "ultimate-esthetics-preview-isolated"
