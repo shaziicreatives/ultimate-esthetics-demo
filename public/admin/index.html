@@ -1739,6 +1739,7 @@ if ("serviceWorker" in navigator) {
   if (!fab || !panel || fab.dataset.bound === '1') return;
   fab.dataset.bound = '1';
   let attemptedForLogin = false;
+  try { attemptedForLogin = sessionStorage.getItem('ue_ai_bridge_checked') === '1'; } catch (_) {}
   const setOpen = open => {
     panel.classList.toggle('open', open);
     fab.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -1796,10 +1797,12 @@ if ("serviceWorker" in navigator) {
   window.addEventListener('ue:clinic-authenticated', () => {
     if (attemptedForLogin) return;
     attemptedForLogin = true;
+    try { sessionStorage.setItem('ue_ai_bridge_checked', '1'); } catch (_) {}
     void verifyConnection();
   });
   window.addEventListener('ue:clinic-logged-out', () => {
     attemptedForLogin = false;
+    try { sessionStorage.removeItem('ue_ai_bridge_checked'); } catch (_) {}
     if (status) status.querySelector('span').textContent = 'Waiting for sign-in';
     if (result) { result.hidden = true; result.textContent = ''; }
     if (check) { check.hidden = true; check.disabled = false; }
